@@ -1,0 +1,15 @@
+# Preview and downloaded videos remain local.
+*.mp4
+*.MP4
+
+# Generated builds, caches, local settings and logs.
+__pycache__/
+*.py[cod]
+*.log
+/pet-settings.json
+/backups/
+/work/dist/
+/work/pyinstaller-build/
+/work/repaired-assets/
+/work/sources/
+/work/*-empty-*
