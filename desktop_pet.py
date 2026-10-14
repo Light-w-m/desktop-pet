@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 import time
 from PIL import Image, ImageChops, ImageSequence
+from playback import Playback
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -97,8 +98,6 @@ signature(gdi, 'DeleteDC', W.BOOL, W.HDC)
 
 class DesktopPet:
     LABELS = {'standing': '站立待机', 'drinking': '坐着喝饮料', 'reading': '趴着读书'}
-    # Excerpts repeat briefly, with normal standing between the two idle poses.
-    PLAYLIST = [('standing', 12), ('drinking', 6.12), ('standing', 8), ('reading', 4.6)]
 
     def __init__(self):
         self.settings = {}
@@ -112,7 +111,6 @@ class DesktopPet:
         self.paused = False
         self.drag_offset = None
         self.current = 'standing'
-        self.playlist_index = 0
         self.last_frame = -1
         self.draw_times = []
         self.render_times = []
@@ -127,11 +125,18 @@ class DesktopPet:
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
         self.blend = BLEND(0, 0, 255, 1)
         self.load_frames()
+        self.clock=Playback({name:animation['duration'] for name,animation in self.animations.items()})
+        self.qa_target=None
         work = W.RECT()
         if not user.SystemParametersInfoW(0x0030, 0, C.byref(work), 0):
             raise C.WinError(C.get_last_error())
         self.x = int(self.settings.get('x', work.right - self.width - 35))
         self.y = int(self.settings.get('y', work.bottom - self.height))
+        if 'y' in self.settings:
+            # Preserve the bottom anchor when upgrading the old 420px canvas
+            # or when the saved scale/canvas dimensions change.
+            saved_height=int(self.settings.get('height',round(420*self.scale)))
+            self.y+=saved_height-self.height
         self.clamp_position()
         self.callback = WNDPROC(self.window_proc)
         self.instance = kernel.GetModuleHandleW(None)
@@ -157,7 +162,7 @@ class DesktopPet:
 
     def load_frames(self):
         manifest = json.loads((ASSETS / 'manifest.json').read_text(encoding='utf-8'))
-        self.width, self.height = [round(x*self.scale) for x in manifest['canvas']]
+        self.width, self.height = [round(x*self.scale) for x in manifest.get('display_canvas',manifest['canvas'])]
         self.animations = {}
         for name, spec in manifest['animations'].items():
             frames=[]
@@ -228,13 +233,10 @@ class DesktopPet:
             self.render_times.append(time.perf_counter()-render_start)
 
     def switch(self,name,automatic=False):
-        self.current=name
+        self.clock.request(name,automatic)
         self.auto=automatic
-        self.elapsed=0
-        self.last_frame=-1
         self.last_tick=time.perf_counter()
-        logging.info('Animation %s auto=%s',name,automatic)
-        self.draw(0)
+        logging.info('Requested %s auto=%s current=%s pending=%s',name,automatic,self.current,self.clock.pending)
 
     def tick(self):
         now=time.perf_counter()
@@ -246,15 +248,17 @@ class DesktopPet:
         if self.qa_mode:
             names=['standing','drinking','reading']
             name=names[min(2,int((now-self.started)/max(3,self.qa_seconds/3)))]
-            if self.current!=name:self.switch(name,False)
+            if self.qa_target!=name:
+                self.qa_target=name
+                self.switch(name,False)
         if self.paused:return
-        previous_elapsed=self.elapsed
-        self.elapsed+=dt
-        duration=self.animations[self.current]['duration']
-        # Finish the current loop before changing an automatic idle pose.
-        if self.auto and self.elapsed>=self.PLAYLIST[self.playlist_index][1] and int(self.elapsed/duration)>int(previous_elapsed/duration):
-            self.playlist_index=(self.playlist_index+1)%len(self.PLAYLIST)
-            self.switch(self.PLAYLIST[self.playlist_index][0],True)
+        previous=self.current
+        self.clock.advance(dt)
+        self.current=self.clock.current
+        self.elapsed=self.clock.position
+        if self.current!=previous:
+            self.last_frame=-1
+            logging.info('Animation %s after native return from %s',self.current,previous)
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
         index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
@@ -280,6 +284,8 @@ class DesktopPet:
         animation=self.animations[self.current]
         index=min(bisect_right(animation['endpoints'],self.elapsed%animation['duration']),len(animation['frames'])-1)
         self.draw(index)
+        # Decoding resized frames takes real time; it must not advance media.
+        self.last_tick=time.perf_counter()
         logging.info('Resize %s',self.scale)
 
     def menu(self):
@@ -291,9 +297,11 @@ class DesktopPet:
         def item(command,label,checked=False):
             user.AppendMenuW(menu,0x8 if checked else 0,command,label)
         item(10,'自动轮换待机动作',self.auto)
-        item(11,'站立待机',not self.auto and self.current=='standing')
-        item(12,'坐着喝饮料',not self.auto and self.current=='drinking')
-        item(13,'趴着读书',not self.auto and self.current=='reading')
+        item(11,'站立待机',not self.auto and self.clock.requested=='standing')
+        item(12,'坐着喝饮料',not self.auto and self.clock.requested=='drinking')
+        item(13,'趴着读书',not self.auto and self.clock.requested=='reading')
+        if self.clock.pending:
+            user.AppendMenuW(menu,0x0001,0,'当前动作结束后切换：'+self.LABELS[self.clock.pending])
         user.AppendMenuW(menu,0x800,0,None)
         item(20,'继续播放' if self.paused else '暂停动画')
         item(31,'小号',abs(self.scale-.7)<.01)
@@ -306,7 +314,6 @@ class DesktopPet:
         user.DestroyMenu(menu)
         self.last_tick=time.perf_counter()
         if command==10:
-            self.playlist_index=0
             self.switch('standing',True)
         elif command in (11,12,13):
             self.switch({11:'standing',12:'drinking',13:'reading'}[command])
@@ -366,11 +373,12 @@ class DesktopPet:
                 user.KillTimer(hwnd,1)
                 self.free_surface()
                 if not self.qa_mode:
-                    try:SETTINGS.write_text(json.dumps({'x':self.x,'y':self.y,'scale':self.scale}),encoding='utf-8')
+                    try:SETTINGS.write_text(json.dumps({'x':self.x,'y':self.y,'scale':self.scale,'height':self.height}),encoding='utf-8')
                     except OSError:pass
                 logging.info('Exited cleanly')
                 if self.qa_mode:
                     qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times]}
+                    (APP_DIR/'work').mkdir(exist_ok=True)
                     (APP_DIR/'work'/'playback-qa.json').write_text(json.dumps(qa),encoding='utf-8')
                 user.PostQuitMessage(0)
                 return 0
@@ -393,7 +401,7 @@ class DesktopPet:
                 timeout=30
             else:
                 animation=self.animations[self.current]
-                t=self.elapsed%animation['duration']
+                t=self.elapsed
                 index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
                 remaining=animation['endpoints'][index]-t
                 # WM_TIMER has a 10 ms floor. Waiting for each media deadline

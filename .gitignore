@@ -13,3 +13,13 @@ __pycache__/
 /work/repaired-assets/
 /work/sources/
 /work/*-empty-*
+
+# Local OBS inspection frames; selected final QA previews are kept separately.
+/work/obs*.png
+/work/obs*-contact.jpg
+/work/drinking-enter-source.png
+/work/matte-final.png
+/work/*-border-*.jpg
+/work/return-fixed.jpg
+/work/obs-source-return-pair.jpg
+/work/*-obs-motion.jpg

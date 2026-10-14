@@ -1,0 +1,25 @@
+{
+  "provided_by": "user",
+  "videos": [
+    {
+      "file": "E:/OBS/video/2026-10-14 21-04-10.mp4",
+      "action": "reading",
+      "resolution": [2560, 1440],
+      "fps": 60,
+      "range_seconds": [2.10, 15.70]
+    },
+    {
+      "file": "E:/OBS/video/2026-10-14 21-04-51.mp4",
+      "action": "drinking and standing",
+      "resolution": [2560, 1440],
+      "fps": 60,
+      "drinking_range_seconds": [0.0, 15.75],
+      "standing_range_seconds": [15.75, 18.30]
+    }
+  ],
+  "asset_canvas": [840, 720],
+  "default_display_canvas": [560, 480],
+  "encoding": "lossless animated WebP",
+  "matting": "Cyan backdrop classification, native toon outline recovery and blue-fabric topology preservation, moving lower-edge detection to exclude floor reflection; detached familiar and shrinking cushion retained; wider crop for sideways cushion travel and extra headroom for pose returns",
+  "motion": "Native recording frames and timing; complete pose starts and returns; common standing endpoints over 200 ms; no character/cushion layer offsets"
+}
