@@ -25,12 +25,15 @@
 
 素材记录在 `references/obs-source.json`，帧数、时长和编码信息在 `assets/manifest.json`。完整取景参考保存在 `references/requested-full-framing.png`。以前的素材和处理脚本保留供历史对照。
 
+站立的两只鞋分别按实际鞋底轮廓跟踪，去掉原录屏的地面倒影；两条飘带保留浅色连接处，并跟随原动画摆动。动作起始和收尾的公共站姿使用同样的处理，避免切换时倒影重新闪现。
+
 ## 构建与验证
 
 `desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的动画。
 
 1. 用 `work/extract_obs.py` 从上述本地 OBS 文件生成素材到 `work/repaired-assets`，需要 Pillow、NumPy、OpenCV 和 ffmpeg。
 2. 运行 `work/validate_assets.py` 检查所有帧的轮廓边距、完整性、时长和公共站姿接缝。
+   运行 `work/validate_standing_edges.py` 检查脚底倒影、鞋底边界稳定性和飘带连接处。
 3. 运行 `work/test_playback.py` 检查动作中途切换、连续选择和自动轮换。
 4. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。
 

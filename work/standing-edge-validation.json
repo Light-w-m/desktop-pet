@@ -1,0 +1,74 @@
+{
+  "before": {
+    "frames": 153,
+    "max_reflection_pixels": 298,
+    "sole_bottom_range_pixels": [
+      8,
+      8
+    ],
+    "sole_bottom_minmax": [
+      [
+        656,
+        664
+      ],
+      [
+        656,
+        664
+      ]
+    ],
+    "minimum_sole_area": [
+      334,
+      0
+    ],
+    "minimum_knot_area": [
+      12,
+      1
+    ],
+    "knot_area_range": [
+      [
+        12,
+        240
+      ],
+      [
+        1,
+        268
+      ]
+    ]
+  },
+  "after": {
+    "frames": 153,
+    "max_reflection_pixels": 0,
+    "sole_bottom_range_pixels": [
+      2,
+      1
+    ],
+    "sole_bottom_minmax": [
+      [
+        654,
+        656
+      ],
+      [
+        664,
+        665
+      ]
+    ],
+    "minimum_sole_area": [
+      228,
+      288
+    ],
+    "minimum_knot_area": [
+      174,
+      234
+    ],
+    "knot_area_range": [
+      [
+        174,
+        239
+      ],
+      [
+        234,
+        304
+      ]
+    ]
+  }
+}

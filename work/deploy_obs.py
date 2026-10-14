@@ -7,7 +7,7 @@ import shutil
 root=Path(__file__).resolve().parent.parent
 stage=root/'work'/'repaired-assets'
 manifest=json.loads((stage/'manifest.json').read_text(encoding='utf-8'))
-assert manifest['version']==4
+assert manifest['version']>=4
 validation=json.loads((root/'work'/'exe-playback-validation.json').read_text(encoding='utf-8'))
 assert validation.get('verified_switches'),'Packaged transitions have not been checked'
 for name in manifest['animations']:assert validation[name]['fps']>57

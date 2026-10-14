@@ -30,7 +30,10 @@ def layout(rgba):
     rgb=np.divide(p[:,:,:3]*255,alpha,out=np.zeros_like(p[:,:,:3]),where=alpha>1)
     return Image.fromarray(np.uint8(np.clip(np.concatenate((rgb,alpha),axis=2),0,255)+.5))
 
-def frames(name):
+def frames(name,standing_repair=None):
+    if standing_repair is None:
+        from standing_matte import StandingMatte,reference_from_video
+        standing_repair=StandingMatte(reference_from_video())
     path,start,end=SOURCES[name]
     cap=cv2.VideoCapture(str(path))
     cap.set(cv2.CAP_PROP_POS_FRAMES,round(start*60))
@@ -38,8 +41,11 @@ def frames(name):
         ok,bgr=cap.read()
         if not ok:raise RuntimeError('Missing source frame %s %s'%(name,i))
         x1,y1,x2,y2=CROP
-        rgb=cv2.cvtColor(bgr[y1:y2,x1:x2],cv2.COLOR_BGR2RGB)
-        yield layout(matte(rgb))
+        full_rgb=cv2.cvtColor(bgr,cv2.COLOR_BGR2RGB)
+        if name=='standing' or i<12 or i>=round((end-start)*60)-12:
+            rgba=standing_repair.apply(full_rgb)
+        else:rgba=matte(full_rgb[y1:y2,x1:x2])
+        yield layout(rgba)
         if i%60==0:print(name,i,'/',round((end-start)*60),flush=True)
     cap.release()
 
@@ -55,7 +61,9 @@ def mix(a,b,t):
 
 def main():
     STAGE.mkdir(exist_ok=True)
-    canonical=next(frames('standing')).copy()
+    from standing_matte import StandingMatte,reference_from_video
+    standing_repair=StandingMatte(reference_from_video())
+    canonical=next(frames('standing',standing_repair)).copy()
     items={}
     for name in ['standing','reading','drinking']:
         # A common endpoint eliminates switching seams. Both action recordings
@@ -74,7 +82,7 @@ def main():
         with tempfile.TemporaryFile() as errors:
             process=subprocess.Popen(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','rawvideo','-pix_fmt','rgba','-s','840x720','-framerate','60','-i','pipe:0','-an','-c:v','libwebp_anim','-lossless','1','-compression_level','0','-loop','0',str(STAGE/filename)],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=errors)
             tail=deque()
-            for i,pose in enumerate(frames(name)):
+            for i,pose in enumerate(frames(name,standing_repair)):
                 if i<bridge:pose=mix(canonical,pose,i/(bridge-1))
                 tail.append((i,pose))
                 if len(tail)>bridge:
@@ -96,9 +104,9 @@ def main():
             durations=[]
             for i in range(encoded.n_frames):
                 encoded.seek(i);encoded.load();durations.append(encoded.info['duration'])
-        items[name]={'file':filename,'frames':len(durations),'duration_ms':sum(durations),'fps':60,'source_range_seconds':[start,end],'source_file':path.name,'lossless':True,'native_frames':True,'full_character_and_pillow':True,'endpoint_blend_ms':200}
+        items[name]={'file':filename,'frames':len(durations),'duration_ms':sum(durations),'fps':60,'source_range_seconds':[start,end],'source_file':path.name,'lossless':True,'native_frames':True,'full_character_and_pillow':True,'endpoint_blend_ms':200,'standing_contours_repaired':True}
         sheet.save(ROOT/(name+'-obs-qa.jpg'),quality=96)
-    manifest={'version':4,'canvas':list(CANVAS),'display_canvas':[560,480],'animations':items,'coverage':'Full character, entire cushion and detached familiar from native 2560x1440 60 fps user recordings; shared framing includes the cushion shrinking and traveling sideways during returns, with extra headroom and side margins and common standing endpoints. No layer offsets or motion interpolation.'}
+    manifest={'version':5,'canvas':list(CANVAS),'display_canvas':[560,480],'animations':items,'coverage':'Complete native poses with shared standing endpoints, tracked shoe contours excluding floor reflection, and tracked ribbon knots. Original character and cushion proportions retained.'}
     (STAGE/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
     print('Done',items,flush=True)
 

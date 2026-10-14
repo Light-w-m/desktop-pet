@@ -4,8 +4,8 @@
     "duration_ms": 2549,
     "fps": 60.02353864260494,
     "seam_difference": 0.0,
-    "max_frame_difference": 0.9746337532997131,
-    "median_frame_difference": 0.33183862268924713,
+    "max_frame_difference": 0.72001051902771,
+    "median_frame_difference": 0.3175376355648041,
     "shared_standing_boundary": true
   },
   "reading": {
@@ -14,7 +14,7 @@
     "fps": 60.0044120891242,
     "seam_difference": 0.0,
     "max_frame_difference": 15.281167030334473,
-    "median_frame_difference": 0.6046872735023499,
+    "median_frame_difference": 0.6168114542961121,
     "shared_standing_boundary": true
   },
   "drinking": {
@@ -23,7 +23,7 @@
     "fps": 60.00380976569941,
     "seam_difference": 0.0,
     "max_frame_difference": 14.16417407989502,
-    "median_frame_difference": 0.7281126379966736,
+    "median_frame_difference": 0.726296603679657,
     "shared_standing_boundary": true
   }
 }

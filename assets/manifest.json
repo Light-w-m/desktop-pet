@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "canvas": [
     840,
     720
@@ -22,7 +22,8 @@
       "lossless": true,
       "native_frames": true,
       "full_character_and_pillow": true,
-      "endpoint_blend_ms": 200
+      "endpoint_blend_ms": 200,
+      "standing_contours_repaired": true
     },
     "reading": {
       "file": "reading-obs.webp",
@@ -37,7 +38,8 @@
       "lossless": true,
       "native_frames": true,
       "full_character_and_pillow": true,
-      "endpoint_blend_ms": 200
+      "endpoint_blend_ms": 200,
+      "standing_contours_repaired": true
     },
     "drinking": {
       "file": "drinking-obs.webp",
@@ -52,8 +54,15 @@
       "lossless": true,
       "native_frames": true,
       "full_character_and_pillow": true,
-      "endpoint_blend_ms": 200
+      "endpoint_blend_ms": 200,
+      "standing_contours_repaired": true
     }
   },
-  "coverage": "Full character and cushion with detached spawn/shrink frames and sideways return travel; common standing endpoints and shared original proportions."
+  "coverage": "Full character and cushion with detached spawn/shrink frames and sideways return travel; common standing endpoints and shared original proportions.",
+  "standing_matting": {
+    "floor_reflection_removed": true,
+    "shoe_outlines": "tracked planted sole contours",
+    "ribbons": "tracked full tails and pale knots",
+    "shared_standing_endpoints_repaired": true
+  }
 }
