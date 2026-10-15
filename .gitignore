@@ -40,3 +40,6 @@ pet-frames.json
 /local-media/
 /assets/voices/
 /work/voice-playback-qa.json
+
+# Optional local AI voice services, environments, weights and generated audio.
+/local-services/
