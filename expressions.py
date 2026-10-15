@@ -86,7 +86,7 @@ def render_picker(library, state, hover=None, dpi=1):
         if active:
             rounded((right-19, top+5, right-5, top+19), 7, '#cd84a4')
             text(right-12, top+4.5, '✓', 10, '#ffffff', True, 'mt')
-    text(180, 478, '会跟随桌宠移动 · 再次选择即可替换', 9.5, '#b18498', anchor='mt')
+    text(180, 478, '显示 5 秒后自动消失 · 再次选择重新计时', 9.5, '#b18498', anchor='mt')
     return canvas.resize((round(360*dpi), round(506*dpi)), Image.Resampling.LANCZOS)
 
 

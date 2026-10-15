@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import time
+from unittest.mock import patch
 
 from PIL import Image
 
@@ -162,10 +163,49 @@ try:
     preview.alpha_composite(Image.frombytes('RGBA', (badge.width, badge.height), pixels, 'raw', 'BGRA'),
                             (badge.x-pet.x, badge.y-pet.y+90))
     preview.convert('RGB').save(ROOT/'work'/'expression-pet-preview.jpg')
+    # The timeout uses real elapsed time, including when playback is paused.
+    pet.paused = True
+    pet.show_expression('wink')
+    ready(pet.expression)
+    pump(4.7)
+    assert pet.expression_key == 'wink', 'Expression disappeared before five seconds'
+    pet.menu(picker=True)
+    ready(pet.popup)
+    pump(.4)
+    assert pet.expression is None and pet.expression_key is None
+    assert pet.expression_expires_at is None
+    assert pet.popup.last_state['expression'] is None, 'Picker retained an expired selection'
+    pet.popup.close()
+    pet.show_expression('panic')
+    ready(pet.expression)
+    original_deadline = pet.expression_expires_at
+    with patch.object(app.time, 'perf_counter', return_value=original_deadline-1):
+        pet.show_expression('sleep')
+    ready(pet.expression)
+    replacement_deadline = pet.expression_expires_at
+    assert replacement_deadline == original_deadline+4
+    with patch.object(app.time, 'perf_counter', return_value=original_deadline+.01):
+        pet.tick()
+    assert pet.expression_key == 'sleep', 'Previous selection expired the replacement'
+    pet.show_expression('sleep')
+    ready(pet.expression)
+    assert pet.expression_expires_at != replacement_deadline, 'Reselecting did not restart the timer'
+    deadline = pet.expression_expires_at
+    pet.resize(.7)
+    ready(pet.expression)
+    assert pet.expression_expires_at == deadline, 'Resizing restarted the timer'
+    with patch.object(app.time, 'perf_counter', return_value=deadline):
+        pet.tick()
+    assert pet.expression is None, 'Expression survived its expiry boundary'
+    pet.show_expression('hello')
+    pet.show_expression(None)
+    assert pet.expression_expires_at is None, 'Manual clear left a timer active'
     report = {'all_9_selected': True, 'gallery_keeps_animation_playing': True,
               'clear_back_keyboard': True, 'follows_move_resize_action': True,
               'stable_between_frames': True, 'monitor_edges_visible': True,
-              'click_through_no_activate': True, 'gdi_handles_before': before,
+              'click_through_no_activate': True, 'five_second_timeout_while_paused': True,
+              'replacement_reselection_restart_timeout': True, 'resize_preserves_timeout': True,
+              'expired_picker_selection_cleared': True, 'gdi_handles_before': before,
               'gdi_handles_after': after, 'small_image_cache': pet.stickers.image.cache_info().currsize}
     (ROOT/'work'/'expression-validation.json').write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps(report, indent=2), flush=True)

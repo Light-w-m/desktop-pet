@@ -6,6 +6,10 @@
   "stable_between_frames": true,
   "monitor_edges_visible": true,
   "click_through_no_activate": true,
+  "five_second_timeout_while_paused": true,
+  "replacement_reselection_restart_timeout": true,
+  "resize_preserves_timeout": true,
+  "expired_picker_selection_cleared": true,
   "gdi_handles_before": 2,
   "gdi_handles_after": 2,
   "small_image_cache": 18

@@ -123,6 +123,7 @@ class DesktopPet:
         self.popup = None
         self.expression = None
         self.expression_key = None
+        self.expression_expires_at = None
         self.stickers = StickerLibrary(APP_DIR/'assets'/'expressions', RESOURCE_DIR/'assets'/'expressions')
         self.displayed_frame = None
         self.hwnd = None
@@ -249,6 +250,8 @@ class DesktopPet:
             if self.qa_target!=name:
                 self.qa_target=name
                 self.switch(name,False)
+        if self.expression_expires_at is not None and now>=self.expression_expires_at:
+            self.show_expression(None)
         if self.popup:self.popup.refresh()
         if self.paused:return
         previous=self.current
@@ -283,7 +286,7 @@ class DesktopPet:
         animation=self.animations[self.current]
         index=min(bisect_right(animation['endpoints'],self.elapsed%animation['duration']),len(animation['frames'])-1)
         self.draw(index)
-        if self.expression_key:self.show_expression(self.expression_key)
+        if self.expression_key:self.show_expression(self.expression_key,reset_timer=False)
         # Decoding resized frames takes real time; it must not advance media.
         self.last_tick=time.perf_counter()
         logging.info('Resize %s',self.scale)
@@ -298,7 +301,7 @@ class DesktopPet:
         self.popup=(ExpressionPicker if picker else PinkMenu)(self,sys.modules[__name__])
         self.popup.open(p.x,p.y)
 
-    def show_expression(self,key):
+    def show_expression(self,key,*,reset_timer=True):
         if key is not None:self.stickers.path(key)
         if self.expression:
             self.expression.close()
@@ -308,6 +311,10 @@ class DesktopPet:
             self.expression=ExpressionBadge(self,sys.modules[__name__],key)
             self.expression.open(self.x,self.y)
             self.expression.follow()
+            if reset_timer or self.expression_expires_at is None:
+                self.expression_expires_at=time.perf_counter()+5.0
+        else:
+            self.expression_expires_at=None
         logging.info('Expression %s',key)
 
     def menu_command(self,command,position=None):

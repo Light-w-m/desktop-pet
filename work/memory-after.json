@@ -1,8 +1,8 @@
 {
   "display_scale": 1.0,
-  "samples": 214,
-  "child_peak_working_mib": 37.11328125,
-  "child_peak_private_mib": 28.25390625,
-  "group_peak_working_mib": 45.703125,
-  "group_peak_private_mib": 29.71875
+  "samples": 213,
+  "child_peak_working_mib": 36.60546875,
+  "child_peak_private_mib": 26.79296875,
+  "group_peak_working_mib": 45.16796875,
+  "group_peak_private_mib": 28.25
 }
