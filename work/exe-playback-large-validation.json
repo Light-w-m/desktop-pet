@@ -1,0 +1,34 @@
+{
+  "standing": {
+    "fps": 58.32582886293106,
+    "p95_frame_ms": 24.832399969454855,
+    "frames_drawn": 894
+  },
+  "drinking": {
+    "fps": 59.11071025435748,
+    "p95_frame_ms": 19.95129999704659,
+    "frames_drawn": 931
+  },
+  "reading": {
+    "fps": 58.42832578279094,
+    "p95_frame_ms": 24.60940001765266,
+    "frames_drawn": 816
+  },
+  "verified_switches": [
+    {
+      "from": "standing",
+      "to": "drinking",
+      "last_frame": 152,
+      "first_frame": 0
+    },
+    {
+      "from": "drinking",
+      "to": "reading",
+      "last_frame": 944,
+      "first_frame": 0
+    }
+  ],
+  "render_mean_ms": 4.185099053150413,
+  "peak_cache_frames": 12,
+  "peak_cache_mib": 8.309028625488281
+}

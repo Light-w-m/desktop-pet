@@ -1,0 +1,8 @@
+{
+  "native_window_rendered": true,
+  "menu_keeps_animation_playing": true,
+  "mouse_keyboard_pause_auto_resize_dismiss": true,
+  "gdi_handles_before": 9,
+  "gdi_handles_after": 9,
+  "max_hover_dispatch_ms": 1.8560000462457538
+}

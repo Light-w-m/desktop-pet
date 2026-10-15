@@ -11,7 +11,8 @@ import os
 from pathlib import Path
 import sys
 import time
-from PIL import Image, ImageChops, ImageSequence
+from frame_stream import FrameArchive, FrameStream
+from pet_menu import PinkMenu
 from playback import Playback
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
@@ -81,10 +82,6 @@ signature(user, 'ReleaseCapture', W.BOOL)
 signature(user, 'SetWindowPos', W.BOOL, W.HWND, W.HWND, C.c_int, C.c_int, C.c_int, C.c_int, W.UINT)
 signature(user, 'SystemParametersInfoW', W.BOOL, W.UINT, W.UINT, C.c_void_p, W.UINT)
 signature(user, 'GetSystemMetrics', C.c_int, C.c_int)
-signature(user, 'CreatePopupMenu', W.HANDLE)
-signature(user, 'AppendMenuW', W.BOOL, W.HANDLE, W.UINT, C.c_size_t, W.LPCWSTR)
-signature(user, 'TrackPopupMenu', W.UINT, W.HANDLE, W.UINT, C.c_int, C.c_int, C.c_int, W.HWND, C.c_void_p)
-signature(user, 'DestroyMenu', W.BOOL, W.HANDLE)
 signature(user, 'SetForegroundWindow', W.BOOL, W.HWND)
 signature(user, 'PostQuitMessage', None, C.c_int)
 signature(user, 'MessageBoxW', C.c_int, W.HWND, W.LPCWSTR, W.LPCWSTR, W.UINT)
@@ -120,7 +117,10 @@ class DesktopPet:
         self.started = self.last_tick
         self.qa_seconds = float(sys.argv[sys.argv.index('--qa-seconds') + 1]) if '--qa-seconds' in sys.argv else 0
         self.qa_mode = '--qa-seconds' in sys.argv
+        self.qa_report = APP_DIR/'work'/'playback-qa.json'
         self.animations = {}
+        self.popup = None
+        self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
         self.blend = BLEND(0, 0, 255, 1)
@@ -158,37 +158,23 @@ class DesktopPet:
         self.draw(0)
         user.ShowWindow(self.hwnd, 4)
         self.last_tick=self.started=time.perf_counter()
-        logging.info('Started. hwnd=%s size=%sx%s frames=%s', self.hwnd, self.width, self.height, {k:len(v['frames']) for k,v in self.animations.items()})
+        logging.info('Started. hwnd=%s size=%sx%s frames=%s bounded streaming cache', self.hwnd, self.width, self.height, {k:len(v['frames']) for k,v in self.animations.items()})
 
     def load_frames(self):
         manifest = json.loads((ASSETS / 'manifest.json').read_text(encoding='utf-8'))
         self.width, self.height = [round(x*self.scale) for x in manifest.get('display_canvas',manifest['canvas'])]
-        self.animations = {}
-        for name, spec in manifest['animations'].items():
-            frames=[]
-            endpoints=[]
-            endpoint=0.0
-            with Image.open(ASSETS / spec['file']) as im:
-                for f in ImageSequence.Iterator(im):
-                    # Animated WebP's durations are available after loading.
-                    rgba=f.convert('RGBA')
-                    duration=max(1, im.info.get('duration',17))/1000
-                    # Scale the entire fixed canvas so subpixel rounding does
-                    # not move the sprite when its alpha bounds change.
-                    rgba=rgba.resize((self.width,self.height),Image.Resampling.LANCZOS)
-                    bbox=rgba.getbbox()
-                    if bbox is None:
-                        raise ValueError(f'Empty frame: {name}')
-                    offset=bbox[:2]
-                    size=(bbox[2]-bbox[0],bbox[3]-bbox[1])
-                    tile=rgba.crop(bbox)
-                    r,g,b,a=tile.split()
-                    premult=Image.merge('RGBA',(ImageChops.multiply(r,a),ImageChops.multiply(g,a),ImageChops.multiply(b,a),a))
-                    pixels=premult.tobytes('raw','BGRA')
-                    frames.append({'pixels':C.create_string_buffer(pixels,len(pixels)),'alpha':a.tobytes(),'offset':offset,'size':size})
-                    endpoint+=duration
-                    endpoints.append(endpoint)
-            self.animations[name]={'frames':frames,'endpoints':endpoints,'duration':endpoint}
+        if not self.animations:
+            archive_path=ASSETS/manifest['playback_pack']
+            if not archive_path.is_file():
+                # Ship the pack inside the standalone EXE without keeping a
+                # second copy beside it. Source runs reuse the build output.
+                folder=RESOURCE_DIR/'assets' if getattr(sys,'frozen',False) else APP_DIR/'work'/'repaired-assets'
+                archive_path=folder/manifest['playback_pack']
+            archive = FrameArchive(archive_path)
+            self.animations = archive.animations
+            self.stream = FrameStream(archive)
+        else:
+            self.stream.clear()
 
     def create_surface(self):
         self.free_surface()
@@ -215,11 +201,12 @@ class DesktopPet:
     def draw(self,index):
         render_start=time.perf_counter()
         self.frame_index=index
-        frame=self.animations[self.current]['frames'][index]
+        frame=self.stream.get(self.current,index,(self.width,self.height))
+        self.displayed_frame=frame
         C.memset(self.bits,0,self.width*self.height*4)
         x,y=frame['offset']
         w,h=frame['size']
-        data=C.addressof(frame['pixels'])
+        data=C.cast(C.c_char_p(frame['pixels']),C.c_void_p).value
         for row in range(min(h,self.height-y)):
             C.memmove(self.bits.value+((y+row)*self.width+x)*4,data+row*w*4,min(w,self.width-x)*4)
         pt=POINT(self.x,self.y)
@@ -259,6 +246,7 @@ class DesktopPet:
         if self.current!=previous:
             self.last_frame=-1
             logging.info('Animation %s after native return from %s',self.current,previous)
+        if self.popup:self.popup.refresh()
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
         index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
@@ -293,26 +281,11 @@ class DesktopPet:
         user.ReleaseCapture()
         p=POINT()
         user.GetCursorPos(C.byref(p))
-        menu=user.CreatePopupMenu()
-        def item(command,label,checked=False):
-            user.AppendMenuW(menu,0x8 if checked else 0,command,label)
-        item(10,'自动轮换待机动作',self.auto)
-        item(11,'站立待机',not self.auto and self.clock.requested=='standing')
-        item(12,'坐着喝饮料',not self.auto and self.clock.requested=='drinking')
-        item(13,'趴着读书',not self.auto and self.clock.requested=='reading')
-        if self.clock.pending:
-            user.AppendMenuW(menu,0x0001,0,'当前动作结束后切换：'+self.LABELS[self.clock.pending])
-        user.AppendMenuW(menu,0x800,0,None)
-        item(20,'继续播放' if self.paused else '暂停动画')
-        item(31,'小号',abs(self.scale-.7)<.01)
-        item(32,'中号',abs(self.scale-1)<.01)
-        item(33,'大号',abs(self.scale-1.3)<.01)
-        user.AppendMenuW(menu,0x800,0,None)
-        item(40,'退出桌宠')
-        user.SetForegroundWindow(self.hwnd)
-        command=user.TrackPopupMenu(menu,0x0100|0x0002,p.x,p.y,0,self.hwnd,None)
-        user.DestroyMenu(menu)
-        self.last_tick=time.perf_counter()
+        if self.popup:self.popup.close()
+        self.popup=PinkMenu(self,sys.modules[__name__])
+        self.popup.open(p.x,p.y)
+
+    def menu_command(self,command):
         if command==10:
             self.switch('standing',True)
         elif command in (11,12,13):
@@ -323,6 +296,8 @@ class DesktopPet:
 
     def window_proc(self,hwnd,msg,wparam,lparam):
         try:
+            if self.popup and hwnd==self.popup.hwnd:
+                return self.popup.window_proc(hwnd,msg,wparam,lparam)
             if msg==0x0113:
                 self.tick()
                 return 0
@@ -361,25 +336,29 @@ class DesktopPet:
             if msg==0x0084 and self.hwnd:
                 x=C.c_short(lparam&0xffff).value-self.x
                 y=C.c_short((lparam>>16)&0xffff).value-self.y
-                frame=self.animations[self.current]['frames'][self.frame_index]
+                frame=self.displayed_frame
+                if frame is None:return -1
                 fx,fy=frame['offset']
                 fw,fh=frame['size']
-                if 0<=x-fx<fw and 0<=y-fy<fh and frame['alpha'][(y-fy)*fw+x-fx]>20:return 1
+                if 0<=x-fx<fw and 0<=y-fy<fh and frame['pixels'][((y-fy)*fw+x-fx)*4+3]>20:return 1
                 return -1
             if msg==0x0010:
                 user.DestroyWindow(hwnd)
                 return 0
             if msg==0x0002:
                 user.KillTimer(hwnd,1)
+                if self.popup:self.popup.close()
+                self.stream.close()
                 self.free_surface()
                 if not self.qa_mode:
                     try:SETTINGS.write_text(json.dumps({'x':self.x,'y':self.y,'scale':self.scale,'height':self.height}),encoding='utf-8')
                     except OSError:pass
                 logging.info('Exited cleanly')
                 if self.qa_mode:
-                    qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times]}
-                    (APP_DIR/'work').mkdir(exist_ok=True)
-                    (APP_DIR/'work'/'playback-qa.json').write_text(json.dumps(qa),encoding='utf-8')
+                    qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times],
+                        'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames}
+                    self.qa_report.parent.mkdir(exist_ok=True)
+                    self.qa_report.write_text(json.dumps(qa),encoding='utf-8')
                 user.PostQuitMessage(0)
                 return 0
         except Exception:

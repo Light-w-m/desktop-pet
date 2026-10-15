@@ -1,0 +1,20 @@
+{
+  "standing": {
+    "frames_verified": 153,
+    "pixel_differences": 0,
+    "other_sizes_verified": 16,
+    "random_seeks_verified": 4
+  },
+  "reading": {
+    "frames_verified": 816,
+    "pixel_differences": 0,
+    "other_sizes_verified": 52,
+    "random_seeks_verified": 4
+  },
+  "drinking": {
+    "frames_verified": 945,
+    "pixel_differences": 0,
+    "other_sizes_verified": 60,
+    "random_seeks_verified": 4
+  }
+}

@@ -5,6 +5,7 @@
 - 按住角色拖动：移动位置。
 - 鼠标滚轮：调整大小。
 - 右键角色：选择站立、喝饮料、读书、自动轮换、暂停、大小或退出。
+- 右键菜单采用浅粉色卡片、细线图标和选中提示；打开时动画继续播放。方向键或 Tab 选择、Enter 执行、Esc 收起，点击菜单外也会收起。
 - 空格：暂停或继续。Esc：退出。
 
 程序置顶，透明区域可以点击到下面的窗口。位置和大小保存在本机的 `pet-settings.json`。
@@ -29,12 +30,21 @@
 
 ## 构建与验证
 
-`desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的动画。
+`desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换，`pet_menu.py` 和 `menu_view.py` 绘制粉色菜单。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的素材包。
+
+播放器按需读取 `pet-frames.bin`，后台预读接下来 8 帧，已解压帧缓存不超过 12 帧或 24 MiB，不再把 1914 帧全部放进内存。素材包同时保存原生分辨率与默认尺寸的无损帧：默认尺寸提前完成缩放，其他尺寸仍从 840 × 720 原图缩放。透明命中检测复用当前帧的 alpha，省去另一份遮罩。原 WebP 保留用于素材检查，EXE 只包含播放需要的索引和帧包。
+
+两种尺寸的无损数据会增加磁盘体积，用于减少运行时的内存和解码开销。菜单图像也在后台绘制，鼠标悬停时不会阻塞动画播放。
+
+帧包内置在可独立运行的 EXE 中，不在旁边重复保存。源码运行时会读取 `work/repaired-assets` 中生成的帧包；如需外部覆盖，也可把完整的帧包索引和数据放入 `assets`。
+
+本机 45 秒后台回归中，默认尺寸的进程组工作集峰值为 45.0 MiB，大号为 72.4 MiB；旧版默认尺寸约 546.5 MiB。默认三组动作约 60 FPS，大号约 58–59 FPS。1914 帧默认尺寸均与原版显示像素一致，其他尺寸抽查也一致；菜单连续开关后 GDI 句柄数不变。记录保存在 `work/memory-*.json`、`work/exe-playback-*-validation.json`、`work/stream-quality-validation.json` 和 `work/menu-validation.json`。
 
 1. 用 `work/extract_obs.py` 从上述本地 OBS 文件生成素材到 `work/repaired-assets`，需要 Pillow、NumPy、OpenCV 和 ffmpeg。
 2. 运行 `work/validate_assets.py` 检查所有帧的轮廓边距、完整性、时长和公共站姿接缝。
    运行 `work/validate_standing_edges.py` 检查脚底倒影、鞋底边界稳定性和飘带连接处。
 3. 运行 `work/test_playback.py` 检查动作中途切换、连续选择和自动轮换。
-4. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。
+4. 用 `work/build_frame_pack.py` 生成无损帧包，再运行 `work/validate_stream.py` 对照原 WebP 逐帧检查默认尺寸，以及抽查其他尺寸和任意跳帧。
+5. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。`work/test_pink_menu.py` 检查菜单交互和 GDI 资源释放。
 
 MP4 原始素材与预览、构建缓存、日志、设置和本地备份由 `.gitignore` 排除。完成修改并验证后创建本地 Git 提交。角色与录屏内容属于原权利人，本程序用于个人桌面体验。
