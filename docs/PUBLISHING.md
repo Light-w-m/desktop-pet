@@ -12,7 +12,7 @@ GitHub 普通 Git 仓库阻止超过 100 MiB 的单文件；Release 每个附件
 4. 在 GitHub 仓库的 **Releases → Draft a new release** 中，自行选择版本标签和标题。
 5. 从本机 `release` 目录选择以下三个附件：
    - `CitlaliDesktopPet.exe`：普通用户下载的独立程序。
-   - `CitlaliDesktopPet-source-assets.zip`：开发者重新构建所需的三组原始无损动画。
+   - `CitlaliDesktopPet-source-assets.zip`：开发者重新构建所需的主动作、拖动帧包和语音素材。
    - `SHA256SUMS.txt`：上述两个附件的校验值。
 6. 把 `release/RELEASE_NOTES.md` 的内容复制到发布说明中，核对后自行发布。
 
@@ -42,6 +42,8 @@ python work/check_publish_repo.py
 ## 源码素材
 
 新克隆的仓库没有动画文件。下载同一版本 Release 中的 `CitlaliDesktopPet-source-assets.zip`，解压到项目根目录，得到 `assets/standing-obs.webp`、`assets/reading-obs.webp` 和 `assets/drinking-obs.webp`。运行 `python work/prepare_assets.py` 会检查 SHA-256，并准备本机的构建目录。
+
+v1.2.0 还包含 `assets/dragging/pet-frames.json` 和 `pet-frames.bin`，提供已处理好的透明拖动动画。`assets/dragging/source.json` 随源码保存处理说明和校验值；`work/prepare_assets.py` 同时检查拖动帧包。使用准备好的素材包构建不需要重新抠图或补帧，拖动动画与主动作共用受限帧缓存。
 
 带语音的版本还会在源码素材包中提供 `assets/voices/catalog.json` 和 PCM WAV；这些文件同样保持 Git 忽略。使用本地原始语音时，先按需要删除 `local-media/citlali-voices-zh-cn` 中的 OGG，再运行 `python work/prepare_voices.py` 同步索引并转换保留的文件，转换需要 ffmpeg。EXE 只内置当前保留的语音，运行时使用 Windows 原生接口，无需 ffmpeg。
 
