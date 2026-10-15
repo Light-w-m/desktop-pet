@@ -5,13 +5,13 @@ import os
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-WIDTH, HEIGHT = 292, 448
-COMMANDS = (10, 11, 12, 13, 20, 31, 32, 33, 40)
+WIDTH, HEIGHT = 292, 495
+COMMANDS = (10, 11, 12, 13, 50, 20, 31, 32, 33, 40)
 HITS = {10: (23, 94, 269, 128), 11: (23, 131, 269, 165),
         12: (23, 168, 269, 202), 13: (23, 205, 269, 239),
-        20: (23, 271, 269, 307), 31: (23, 339, 101, 373),
-        32: (107, 339, 185, 373), 33: (191, 339, 269, 373),
-        40: (23, 396, 269, 430)}
+        50: (23, 271, 269, 309), 20: (23, 318, 269, 354),
+        31: (23, 386, 101, 420), 32: (107, 386, 185, 420),
+        33: (191, 386, 269, 420), 40: (23, 443, 269, 477)}
 
 
 def hit_test(x, y):
@@ -49,9 +49,9 @@ def render_menu(state, hover=None, dpi=1.0):
                   fill=fill, anchor=anchor)
 
     shadow = Image.new('RGBA', canvas.size)
-    ImageDraw.Draw(shadow).rounded_rectangle(box((12, 13, 280, 440)), radius=20*factor, fill=(106, 52, 76, 35))
+    ImageDraw.Draw(shadow).rounded_rectangle(box((12, 13, 280, 487)), radius=20*factor, fill=(106, 52, 76, 35))
     canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(5*factor)))
-    rounded((10, 8, 282, 438), 19, '#fff8fb', '#ecc5d5')
+    rounded((10, 8, 282, 485), 19, '#fff8fb', '#ecc5d5')
     # A quiet rose header with two small star accents.
     rounded((11, 9, 281, 81), 18, '#fce5ee')
     draw.rectangle(box((11, 58, 281, 82)), fill='#fce5ee')
@@ -94,17 +94,24 @@ def render_menu(state, hover=None, dpi=1.0):
     pending = state.get('pending')
     text(29, 247, '结束后切换：'+labels[{'standing':11, 'drinking':12, 'reading':13}[pending]] if pending else '动作会自然衔接，慢慢陪着你',
          10.5, '#b18498')
+    rounded(HITS[50], 10, '#f6d5e3' if hover == 50 else '#fff1f6', '#efcedc')
+    draw.ellipse(box((34, 281, 52, 299)), outline='#b2698b', width=2*factor)
+    draw.arc(box((38, 287, 48, 295)), 0, 180, fill='#b2698b', width=factor)
+    for x in (40, 46):
+        draw.ellipse(box((x, 286, x+1.3, 287.3)), fill='#b2698b')
+    text(62, 279, '表情', 13, '#985d7b', True)
+    text(248, 281, '9 款  ›', 10.5, '#b18498', anchor='rt')
     rounded(HITS[20], 10, '#f9e0eb' if hover == 20 else '#fcebf2', '#efcedc')
-    text(146, 278, '▷  继续播放' if state['paused'] else 'Ⅱ  暂停动画', 12, '#985d7b', anchor='mt')
-    text(27, 317, '显示大小', 10.5, '#ae8396')
+    text(146, 325, '▷  继续播放' if state['paused'] else 'Ⅱ  暂停动画', 12, '#985d7b', anchor='mt')
+    text(27, 364, '显示大小', 10.5, '#ae8396')
     for command, label, scale in ((31, '小', .7), (32, '中', 1), (33, '大', 1.3)):
         active = abs(state['scale']-scale) < .01
         rounded(HITS[command], 9, '#f4d0e0' if active else '#fbe4ee' if hover == command else '#fffafd',
                 '#e9b7cd' if active else '#eed5e0')
         left, top, right, bottom = HITS[command]
         text((left+right)/2, top+7, label, 12, '#9b607e' if active else '#a38293', active, 'mt')
-    line([(26, 386), (266, 386)], '#eed6e1', .7)
+    line([(26, 433), (266, 433)], '#eed6e1', .7)
     if hover == 40:
         rounded(HITS[40], 9, '#fbe4ed')
-    text(146, 403, '退出桌宠', 11.5, '#ad8095', anchor='mt')
+    text(146, 450, '退出桌宠', 11.5, '#ad8095', anchor='mt')
     return canvas.resize((round(WIDTH*dpi), round(HEIGHT*dpi)), Image.Resampling.LANCZOS)

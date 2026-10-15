@@ -1,0 +1,77 @@
+{
+  "mode": "built-in image_gen / background-extraction",
+  "entries": [
+    {
+      "id": "panic",
+      "name": "慌张",
+      "source_screenshot": "Screenshot 2026-10-15 160526.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the LEFT sticker, spiral pink/blue eyes, yellow crown, sleep mask above her head (Chinese card caption \"慌张\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "panic.png",
+      "sha256": "645fd79b4ac160ce981770c0d4bde17f7d175f795e3045168e4941550086ea2c"
+    },
+    {
+      "id": "sleep",
+      "name": "睡了",
+      "source_screenshot": "Screenshot 2026-10-15 160526.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the RIGHT sticker, asleep sitting with the white blue pillow, purple ZZZ above (Chinese card caption \"睡了\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "sleep.png",
+      "sha256": "948771a3cf9d67b1f706a06eb3a3c3e02b2f356cd9214621b904dadad2d883f1"
+    },
+    {
+      "id": "suspicious",
+      "name": "怀疑",
+      "source_screenshot": "Screenshot 2026-10-15 160518.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the only sticker, suspicious half-open blue eyes and hand near mouth (Chinese card caption \"怀疑\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "suspicious.png",
+      "sha256": "547eb115aad4bbf1e586beb07a664382dd72221586a03c84a6026c8ef9bbc1ec"
+    },
+    {
+      "id": "hide",
+      "name": "不想面对",
+      "source_screenshot": "Screenshot 2026-10-15 160504.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the only sticker, hugging a white blue pillow which covers her entire face (Chinese card caption \"不想面对\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "hide.png",
+      "sha256": "efe8781c82d220f52c33ad3e5627026cf58432a837e907ccadd035c0faf82c1c"
+    },
+    {
+      "id": "wake",
+      "name": "刚醒",
+      "source_screenshot": "Screenshot 2026-10-15 160457.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the LEFT sticker, sleepy wink, head resting on hand, cyan sleepy droplets (Chinese card caption \"刚醒\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "wake.png",
+      "sha256": "24188438cdc60cef19010ae333ff78ac0f2e34b5011da5d8c7d0d0cbf94cb9b3"
+    },
+    {
+      "id": "blush",
+      "name": "脸红",
+      "source_screenshot": "Screenshot 2026-10-15 160457.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the MIDDLE sticker, blushing while holding a blue/purple phone (Chinese card caption \"脸红\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "blush.png",
+      "sha256": "9bab9fb6601b7ca5fb0c83417e1eb9443f8506745900dbd0b8e2f4f9f3c675c6"
+    },
+    {
+      "id": "annoyed",
+      "name": "有点烦",
+      "source_screenshot": "Screenshot 2026-10-15 160457.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the RIGHT sticker, tiny bored chibi with a dark blue scribble above her (Chinese card caption \"有点烦\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "annoyed.png",
+      "sha256": "d98798abbad02d482d8569cb0268087c6246d98a4de3f512f399fd47475cd9b6"
+    },
+    {
+      "id": "hello",
+      "name": "来了",
+      "source_screenshot": "Screenshot 2026-10-15 160445.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the LEFT sticker, thrust fist forward with yellow/cyan action rays (Chinese card caption \"来了\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "hello.png",
+      "sha256": "f9ab1e553546792cba1c2001d616b20c4b3bb369db103a0ab0b2cf52217a7921"
+    },
+    {
+      "id": "wink",
+      "name": "眨眼",
+      "source_screenshot": "Screenshot 2026-10-15 160445.png",
+      "prompt": "Use case: background-extraction.\nAsset type: transparent desktop-pet expression sticker PNG.\nInput image: edit target, a screenshot of sticker cards.\nPrimary request: Extract ONLY the RIGHT sticker, one blue eye winking, hand at cheek (Chinese card caption \"眨眼\"). Remove the beige card, its border, outside game UI, and all caption text. Keep the exact original character pose, face, hair, accessories, pillow/phone if present, outlines, colours and small floating effects unchanged. This is a faithful cutout, not a redesign. Preserve all light and white regions inside the character and props as opaque.\nComposition: one complete isolated sticker, centred, tight framing with a small transparent margin on every side; no clipping of hair, accessories or effects. No other sticker.\nBackground: genuine transparent alpha. No card, no text, no new shadow, no checkerboard painted into the image.",
+      "file": "wink.png",
+      "sha256": "4c8687ef5f591da196da51e1e009d9ddaa0f450a0e537a67f8eff86180e24df8"
+    }
+  ]
+}

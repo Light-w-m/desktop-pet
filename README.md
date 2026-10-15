@@ -8,6 +8,8 @@
 - 鼠标滚轮：调整大小。
 - 右键角色：选择站立、喝饮料、读书、自动轮换、暂停、大小或退出。
 - 右键菜单采用浅粉色卡片、细线图标和选中提示；打开时动画继续播放。方向键或 Tab 选择、Enter 执行、Esc 收起，点击菜单外也会收起。
+- 右键 → **表情**：九宫格展示慌张、睡了、怀疑、不想面对、刚醒、脸红、有点烦、来了和眨眼。点击后显示在桌宠右上角，保持显示，直到替换、清除或退出。
+- 表情会随桌宠拖动、缩放和切换动作调整位置；透明贴图不拦截鼠标，靠近屏幕边缘时保持在可见范围内。在表情面板点击“清除表情”即可收起。
 - 空格：暂停或继续。Esc：退出。
 
 程序置顶，透明区域可以点击到下面的窗口。位置和大小保存在本机的 `pet-settings.json`。
@@ -32,7 +34,7 @@
 
 ## 构建与验证
 
-`desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换，`pet_menu.py` 和 `menu_view.py` 绘制粉色菜单。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的素材包。
+`desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换，`pet_menu.py` 和 `menu_view.py` 绘制粉色菜单，`expressions.py` 管理表情面板和透明贴图。九个 PNG 保存在 `assets/expressions` 并内置到 EXE；缩略图按需解码，最多缓存 18 张小图。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的素材包。
 
 播放器按需读取 `pet-frames.bin`，后台预读接下来 8 帧，已解压帧缓存不超过 12 帧或 24 MiB，不再把 1914 帧全部放进内存。素材包同时保存原生分辨率与默认尺寸的无损帧：默认尺寸提前完成缩放，其他尺寸仍从 840 × 720 原图缩放。透明命中检测复用当前帧的 alpha，省去另一份遮罩。原 WebP 保留用于素材检查，EXE 只包含播放需要的索引和帧包。
 
@@ -47,6 +49,6 @@
    运行 `work/validate_standing_edges.py` 检查脚底倒影、鞋底边界稳定性和飘带连接处。
 3. 运行 `work/test_playback.py` 检查动作中途切换、连续选择和自动轮换。
 4. 用 `work/build_frame_pack.py` 生成无损帧包，再运行 `work/validate_stream.py` 对照原 WebP 逐帧检查默认尺寸，以及抽查其他尺寸和任意跳帧。
-5. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。`work/test_pink_menu.py` 检查菜单交互和 GDI 资源释放。
+5. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。`work/test_pink_menu.py` 检查菜单交互和 GDI 资源释放，`work/test_expressions.py` 检查九个表情的选择、清除、跟随位置、透明命中和重复开关。
 
 EXE、动画 WebP、播放帧包、MP4、构建缓存、日志、设置和本地备份由 `.gitignore` 排除。`work/prepare_release.py` 可以生成本地 Release 附件；`work/check_publish_repo.py` 检查所有可推送历史中的大文件。完成修改并验证后创建本地 Git 提交。角色与录屏内容属于原权利人，本程序用于个人桌面体验。

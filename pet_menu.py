@@ -5,19 +5,42 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 
 from PIL import Image, ImageChops
-from menu_view import COMMANDS, HEIGHT, WIDTH, font, hit_test, render_menu
+from menu_view import COMMANDS, HEIGHT, HITS, WIDTH, font, render_menu
 
 _RENDERER = ThreadPoolExecutor(max_workers=1, thread_name_prefix='PetMenuPaint')
 
 
-def menu_pixels(state, hover, dpi):
-    image = render_menu(state, hover, dpi)
+class MONITORINFO(C.Structure):
+    _fields_ = [('cbSize', W.DWORD), ('monitor', W.RECT), ('work', W.RECT), ('flags', W.DWORD)]
+
+
+def monitor_work_area(api, x, y):
+    api.signature(api.user, 'MonitorFromPoint', W.HANDLE, api.POINT, W.DWORD)
+    api.signature(api.user, 'GetMonitorInfoW', W.BOOL, W.HANDLE, C.POINTER(MONITORINFO))
+    info = MONITORINFO()
+    info.cbSize = C.sizeof(info)
+    if not api.user.GetMonitorInfoW(api.user.MonitorFromPoint(api.POINT(x, y), 2), C.byref(info)):
+        raise C.WinError(C.get_last_error())
+    return info.work
+
+
+def rgba_pixels(image):
     r, g, b, alpha = image.split()
     return Image.merge('RGBA', (ImageChops.multiply(r, alpha), ImageChops.multiply(g, alpha),
                                ImageChops.multiply(b, alpha), alpha)).tobytes('raw', 'BGRA')
 
 
+def menu_pixels(state, hover, dpi):
+    return rgba_pixels(render_menu(state, hover, dpi))
+
+
 class PinkMenu:
+    logical_width, logical_height = WIDTH, HEIGHT
+    commands, hits = COMMANDS, HITS
+    activate = True
+    extra_style = 0
+    title = '茜特菈莉 · 小小日常'
+
     def __init__(self, owner, api):
         self.owner, self.api = owner, api
         self.hwnd = None
@@ -34,33 +57,35 @@ class PinkMenu:
         return {'auto': self.owner.auto, 'requested': self.owner.clock.requested,
                 'pending': self.owner.clock.pending, 'paused': self.owner.paused, 'scale': self.owner.scale}
 
+    def dimensions(self):
+        return round(self.logical_width*self.dpi), round(self.logical_height*self.dpi)
+
+    def hit_test(self, x, y):
+        for command, (left, top, right, bottom) in self.hits.items():
+            if left <= x < right and top <= y < bottom:
+                return command
+        return None
+
+    def render_pixels(self, state, hover, dpi):
+        return menu_pixels(state, hover, dpi)
+
     def open(self, x, y):
         a = self.api
         a.signature(a.user, 'GetDpiForWindow', W.UINT, W.HWND)
         a.signature(a.user, 'SetFocus', W.HWND, W.HWND)
         a.signature(a.user, 'GetKeyState', C.c_short, C.c_int)
         a.signature(a.user, 'PostMessageW', W.BOOL, W.HWND, W.UINT, a.WPARAM, a.LPARAM)
-        a.signature(a.user, 'MonitorFromPoint', W.HANDLE, a.POINT, W.DWORD)
-
-        class MONITORINFO(C.Structure):
-            _fields_ = [('cbSize', W.DWORD), ('monitor', W.RECT), ('work', W.RECT), ('flags', W.DWORD)]
-
-        a.signature(a.user, 'GetMonitorInfoW', W.BOOL, W.HANDLE, C.POINTER(MONITORINFO))
         class TRACKMOUSEEVENT(C.Structure):
             _fields_ = [('cbSize', W.DWORD), ('flags', W.DWORD), ('hwnd', W.HWND), ('hoverTime', W.DWORD)]
         self.TRACKMOUSEEVENT = TRACKMOUSEEVENT
         a.signature(a.user, 'TrackMouseEvent', W.BOOL, C.POINTER(TRACKMOUSEEVENT))
         self.dpi = max(1, a.user.GetDpiForWindow(self.owner.hwnd)/96)
-        self.width, self.height = round(WIDTH*self.dpi), round(HEIGHT*self.dpi)
-        monitor = MONITORINFO()
-        monitor.cbSize = C.sizeof(monitor)
-        if not a.user.GetMonitorInfoW(a.user.MonitorFromPoint(a.POINT(x, y), 2), C.byref(monitor)):
-            raise C.WinError(C.get_last_error())
-        work = monitor.work
+        self.width, self.height = self.dimensions()
+        work = monitor_work_area(a, x, y)
         self.x = max(work.left, min(x-12, work.right-self.width))
         self.y = max(work.top, min(y-10, work.bottom-self.height))
-        self.hwnd = a.user.CreateWindowExW(0x00080000 | 0x00000008 | 0x00000080,
-            'CitlaliDesktopPetWindow_20261014', '茜特菈莉 · 小小日常', 0x80000000,
+        self.hwnd = a.user.CreateWindowExW(0x00080000 | 0x00000008 | 0x00000080 | self.extra_style,
+            'CitlaliDesktopPetWindow_20261014', self.title, 0x80000000,
             self.x, self.y, self.width, self.height, self.owner.hwnd, None, self.owner.instance, None)
         if not self.hwnd:
             raise C.WinError(C.get_last_error())
@@ -76,9 +101,10 @@ class PinkMenu:
             raise C.WinError(C.get_last_error())
         self.old_bitmap = a.gdi.SelectObject(self.dc, self.bitmap)
         self.paint()
-        a.user.ShowWindow(self.hwnd, 5)
-        a.user.SetForegroundWindow(self.hwnd)
-        a.user.SetFocus(self.hwnd)
+        a.user.ShowWindow(self.hwnd, 5 if self.activate else 4)
+        if self.activate:
+            a.user.SetForegroundWindow(self.hwnd)
+            a.user.SetFocus(self.hwnd)
         logging.info('Pink menu opened hwnd=%s', self.hwnd)
 
     def paint(self):
@@ -90,7 +116,7 @@ class PinkMenu:
         if self.closing or self.paint_future is not None or not self.paint_dirty:
             return
         self.paint_dirty = False
-        self.paint_future = _RENDERER.submit(menu_pixels, self.last_state.copy(), self.hover, self.dpi)
+        self.paint_future = _RENDERER.submit(self.render_pixels, self.last_state.copy(), self.hover, self.dpi)
         self.paint_future.add_done_callback(self.paint_ready)
 
     def paint_ready(self, future):
@@ -140,8 +166,9 @@ class PinkMenu:
             self.owner.popup = None
 
     def invoke(self, command):
+        origin = (self.x+12, self.y+10)
         self.close()
-        self.owner.menu_command(command)
+        self.owner.menu_command(command, origin)
 
     def window_proc(self, hwnd, message, wparam, lparam):
         a = self.api
@@ -166,7 +193,7 @@ class PinkMenu:
         if message in (0x0200, 0x0201, 0x0202, 0x0205):
             x = C.c_short(lparam & 0xffff).value / self.dpi
             y = C.c_short((lparam >> 16) & 0xffff).value / self.dpi
-            command = hit_test(x, y)
+            command = self.hit_test(x, y)
             if message == 0x0200:
                 self.keyboard = False
                 track = self.TRACKMOUSEEVENT(C.sizeof(self.TRACKMOUSEEVENT), 2, hwnd, 0)
@@ -194,13 +221,13 @@ class PinkMenu:
             elif wparam in (9, 35, 36, 37, 38, 39, 40):
                 self.keyboard = True
                 if wparam == 36:
-                    self.hover = COMMANDS[0]
+                    self.hover = self.commands[0]
                 elif wparam == 35:
-                    self.hover = COMMANDS[-1]
+                    self.hover = self.commands[-1]
                 else:
                     step = -1 if wparam in (37, 38) or (wparam == 9 and a.user.GetKeyState(16) & 0x8000) else 1
-                    index = COMMANDS.index(self.hover) if self.hover in COMMANDS else (-1 if step > 0 else 0)
-                    self.hover = COMMANDS[(index+step) % len(COMMANDS)]
+                    index = self.commands.index(self.hover) if self.hover in self.commands else (-1 if step > 0 else 0)
+                    self.hover = self.commands[(index+step) % len(self.commands)]
                 self.paint()
             return 0
         return a.user.DefWindowProcW(hwnd, message, wparam, lparam)

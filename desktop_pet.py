@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 import time
 from frame_stream import FrameArchive, FrameStream
+from expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
 from pet_menu import PinkMenu
 from playback import Playback
 
@@ -120,6 +121,9 @@ class DesktopPet:
         self.qa_report = APP_DIR/'work'/'playback-qa.json'
         self.animations = {}
         self.popup = None
+        self.expression = None
+        self.expression_key = None
+        self.stickers = StickerLibrary(APP_DIR/'assets'/'expressions', RESOURCE_DIR/'assets'/'expressions')
         self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
@@ -172,6 +176,12 @@ class DesktopPet:
                 archive_path=folder/manifest['playback_pack']
             archive = FrameArchive(archive_path)
             self.animations = archive.animations
+            # Stable upper-right pose bounds in default display coordinates.
+            sx, sy = (d/n for d, n in zip(archive.display_canvas, archive.canvas))
+            self.expression_anchors = {
+                name: (max(f['native'][4] for f in animation['frames'])*sx,
+                       min(f['native'][3] for f in animation['frames'])*sy)
+                for name, animation in self.animations.items()}
             self.stream = FrameStream(archive)
         else:
             self.stream.clear()
@@ -215,6 +225,7 @@ class DesktopPet:
         if not user.UpdateLayeredWindow(self.hwnd,None,C.byref(pt),C.byref(size),self.dc,C.byref(src),0,C.byref(self.blend),2):
             raise C.WinError(C.get_last_error())
         self.last_frame=index
+        if self.expression:self.expression.follow()
         if self.qa_mode:
             self.draw_times.append((self.current,index,render_start))
             self.render_times.append(time.perf_counter()-render_start)
@@ -238,6 +249,7 @@ class DesktopPet:
             if self.qa_target!=name:
                 self.qa_target=name
                 self.switch(name,False)
+        if self.popup:self.popup.refresh()
         if self.paused:return
         previous=self.current
         self.clock.advance(dt)
@@ -246,7 +258,6 @@ class DesktopPet:
         if self.current!=previous:
             self.last_frame=-1
             logging.info('Animation %s after native return from %s',self.current,previous)
-        if self.popup:self.popup.refresh()
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
         index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
@@ -272,20 +283,34 @@ class DesktopPet:
         animation=self.animations[self.current]
         index=min(bisect_right(animation['endpoints'],self.elapsed%animation['duration']),len(animation['frames'])-1)
         self.draw(index)
+        if self.expression_key:self.show_expression(self.expression_key)
         # Decoding resized frames takes real time; it must not advance media.
         self.last_tick=time.perf_counter()
         logging.info('Resize %s',self.scale)
 
-    def menu(self):
+    def menu(self, position=None, picker=False):
         self.drag_offset=None
         user.ReleaseCapture()
         p=POINT()
         user.GetCursorPos(C.byref(p))
         if self.popup:self.popup.close()
-        self.popup=PinkMenu(self,sys.modules[__name__])
+        if position:p.x,p.y=position
+        self.popup=(ExpressionPicker if picker else PinkMenu)(self,sys.modules[__name__])
         self.popup.open(p.x,p.y)
 
-    def menu_command(self,command):
+    def show_expression(self,key):
+        if key is not None:self.stickers.path(key)
+        if self.expression:
+            self.expression.close()
+            self.expression=None
+        self.expression_key=key
+        if key is not None:
+            self.expression=ExpressionBadge(self,sys.modules[__name__],key)
+            self.expression.open(self.x,self.y)
+            self.expression.follow()
+        logging.info('Expression %s',key)
+
+    def menu_command(self,command,position=None):
         if command==10:
             self.switch('standing',True)
         elif command in (11,12,13):
@@ -293,11 +318,16 @@ class DesktopPet:
         elif command==20:self.paused=not self.paused
         elif command in (31,32,33):self.resize({31:.7,32:1,33:1.3}[command])
         elif command==40:user.DestroyWindow(self.hwnd)
+        elif command==50:self.menu(position=position,picker=True)
 
     def window_proc(self,hwnd,msg,wparam,lparam):
         try:
             if self.popup and hwnd==self.popup.hwnd:
                 return self.popup.window_proc(hwnd,msg,wparam,lparam)
+            if self.expression and hwnd==self.expression.hwnd:
+                return self.expression.window_proc(hwnd,msg,wparam,lparam)
+            if msg==0x0047 and hwnd==self.hwnd and self.expression:
+                self.expression.follow()
             if msg==0x0113:
                 self.tick()
                 return 0
@@ -314,6 +344,7 @@ class DesktopPet:
                 self.y=p.y-self.drag_offset[1]
                 self.clamp_position()
                 user.SetWindowPos(hwnd,None,self.x,self.y,0,0,0x0001|0x0004|0x0010)
+                if self.expression:self.expression.follow()
                 return 0
             if msg==0x0202:
                 self.drag_offset=None
@@ -348,6 +379,9 @@ class DesktopPet:
             if msg==0x0002:
                 user.KillTimer(hwnd,1)
                 if self.popup:self.popup.close()
+                if self.expression:
+                    self.expression.close()
+                    self.expression=None
                 self.stream.close()
                 self.free_surface()
                 if not self.qa_mode:

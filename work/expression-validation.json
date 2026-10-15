@@ -1,0 +1,12 @@
+{
+  "all_9_selected": true,
+  "gallery_keeps_animation_playing": true,
+  "clear_back_keyboard": true,
+  "follows_move_resize_action": true,
+  "stable_between_frames": true,
+  "monitor_edges_visible": true,
+  "click_through_no_activate": true,
+  "gdi_handles_before": 2,
+  "gdi_handles_after": 2,
+  "small_image_cache": 18
+}

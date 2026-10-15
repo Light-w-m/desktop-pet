@@ -13,11 +13,25 @@ import desktop_pet as app
 from menu_view import HITS
 from PIL import Image
 
+# Send messages only to these test windows, without stealing the user's focus.
+app.PinkMenu.activate = False
+app.PinkMenu.extra_style = 0x08000000
+native_open = app.PinkMenu.open
+
+
+def open_hidden(self, x, y):
+    native_open(self, x, y)
+    app.user.ShowWindow(self.hwnd, 0)
+
+
+app.PinkMenu.open = open_hidden
+
 app.user.SetProcessDPIAware()
 app.signature(app.user, 'SendMessageW', app.LRESULT, app.W.HWND, app.W.UINT, app.WPARAM, app.LPARAM)
 app.signature(app.user, 'GetGuiResources', app.W.DWORD, app.W.HANDLE, app.W.DWORD)
 app.signature(app.kernel, 'GetCurrentProcess', app.W.HANDLE)
 pet = app.DesktopPet()
+app.user.ShowWindow(pet.hwnd, 0)
 pet.qa_report = ROOT/'work'/'menu-playback-qa.json'
 
 
