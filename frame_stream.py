@@ -83,18 +83,51 @@ class FrameStream:
         self.peak_cache_frames = 0
         self.condition = threading.Condition()
         self.plan = None
+        self.warm = ()
+        self.generation = 0
         self.stopped = False
         self.error = None
         self.worker = threading.Thread(target=self._work, name='PetFrameReader', daemon=True)
         self.worker.start()
 
-    def get(self, name, number, size):
+    def _key(self, name, number, size):
         if not 0 <= number < len(self.archive.animations[name]['frames']):
             raise IndexError(f'Animation frame out of range: {name} {number}')
-        key = (name, number, size)
+        return name, number, size
+
+    def request(self, name, number, size):
+        """Select the playback plan without blocking the window thread."""
+        key = self._key(name, number, size)
         with self.condition:
             self.plan = key
-            self.condition.notify()
+            self.condition.notify_all()
+
+    def prefetch(self, keys=()):
+        """Warm up to three transition frames alongside the current animation."""
+        keys = tuple(dict.fromkeys(self._key(*key) for key in keys))
+        if len(keys) > 3:
+            raise ValueError('At most three transition frames may be warmed')
+        with self.condition:
+            if keys != self.warm:
+                self.warm = keys
+                self.condition.notify_all()
+
+    def peek(self, name, number, size):
+        """Return a prepared frame, or None; never switch plans or wait for I/O."""
+        key = self._key(name, number, size)
+        with self.condition:
+            if self.error:
+                raise RuntimeError('Animation reader failed') from self.error
+            frame = self.cache.get(key)
+            if frame is not None:
+                self.cache.move_to_end(key)
+            return frame
+
+    def get(self, name, number, size):
+        key = self._key(name, number, size)
+        with self.condition:
+            self.plan = key
+            self.condition.notify_all()
             while key not in self.cache:
                 if self.error:
                     raise RuntimeError('Animation reader failed') from self.error
@@ -107,6 +140,8 @@ class FrameStream:
     def clear(self):
         with self.condition:
             self.plan = None
+            self.warm = ()
+            self.generation += 1
             self.cache.clear()
             self.cache_bytes = 0
             self.condition.notify_all()
@@ -117,6 +152,20 @@ class FrameStream:
             self.condition.notify_all()
         self.worker.join()
 
+    def _desired(self):
+        if self.plan is None:
+            return list(self.warm)
+        name, start, size = self.plan
+        count = len(self.archive.animations[name]['frames'])
+        # The visible frame has first priority, followed by the transition
+        # frames. The nine active frames plus three warm frames share the cap.
+        return list(dict.fromkeys([self.plan, *self.warm,
+                    *((name, (start+ahead) % count, size) for ahead in range(1, 9))]))
+
+    def _wake(self, future):
+        with self.condition:
+            self.condition.notify_all()
+
     def _work(self):
         pending = {}
         pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix='PetFrameDecode')
@@ -125,41 +174,35 @@ class FrameStream:
                 with self.condition:
                     if self.stopped:
                         return
-                    plan = self.plan
-                    for key, future in list(pending.items()):
+                    desired = self._desired()
+                    for key, (generation, future) in list(pending.items()):
                         if not future.done():
                             continue
                         frame = future.result()
                         del pending[key]
-                        if plan is None or (key[0], key[2]) != (plan[0], plan[2]):
+                        if generation != self.generation or key not in desired:
                             continue
+                        previous = self.cache.pop(key, None)
+                        if previous:
+                            self.cache_bytes -= len(previous['pixels'])
                         self.cache[key] = frame
                         self.cache_bytes += len(frame['pixels'])
                         while len(self.cache) > 12 or self.cache_bytes > 24*1024*1024:
-                            _, old = self.cache.popitem(last=False)
+                            victim = next((k for k in self.cache if k not in desired), next(iter(self.cache)))
+                            old = self.cache.pop(victim)
                             self.cache_bytes -= len(old['pixels'])
                         self.peak_cache_bytes = max(self.peak_cache_bytes, self.cache_bytes)
                         self.peak_cache_frames = max(self.peak_cache_frames, len(self.cache))
                         self.condition.notify_all()
-                if plan is None:
-                    with self.condition:
-                        self.condition.wait_for(lambda: self.stopped or self.plan is not None)
-                    continue
-                name, start, size = plan
-                count = len(self.archive.animations[name]['frames'])
-                desired = [(name, (start+ahead) % count, size) for ahead in range(9)]
-                with self.condition:
                     missing = [key for key in desired if key not in self.cache and key not in pending]
-                if missing and len(pending) < 3:
-                    key = missing[0]
-                    pending[key] = pool.submit(self.archive.read, *key)
-                elif pending:
-                    next(iter(pending.values())).result()
-                else:
-                    with self.condition:
-                        # clear() may invalidate the cache while a resize keeps
-                        # exactly the same plan; a missing current frame must wake us.
-                        self.condition.wait_for(lambda: self.stopped or self.plan != plan or plan not in self.cache)
+                    for key in missing[:max(0, 3-len(pending))]:
+                        future = pool.submit(self.archive.read, *key)
+                        pending[key] = self.generation, future
+                        future.add_done_callback(self._wake)
+                    # Completion callbacks wake us without waiting on an old
+                    # animation's slowest decode after a transition or resize.
+                    if not any(future.done() for _, future in pending.values()):
+                        self.condition.wait()
         except Exception as error:
             with self.condition:
                 self.error = error

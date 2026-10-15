@@ -6,6 +6,8 @@ class VoiceActions:
     IDLE_TITLES = ('闲聊·小说','闲聊·出神')
     DRINK_TITLE = '闲聊·喝酒'
     DRINK_DELAY = .5
+    STOMP_TITLES = ('元素爆发·其一', '元素爆发·其二', '元素爆发·其三',
+                    '重受击·其一', '重受击·其二')
 
     def __init__(self, rng=None):
         self.rng = rng or random.Random()
@@ -13,10 +15,24 @@ class VoiceActions:
         self.cycle = None
         self.remaining = self.delay()
         self.last_idle = None
+        self.last_stomp = None
         self.drink_pending = False
 
     def delay(self):
         return self.rng.uniform(45,90)
+
+    def stomp(self, available, *, enabled=True, busy=False):
+        """One random line at visible reaction start; skip missing recordings."""
+        if not enabled or busy:
+            return None
+        choices = [title for title in self.STOMP_TITLES if title in available]
+        if len(choices) > 1:
+            choices = [title for title in choices if title != self.last_stomp]
+        if not choices:
+            return None
+        self.last_stomp = self.rng.choice(choices)
+        self.defer(cancel_drinking=True)
+        return self.last_stomp
 
     def defer(self, *, cancel_drinking=False):
         self.remaining = self.delay()

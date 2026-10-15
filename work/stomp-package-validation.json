@@ -3,10 +3,44 @@
   "hidden_sticker_embedded": true,
   "normal_picker_still_nine": true,
   "actual_exe_one_shot_and_resume": true,
-  "rendered_stomp_frames": 59,
-  "rendered_updates_including_fades": 63,
-  "rendered_fps": 60.1068035764678,
-  "visible_duration_seconds": 0.9649489999283105,
-  "cache_peak_bytes": 3472080,
-  "cache_peak_frames": 12
+  "outgoing_drag_and_live_return": true,
+  "intro_and_outro_frames_not_skipped": true,
+  "samples": [
+    {
+      "scale": 0.6,
+      "rendered_stomp_frames": 60,
+      "rendered_fps": 58.84211484086524,
+      "visible_duration_seconds": 1.002683199942112,
+      "entry_frame_gap_ms": 22.932100109755993,
+      "exit_frame_gap_ms": 2.41950002964586,
+      "entry_render_ms": 0.8397001074627042,
+      "exit_render_ms": 1.3246000744402409,
+      "cache_peak_bytes": 1736684,
+      "cache_peak_frames": 12
+    },
+    {
+      "scale": 1.0,
+      "rendered_stomp_frames": 60,
+      "rendered_fps": 59.82454980862201,
+      "visible_duration_seconds": 0.9862171999411657,
+      "entry_frame_gap_ms": 26.494399993680418,
+      "exit_frame_gap_ms": 17.243899987079203,
+      "entry_render_ms": 1.4723000349476933,
+      "exit_render_ms": 4.0979000041261315,
+      "cache_peak_bytes": 4713732,
+      "cache_peak_frames": 12
+    },
+    {
+      "scale": 1.3,
+      "rendered_stomp_frames": 54,
+      "rendered_fps": 53.49430341426473,
+      "visible_duration_seconds": 0.9907596999546513,
+      "entry_frame_gap_ms": 28.490300057455897,
+      "exit_frame_gap_ms": 20.43120004236698,
+      "entry_render_ms": 2.1298000356182456,
+      "exit_render_ms": 11.457000044174492,
+      "cache_peak_bytes": 7900548,
+      "cache_peak_frames": 12
+    }
+  ]
 }

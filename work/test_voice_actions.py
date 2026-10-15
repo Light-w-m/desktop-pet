@@ -100,6 +100,23 @@ class VoiceActionTests(unittest.TestCase):
         self.assertIsNone(self.advance(3600))
         self.assertGreater(self.actions.remaining,43)
 
+    def test_stomp_uses_all_five_lines_without_consecutive_repeats(self):
+        available=set(VoiceActions.STOMP_TITLES)
+        lines=[self.actions.stomp(available) for _ in range(100)]
+        self.assertEqual(set(lines),available)
+        self.assertTrue(all(a != b for a,b in zip(lines,lines[1:])))
+        self.assertFalse(self.actions.drink_pending)
+
+    def test_stomp_respects_mute_manual_priority_and_deleted_recordings(self):
+        available=set(VoiceActions.STOMP_TITLES)
+        self.assertIsNone(self.actions.stomp(available,enabled=False))
+        self.assertIsNone(self.actions.stomp(available,busy=True))
+        self.assertIsNone(self.actions.stomp(set()))
+        self.assertIsNone(self.actions.last_stomp)
+        one={VoiceActions.STOMP_TITLES[3]}
+        self.assertEqual(self.actions.stomp(one),next(iter(one)))
+        self.assertEqual(self.actions.stomp(one),next(iter(one)))
+
 
 if __name__ == '__main__':
     unittest.main()

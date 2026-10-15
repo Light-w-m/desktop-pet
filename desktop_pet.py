@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ctypes as C
+import copy
 from ctypes import wintypes as W
 from bisect import bisect_right
 import json
@@ -111,6 +112,8 @@ class DesktopPet:
         except (OSError, ValueError):
             pass
         self.scale = float(self.settings.get('scale', 1.0))
+        if '--qa-seconds' in sys.argv and '--qa-scale' in sys.argv:
+            self.scale = float(sys.argv[sys.argv.index('--qa-scale')+1])
         self.scale = max(.6, min(1.5, self.scale))
         self.auto = False
         self.paused = False
@@ -126,6 +129,7 @@ class DesktopPet:
         self.last_stomp_frame = None
         self.draw_times = []
         self.render_times = []
+        self.reaction_states = []
         self.frame_index = 0
         self.elapsed = 0.0
         self.last_tick = time.perf_counter()
@@ -150,6 +154,7 @@ class DesktopPet:
         self.voice_player = VoicePlayer(volume=voice_volume,muted=self.settings.get('voice_muted',False))
         self.voice_actions = VoiceActions()
         self.voice_manual = False
+        self.voice_reaction = False
         self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
@@ -249,14 +254,24 @@ class DesktopPet:
         self.frame_index=index
         size=self.width,self.height
         render_name,render_index=self.current,index
-        if self.stomp_motion.visible:
+        if self.stomp_motion.visible and not self.stomp_motion.preparing:
             base = self.stream.get(self.current,index,size) if self.stomp_motion.held_frame is None else None
             if base is not None:
                 self.stomp_motion.held_frame = self.stomp_motion.entry_frame = base
             animation = self.animations['stomping']
             render_index = min(bisect_right(animation['endpoints'],self.stomp_motion.elapsed),len(animation['frames'])-1)
             render_name = 'stomping'
-            frame = self.stomp_motion.blend(self.stream.get('stomping',render_index,size),size)
+            base = None
+            if self.stomp_motion.elapsed < self.stomp_motion.FADE_IN and self.drag_motion.visible:
+                drag_index = self.drag_index()
+                outgoing = self.stream.peek('dragging',drag_index,size)
+                if outgoing is not None:
+                    base = self.drag_motion.blend(outgoing,size)
+            elif self.stomp_motion.elapsed > animation['duration']-self.stomp_motion.FADE_OUT:
+                base = self.stream.peek(self.current,index,size)
+            frame = self.stomp_motion.blend(self.stream.get('stomping',render_index,size),size,base)
+        elif self.stomp_motion.preparing and not self.drag_motion.visible:
+            frame=self.displayed_frame
         elif self.drag_motion.visible and 'dragging' in self.animations:
             if self.drag_motion.held_frame is None:
                 self.drag_motion.held_frame=self.stream.get(self.current,index,size)
@@ -288,8 +303,13 @@ class DesktopPet:
         if self.expression:self.expression.follow()
         if self.popup:self.popup.follow()
         if self.qa_mode:
-            self.draw_times.append((render_name,render_index,render_start))
-            self.render_times.append(time.perf_counter()-render_start)
+            completed=time.perf_counter()
+            self.draw_times.append((render_name,render_index,completed))
+            self.render_times.append(completed-render_start)
+            if self.qa_stomp:
+                self.reaction_states.append({'pose':render_name,'time':completed,
+                    'weight':self.stomp_motion.weight,'elapsed':self.stomp_motion.elapsed,
+                    'main_pose':self.current,'main_position':self.clock.position})
 
     def switch(self,name,automatic=False):
         self.clock.request(name,automatic)
@@ -305,7 +325,10 @@ class DesktopPet:
             user.DestroyWindow(self.hwnd)
             return
         if self.qa_stomp:
-            if now-self.started >= 1 and self.qa_target is None:
+            if now-self.started >= .6 and self.qa_target is None:
+                self.qa_target = 'dragging'
+                self.start_drag_animation()
+            if now-self.started >= 1.2 and self.qa_target == 'dragging':
                 self.qa_target = 'stomping'
                 self.start_stomp(now)
         elif self.qa_drag:
@@ -328,8 +351,35 @@ class DesktopPet:
         was_dragging=self.drag_motion.visible
         was_stomping=self.stomp_motion.visible
         was_interacting=was_dragging or was_stomping
+        stomp=self.stomp_motion
+        if stomp.visible:
+            if stomp.elapsed < stomp.FADE_IN and self.drag_motion.visible:
+                self.drag_motion.active=True
+            if stomp.preparing:
+                keys=self.warm_stomp()
+                if all(self.stream.peek(*key) is not None for key in keys):
+                    self.stream.request('stomping',0,(self.width,self.height))
+                    stomp.preparing=False
+                    # Start the media clock after decoding/preparation. A slow
+                    # disk must not skip the first part of the crossfade.
+                    self.last_tick=time.perf_counter()
+                    dt=0
+                    self.play_stomp_voice()
+            if not stomp.preparing:
+                if stomp.elapsed < stomp.FADE_IN and self.drag_motion.visible:
+                    self.drag_motion.active=True
+                    self.stream.prefetch(self.drag_keys(self.drag_motion.elapsed+dt))
+                else:
+                    self.stream.prefetch(self.return_keys(dt))
         self.drag_motion.advance(dt)
+        before_return=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT) if was_stomping else 0
         self.stomp_motion.advance(dt)
+        if was_stomping and not stomp.preparing:
+            returned=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT)-before_return
+            if returned > 0 and not self.paused:
+                self.clock.advance(returned)
+            if stomp.elapsed >= stomp.FADE_IN:
+                self.drag_motion.clear()
         interacting=self.drag_motion.visible or self.stomp_motion.visible
         if self.paused and not (was_interacting or interacting):return
         previous=self.current
@@ -357,6 +407,41 @@ class DesktopPet:
             stomp_index=min(bisect_right(stomp['endpoints'],self.stomp_motion.elapsed),len(stomp['frames'])-1)
             stomp_changed=stomp_index!=self.last_stomp_frame or 0 < self.stomp_motion.weight < 1
         if index!=self.last_frame or drag_changed or stomp_changed or (was_interacting and not interacting):self.draw(index)
+        if was_stomping and not interacting:
+            self.stream.prefetch()
+
+    def warm_stomp(self):
+        if 'stomping' not in self.animations:
+            return []
+        keys=[('stomping',i,(self.width,self.height)) for i in range(3)]
+        self.stream.prefetch(keys)
+        return keys
+
+    def drag_index(self):
+        animation=self.animations['dragging']
+        return min(bisect_right(animation['endpoints'],self.drag_motion.elapsed % animation['duration']),
+                   len(animation['frames'])-1)
+
+    def drag_keys(self, position):
+        animation=self.animations['dragging']
+        start=bisect_right(animation['endpoints'],position % animation['duration'])
+        return [('dragging',(start+i) % len(animation['frames']),(self.width,self.height)) for i in range(3)]
+
+    def return_keys(self, seconds):
+        stomp=self.stomp_motion
+        threshold=stomp.duration-stomp.FADE_OUT
+        returned=max(0,min(stomp.duration,stomp.elapsed+seconds)-threshold)-max(0,stomp.elapsed-threshold)
+        clock=copy.copy(self.clock)
+        if not self.paused:
+            clock.advance(returned)
+        keys=[]
+        for _ in range(3):
+            animation=self.animations[clock.current]
+            index=min(bisect_right(animation['endpoints'],clock.position),len(animation['frames'])-1)
+            keys.append((clock.current,index,(self.width,self.height)))
+            if not self.paused:
+                clock.advance(1/60)
+        return keys
 
     def clamp_position(self):
         left=user.GetSystemMetrics(76)
@@ -423,6 +508,7 @@ class DesktopPet:
                 self.drag_motion.start(self.displayed_frame,base)
             else:
                 self.drag_motion.start(self.displayed_frame)
+            self.warm_stomp()
             self.last_frame=-1
 
     def try_stomp(self, now):
@@ -438,19 +524,27 @@ class DesktopPet:
         except FileNotFoundError:
             logging.warning('Hidden shake sticker is unavailable; skipping reaction')
             return False
-        base = self.drag_motion.held_frame
-        if base is None:
-            animation = self.animations[self.current]
-            index = min(bisect_right(animation['endpoints'],self.elapsed),len(animation['frames'])-1)
-            base = self.stream.get(self.current,index,(self.width,self.height))
+        base = self.drag_motion.held_frame or self.displayed_frame
         self.stomp_motion.start_once(self.displayed_frame,base,self.animations['stomping']['duration'])
-        self.drag_motion.clear()
+        self.warm_stomp()
         self.last_stomp_time = now
         self.last_stomp_frame = None
         self.last_frame = -1
         self.show_expression('shake_angry')
         logging.info('Shake easter egg: one stomp, then resume %s at %.3fs',self.current,self.clock.position)
         return True
+
+    def play_stomp_voice(self):
+        if self.qa_mode:
+            return
+        player=self.voice_player
+        title=self.voice_actions.stomp({r['title'] for r in self.voices.records},
+                enabled=not player.muted and player.volume > 0,
+                busy=player.current_id is not None and self.voice_manual)
+        if title:
+            record=next(r for r in self.voices.records if r['title'] == title)
+            if self.play_voice(record['id'],automatic=True):
+                self.voice_reaction=True
 
     def show_interaction_expression(self,interaction):
         self.show_expression(self.interaction_random.choice(self.INTERACTION_EXPRESSIONS[interaction]))
@@ -475,7 +569,7 @@ class DesktopPet:
         player = self.voice_player
         busy = player.current_id is not None
         if self.current == 'drinking':
-            busy = busy and self.voice_manual
+            busy = busy and (self.voice_manual or self.voice_reaction)
         else:
             busy = busy or isinstance(self.popup,VoicePicker)
         title = self.voice_actions.advance(seconds,self.current,self.clock.cycle,
@@ -489,11 +583,13 @@ class DesktopPet:
 
     def play_voice(self,identifier,*,automatic=False):
         try:
-            if self.voice_player.play(self.voices.get(identifier)):
+            played=self.voice_player.play(self.voices.get(identifier))
+            if played:
                 self.voice_manual = not automatic
+                self.voice_reaction = False
                 if not automatic:
                     self.voice_actions.defer(cancel_drinking=True)
-            return True
+            return played
         except (FileNotFoundError,StopIteration):
             if not automatic:
                 self.voice_player.stop()
@@ -574,7 +670,7 @@ class DesktopPet:
                 first_drag = not self.dragging
                 self.dragging=True
                 self.shake.record(p.x,p.y,time.perf_counter())
-                if not self.drag_motion.active:
+                if self.stomp_motion.visible or not self.drag_motion.active:
                     self.start_drag_animation()
                 if first_drag:
                     self.show_interaction_expression('drag')
@@ -625,7 +721,8 @@ class DesktopPet:
                 logging.info('Exited cleanly')
                 if self.qa_mode:
                     qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times],
-                        'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames}
+                        'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames,
+                        'reaction_states':self.reaction_states}
                     self.qa_report.parent.mkdir(exist_ok=True)
                     self.qa_report.write_text(json.dumps(qa),encoding='utf-8')
                 user.PostQuitMessage(0)

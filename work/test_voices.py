@@ -202,7 +202,7 @@ try:
             selected.append(record['id'])
         if page+1 < popup.pages:
             click(64)
-    assert selected == expected and len(selected) == 29
+    assert selected == expected and len(selected) == len(pet.voices.records)
     click(62)
     ready()
     assert pet.voice_player.current_id is None and played[-1] is None

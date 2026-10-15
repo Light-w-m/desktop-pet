@@ -71,22 +71,32 @@ class ShakeDetector:
 
 
 class StompMotion(DragMotion):
-    FADE_IN = .12
-    FADE_OUT = .18
+    FADE_IN = .20
+    FADE_OUT = .24
+
+    def __init__(self):
+        super().__init__()
+        self.preparing = False
+
+    def clear(self):
+        super().clear()
+        self.preparing = False
 
     def start_once(self, entry_frame, return_frame, duration):
         self.clear()
         self.duration = duration
         self.start(entry_frame, return_frame)
+        self.preparing = True
 
     def advance(self, seconds):
-        if not self.visible:
+        if not self.visible or self.preparing:
             return
         self.elapsed = min(self.duration, self.elapsed+max(0, seconds))
         self.weight = max(0, min(1, self.elapsed/self.FADE_IN,
                                  (self.duration-self.elapsed)/self.FADE_OUT))
         self.active = self.elapsed < self.duration
 
-    def blend(self, frame, size):
-        base = self.entry_frame if self.elapsed < self.FADE_IN else self.held_frame
+    def blend(self, frame, size, base=None):
+        if base is None:
+            base = self.entry_frame if self.elapsed < self.FADE_IN else self.held_frame
         return blend_frames(base or self.held_frame, frame, size, self.weight)

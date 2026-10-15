@@ -135,7 +135,10 @@ try:
         held = pet.clock.position
         mouse(0x0202, x-55, y, 0)
         assert pet.stomp_motion.visible and pet.expression_key == 'shake_angry'
-        pump(.35)
+        drag_elapsed=pet.drag_motion.elapsed
+        pump(.1)
+        assert pet.drag_motion.visible and pet.drag_motion.elapsed > drag_elapsed
+        pump(.25)
         assert pet.visual_pose == 'stomping' and pet.clock.position == held and pet.current == name
         if name == 'standing':
             preview = Image.new('RGBA', (pet.width, pet.height), '#eadfe7')
@@ -144,8 +147,43 @@ try:
             preview.convert('RGB').save(ROOT/'work'/'stomping-native.jpg')
         pump(.85)
         assert not pet.stomp_motion.visible and pet.current == name
-        assert held < pet.clock.position < held+.35
+        assert held < pet.clock.position < held+.65
         assert pet.stomp_motion.held_frame is None
+
+    # A cold archive must keep the previous image on screen while preparing;
+    # its I/O time must not consume the beginning of the reaction.
+    x,y=prepare(paused=True)
+    pet.reset_drag()
+    pet.stream.clear()
+    native_read=pet.stream.archive.read
+    def slow_read(*args):
+        time.sleep(.025)
+        return native_read(*args)
+    with patch.object(pet.stream.archive,'read',side_effect=slow_read), patch.object(pet,'play_stomp_voice') as voice:
+        started=time.perf_counter()
+        assert pet.start_stomp(started)
+        assert time.perf_counter()-started < .05
+        pet.tick()
+        assert pet.stomp_motion.preparing and pet.stomp_motion.elapsed == 0
+        voice.assert_not_called()
+        pump(.13)
+        assert not pet.stomp_motion.preparing and 0 < pet.stomp_motion.elapsed < .13
+        voice.assert_called_once()
+        pump(1.2)
+        voice.assert_called_once()
+    assert not pet.stomp_motion.visible and pet.clock.position == .7
+
+    x,y=prepare('drinking')
+    pet.reset_drag()
+    pet.clock.position=pet.elapsed=pet.animations['drinking']['duration']-.08
+    pet.clock.request('reading')
+    pet.draw(len(pet.animations['drinking']['frames'])-5)
+    assert pet.start_stomp(time.perf_counter())
+    pump(.94)
+    assert pet.stomp_motion.visible and pet.current == 'reading'
+    pump(.35)
+    assert not pet.stomp_motion.visible and pet.current == 'reading'
+    assert 0 < pet.clock.position < .6
 
     x, y = prepare(paused=True)
     shake(x, y)
@@ -196,6 +234,9 @@ try:
               'paused_playback_and_resize': True, 'regrab_smoothly_cancels_stomp': True,
               'capture_loss_cancels_pending_shake': True, 'cooldown_and_expression_timeout': True,
               'all_60_frames_valid_premultiplied_with_margins': True, 'shared_bounded_cache': True}
+    report.update(live_outgoing_motion_during_fade=True,cold_start_is_nonblocking_and_preserves_intro=True,
+                  main_action_resumes_during_exit_fade=True,one_voice_dispatch_after_frames_ready=True,
+                  queued_action_switch_during_exit_fade=True)
     (ROOT/'work'/'shaking-validation.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2), flush=True)
 finally:

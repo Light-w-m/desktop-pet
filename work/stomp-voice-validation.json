@@ -1,0 +1,9 @@
+{
+  "restored_chinese_recordings": 5,
+  "all_original_and_pcm_hashes_valid": true,
+  "all_five_randomly_selected_without_consecutive_repeats": true,
+  "mute_zero_volume_and_manual_priority": true,
+  "drinking_cannot_interrupt_reaction_voice": true,
+  "total_retained_recordings": 34,
+  "audio_files_remain_git_ignored": true
+}

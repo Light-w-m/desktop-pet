@@ -10,5 +10,10 @@
   "capture_loss_cancels_pending_shake": true,
   "cooldown_and_expression_timeout": true,
   "all_60_frames_valid_premultiplied_with_margins": true,
-  "shared_bounded_cache": true
+  "shared_bounded_cache": true,
+  "live_outgoing_motion_during_fade": true,
+  "cold_start_is_nonblocking_and_preserves_intro": true,
+  "main_action_resumes_during_exit_fade": true,
+  "one_voice_dispatch_after_frames_ready": true,
+  "queued_action_switch_during_exit_fade": true
 }
