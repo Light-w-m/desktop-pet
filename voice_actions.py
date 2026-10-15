@@ -5,6 +5,7 @@ import random
 class VoiceActions:
     IDLE_TITLES = ('闲聊·小说','闲聊·出神')
     DRINK_TITLE = '闲聊·喝酒'
+    DRINK_DELAY = .5
 
     def __init__(self, rng=None):
         self.rng = rng or random.Random()
@@ -12,25 +13,38 @@ class VoiceActions:
         self.cycle = None
         self.remaining = self.delay()
         self.last_idle = None
+        self.drink_pending = False
 
     def delay(self):
         return self.rng.uniform(45,90)
 
-    def defer(self):
+    def defer(self, *, cancel_drinking=False):
         self.remaining = self.delay()
+        if cancel_drinking:
+            self.drink_pending = False
 
-    def advance(self, seconds, pose, cycle, *, enabled=True, busy=False, paused=False):
+    def advance(self, seconds, pose, cycle, *, position, enabled=True, busy=False, paused=False):
         changed = pose != self.pose
         new_cycle = cycle != self.cycle
         self.pose, self.cycle = pose,cycle
+        if changed or new_cycle:
+            self.drink_pending = False
         if changed:
             self.defer()
-        if not enabled or paused:
+        if not enabled or busy:
+            self.drink_pending = False
             return None
-        if pose == 'drinking' and new_cycle:
-            # Skip a busy cycle instead of playing its line late or interrupting a click.
-            return None if busy else self.DRINK_TITLE
-        if pose != 'standing' or busy:
+        if paused:
+            return None
+        if pose == 'drinking':
+            if new_cycle:
+                self.drink_pending = True
+            # Use media position so pausing does not consume the half-second delay.
+            if self.drink_pending and position+1e-9 >= self.DRINK_DELAY:
+                self.drink_pending = False
+                return self.DRINK_TITLE
+            return None
+        if pose != 'standing':
             return None
         self.remaining -= min(max(0,seconds),1.0)
         if self.remaining > 0:

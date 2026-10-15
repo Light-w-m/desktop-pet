@@ -225,7 +225,14 @@ try:
     # Exercise the application wiring without a real speaker or changing its QA clock.
     pet.current = 'drinking'
     pet.clock.cycle += 1
+    pet.clock.position = 0
     pet.update_automatic_voice(.02)
+    assert pet.voice_player.current_id is None
+    pet.clock.position = .499
+    pet.update_automatic_voice(.499)
+    assert pet.voice_player.current_id is None
+    pet.clock.position = .5
+    pet.update_automatic_voice(.001)
     settle(pet.voice_player)
     assert pet.voice_player.current_id == 3
     pet.stop_voice()
@@ -286,6 +293,7 @@ try:
               'page_mouse_keyboard_wheel':True,'same_row_expression_voice_buttons':True,
               'private_handle_live_volume_and_buffer_release':True,'mute_zero_volume_and_bounds':True,
               'native_mute_volume_controls':True,'automatic_action_wiring_and_manual_priority':True,
+              'drinking_voice_waits_half_second_of_animation':True,
               'voice_settings_saved_and_other_preferences_preserved':True,
               'gdi_handles_before':before,'gdi_handles_after':after}
     (ROOT/'work'/'voice-validation.json').write_text(json.dumps(report,indent=2)+'\n')

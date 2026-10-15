@@ -349,6 +349,7 @@ class DesktopPet:
         else:
             busy = busy or isinstance(self.popup,VoicePicker)
         title = self.voice_actions.advance(seconds,self.current,self.clock.cycle,
+                                           position=self.clock.position,
                                            enabled=not player.muted and player.volume > 0,
                                            busy=busy,paused=self.paused)
         if title:
@@ -361,7 +362,7 @@ class DesktopPet:
             if self.voice_player.play(self.voices.get(identifier)):
                 self.voice_manual = not automatic
                 if not automatic:
-                    self.voice_actions.defer()
+                    self.voice_actions.defer(cancel_drinking=True)
             return True
         except (FileNotFoundError,StopIteration):
             if not automatic:
@@ -372,11 +373,11 @@ class DesktopPet:
 
     def stop_voice(self):
         self.voice_player.stop()
-        self.voice_actions.defer()
+        self.voice_actions.defer(cancel_drinking=True)
 
     def configure_voice(self,*,volume=None,muted=None):
         self.voice_player.configure(volume=volume,muted=muted)
-        self.voice_actions.defer()
+        self.voice_actions.defer(cancel_drinking=self.voice_player.muted or self.voice_player.volume == 0)
         self.save_settings()
 
     def save_settings(self):

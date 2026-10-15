@@ -16,16 +16,20 @@ class VoiceActionTests(unittest.TestCase):
 
     def advance(self, seconds, **options):
         self.clock.advance(seconds)
-        return self.actions.advance(seconds,self.clock.current,self.clock.cycle,**options)
+        return self.actions.advance(seconds,self.clock.current,self.clock.cycle,
+                                    position=self.clock.position,**options)
 
     def test_drinking_waits_for_actual_entry_and_repeats_only_at_cycle_start(self):
         self.assertIsNone(self.advance(.5))
         self.clock.request('drinking')
         self.assertIsNone(self.advance(1.5))
-        self.assertEqual(self.advance(.5),'闲聊·喝酒')
+        self.assertIsNone(self.advance(.5))
+        self.assertIsNone(self.advance(.499))
+        self.assertEqual(self.advance(.001),'闲聊·喝酒')
         self.clock.request('drinking')
         self.assertIsNone(self.advance(15))
-        self.assertEqual(self.advance(1),'闲聊·喝酒')
+        self.assertIsNone(self.advance(.5))
+        self.assertEqual(self.advance(.5),'闲聊·喝酒')
         self.clock.request('reading')
         self.assertIsNone(self.advance(16))
 
@@ -33,7 +37,27 @@ class VoiceActionTests(unittest.TestCase):
         self.clock.request('drinking')
         self.assertIsNone(self.advance(2.5,busy=True))
         self.assertIsNone(self.advance(1,busy=False))
-        self.assertEqual(self.advance(15),'闲聊·喝酒')
+        self.assertIsNone(self.advance(15))
+        self.assertEqual(self.advance(.5),'闲聊·喝酒')
+
+    def test_delay_uses_media_phase_when_a_frame_crosses_the_entry_boundary(self):
+        self.clock.request('drinking')
+        self.assertIsNone(self.advance(2.8))
+        self.assertIsNone(self.advance(.199))
+        self.assertEqual(self.advance(.001),'闲聊·喝酒')
+
+    def test_pausing_keeps_delay_and_stop_or_manual_playback_cancels_pending_line(self):
+        self.clock.request('drinking')
+        self.assertIsNone(self.advance(2.75))
+        self.assertIsNone(self.actions.advance(10,'drinking',self.clock.cycle,
+                                               position=self.clock.position,paused=True))
+        self.assertEqual(self.advance(.25),'闲聊·喝酒')
+        self.assertIsNone(self.advance(15.5))
+        self.actions.defer(cancel_drinking=True)
+        self.assertIsNone(self.advance(.5))
+        self.assertIsNone(self.advance(15.5))
+        self.assertIsNone(self.advance(.25,busy=True))
+        self.assertIsNone(self.advance(.25,busy=False))
 
     def test_standing_idle_delays_and_avoids_consecutive_duplicates(self):
         lines, since = [],0
@@ -68,7 +92,8 @@ class VoiceActionTests(unittest.TestCase):
         self.clock.request('drinking')
         self.assertIsNone(self.advance(2.5,enabled=False))
         self.assertIsNone(self.advance(1))
-        self.assertEqual(self.advance(15),'闲聊·喝酒')
+        self.assertIsNone(self.advance(15))
+        self.assertEqual(self.advance(.5),'闲聊·喝酒')
 
     def test_sleep_does_not_cause_idle_catchup_burst(self):
         self.advance(.1)

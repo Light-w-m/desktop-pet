@@ -156,6 +156,32 @@ class VoicePicker(PinkMenu):
             draw.text((round(x*factor),round(y*factor)),label,
                       font=font(round(size*factor),bold),fill=fill,anchor=anchor)
 
+        def centered_text(rect, label, size=8.5):
+            face = font(round(size*factor))
+            left,top,right,bottom = draw.textbbox((0,0),label,font=face)
+            x = ((rect[0]+rect[2])*factor-left-right)/2
+            y = ((rect[1]+rect[3])*factor-top-bottom)/2
+            draw.text((round(x),round(y)),label,font=face,fill='#985d7b')
+
+        def symbol(rect, kind, enabled=True):
+            x, y = (rect[0]+rect[2])/2,(rect[1]+rect[3])/2
+            color = '#985d7b' if enabled else '#cbb4c0'
+            stroke = max(1,round(1.6*factor))
+            if kind in ('plus','minus'):
+                lines = [[(x-4.5,y),(x+4.5,y)]]
+                if kind == 'plus':
+                    lines.append([(x,y-4.5),(x,y+4.5)])
+            else:
+                direction = -1 if kind == 'left' else 1
+                lines = [[(x-direction*2.5,y-4.5),(x+direction*2.5,y),
+                          (x-direction*2.5,y+4.5)]]
+            for points in lines:
+                pixels = [box(point) for point in points]
+                draw.line(pixels,fill=color,width=stroke,joint='curve')
+                for px,py in (pixels[0],pixels[-1]):
+                    radius = (stroke-1)/2
+                    draw.ellipse((px-radius,py-radius,px+radius,py+radius),fill=color)
+
         shadow = Image.new('RGBA', canvas.size)
         ImageDraw.Draw(shadow).rounded_rectangle(box((6,6,182,240)),radius=11*factor,fill=(106,52,76,35))
         canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(3*factor)))
@@ -191,17 +217,19 @@ class VoicePicker(PinkMenu):
             text(173,top+8,f'{seconds//60}:{seconds%60:02}',7.5,'#b18498',anchor='rt')
         if not records:
             text(94,106,'还没有可用语音',10,'#ae8396',anchor='mt')
-        for command,rect,label in ((65,(10,173,69,194),'语音关' if state['muted'] else '语音开'),
-                                   (66,(75,173,97,194),'−'),(67,(156,173,178,194),'+')):
+        for command,rect in ((65,(10,173,69,194)),(66,(75,173,97,194)),(67,(156,173,178,194))):
             rounded(rect,5,'#f3cfdf' if hover == command else '#fff0f6','#eac3d4')
-            text((rect[0]+rect[2])/2,177,label,8.5,anchor='mt')
-        text(126,177,f"{state['volume']}%",8.5,anchor='mt')
-        for command, rect, label, enabled in (
-                (63,(10,201,45,221),'‹',state['page'] > 0),
-                (64,(143,201,178,221),'›',state['page']+1 < self.pages)):
+            if command == 65:
+                centered_text(rect,'语音关' if state['muted'] else '语音开')
+            else:
+                symbol(rect,'minus' if command == 66 else 'plus')
+        centered_text((98,173,155,194),f"{state['volume']}%")
+        for command, rect, kind, enabled in (
+                (63,(10,201,45,221),'left',state['page'] > 0),
+                (64,(143,201,178,221),'right',state['page']+1 < self.pages)):
             rounded(rect,5,'#f3cfdf' if hover == command and enabled else '#fff5f9','#eac3d4')
-            text((rect[0]+rect[2])/2,203,label,11,'#985d7b' if enabled else '#cbb4c0',anchor='mt')
-        text(94,206,f"{state['page']+1} / {self.pages}",8.5,'#b18498',anchor='mt')
+            symbol(rect,kind,enabled)
+        centered_text((50,201,138,221),f"{state['page']+1} / {self.pages}")
         footer = ('语音已关闭' if state['muted'] else '音量为零' if not state['volume'] else
                   '播放失败，请重新点选' if state['error'] else '点击播放 · 滚轮或箭头翻页')
         text(94,227,footer,7.5,'#b18498',anchor='mt')
