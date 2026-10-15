@@ -15,6 +15,8 @@ from frame_stream import FrameArchive, FrameStream
 from expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
 from pet_menu import PinkMenu
 from playback import Playback
+from voice_library import VoiceLibrary
+from voices import VoicePicker, VoicePlayer
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -125,6 +127,8 @@ class DesktopPet:
         self.expression_key = None
         self.expression_expires_at = None
         self.stickers = StickerLibrary(APP_DIR/'assets'/'expressions', RESOURCE_DIR/'assets'/'expressions')
+        self.voices = VoiceLibrary(APP_DIR,RESOURCE_DIR)
+        self.voice_player = VoicePlayer()
         self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
@@ -256,6 +260,7 @@ class DesktopPet:
                 self.switch(name,False)
         if self.expression_expires_at is not None and now>=self.expression_expires_at:
             self.show_expression(None)
+        self.voice_player.poll()
         if self.popup:self.popup.refresh()
         if self.paused:return
         previous=self.current
@@ -300,14 +305,15 @@ class DesktopPet:
         return (self.x+math.floor(left*self.scale),self.y+math.floor(top*self.scale),
                 self.x+math.ceil(right*self.scale),self.y+math.ceil(bottom*self.scale))
 
-    def menu(self, position=None, picker=False):
+    def menu(self, position=None, picker=False, voices=False):
         self.drag_offset=None
         user.ReleaseCapture()
         p=POINT()
         user.GetCursorPos(C.byref(p))
         if self.popup:self.popup.close()
         if position:p.x,p.y=position
-        self.popup=(ExpressionPicker if picker else PinkMenu)(self,sys.modules[__name__])
+        menu_type=VoicePicker if voices else ExpressionPicker if picker else PinkMenu
+        self.popup=menu_type(self,sys.modules[__name__])
         self.popup.open(p.x,p.y)
 
     def show_expression(self,key,*,reset_timer=True):
@@ -326,6 +332,16 @@ class DesktopPet:
             self.expression_expires_at=None
         logging.info('Expression %s',key)
 
+    def play_voice(self,identifier):
+        try:
+            self.voice_player.play(self.voices.get(identifier))
+            return True
+        except (FileNotFoundError,StopIteration):
+            self.voice_player.stop()
+            self.voices.refresh()
+            logging.info('Selected voice is no longer available: %s',identifier)
+            return False
+
     def menu_command(self,command,position=None):
         if command==10:
             self.switch('standing',True)
@@ -335,6 +351,7 @@ class DesktopPet:
         elif command in (31,32,33):self.resize({31:.7,32:1,33:1.3}[command])
         elif command==40:user.DestroyWindow(self.hwnd)
         elif command==50:self.menu(position=position,picker=True)
+        elif command==60:self.menu(position=position,voices=True)
 
     def window_proc(self,hwnd,msg,wparam,lparam):
         try:
@@ -398,6 +415,7 @@ class DesktopPet:
                 if self.expression:
                     self.expression.close()
                     self.expression=None
+                self.voice_player.close()
                 self.stream.close()
                 self.free_surface()
                 if not self.qa_mode:

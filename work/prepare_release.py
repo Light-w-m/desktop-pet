@@ -38,12 +38,19 @@ def prepare(executable):
     assert digest(destination) == executable_hash, 'Executable copy differs'
     archive = output/'CitlaliDesktopPet-source-assets.zip'
     names = list(files)+['manifest.json','source-checksums.json']
+    voice_root = ROOT/'local-media'/'citlali-voices-zh-cn'
+    voices = voice_root/'_playback' if voice_root.is_dir() else assets/'voices'
+    voice_catalog = json.loads((voices/'catalog.json').read_text(encoding='utf-8')) if (voices/'catalog.json').is_file() else None
+    extra = ({'assets/voices/'+name:voices/name for name in
+              ['catalog.json']+[r['file'] for r in voice_catalog['records']]} if voice_catalog else {})
     # WebP files are already compressed; store them without another costly pass.
     with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_STORED) as package:
         for name in names:
             package.write(assets/name, 'assets/'+name)
+        for name, path in extra.items():
+            package.write(path, name)
     with zipfile.ZipFile(archive) as package:
-        assert set(package.namelist()) == {'assets/'+name for name in names}
+        assert set(package.namelist()) == {'assets/'+name for name in names} | set(extra)
         for name, expected in files.items():
             value = hashlib.sha256()
             with package.open('assets/'+name) as source:
@@ -51,6 +58,10 @@ def prepare(executable):
                     value.update(block)
             assert value.hexdigest() == expected['sha256'], 'Archive differs: '+name
         assert json.loads(package.read('assets/manifest.json')) == manifest
+        if voice_catalog:
+            assert json.loads(package.read('assets/voices/catalog.json')) == voice_catalog
+            for record in voice_catalog['records']:
+                assert hashlib.sha256(package.read('assets/voices/'+record['file'])).hexdigest() == record['sha256']
     shutil.copy2(ROOT/'docs'/'RELEASE_NOTES.md', output/'RELEASE_NOTES.md')
     (output/'SHA256SUMS.txt').write_text(
         f'{executable_hash}  {destination.name}\n{digest(archive)}  {archive.name}\n',encoding='utf-8')

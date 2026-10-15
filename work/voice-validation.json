@@ -1,0 +1,12 @@
+{
+  "selected_voice_count": 29,
+  "all_selected_voices_dispatch": true,
+  "deleted_files_filtered": true,
+  "native_pcm_playback_smoke_test": true,
+  "latest_request_wins_stop_and_completion": true,
+  "voice_picker_keeps_animation_playing": true,
+  "page_mouse_keyboard_wheel": true,
+  "same_row_expression_voice_buttons": true,
+  "gdi_handles_before": 10,
+  "gdi_handles_after": 10
+}

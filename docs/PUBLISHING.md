@@ -43,6 +43,8 @@ python work/check_publish_repo.py
 
 新克隆的仓库没有动画文件。下载同一版本 Release 中的 `CitlaliDesktopPet-source-assets.zip`，解压到项目根目录，得到 `assets/standing-obs.webp`、`assets/reading-obs.webp` 和 `assets/drinking-obs.webp`。运行 `python work/prepare_assets.py` 会检查 SHA-256，并准备本机的构建目录。
 
+带语音的版本还会在源码素材包中提供 `assets/voices/catalog.json` 和 PCM WAV；这些文件同样保持 Git 忽略。使用本地原始语音时，先按需要删除 `local-media/citlali-voices-zh-cn` 中的 OGG，再运行 `python work/prepare_voices.py` 同步索引并转换保留的文件，转换需要 ffmpeg。EXE 只内置当前保留的语音，运行时使用 Windows 原生接口，无需 ffmpeg。
+
 ## 本地历史备份
 
 首次整理前的完整 Git 历史保存在 `backups/github-history-before-cleanup-*.bundle`。本机 EXE 和所有动画仍保留原位置。旧对象与恢复记录也可能仍占用本机 `.git` 空间；正常推送只传输分支可达的整理后历史。

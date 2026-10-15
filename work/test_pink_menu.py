@@ -132,8 +132,8 @@ try:
             for x in (area.left, (area.left+area.right-pet.width)//2, area.right-pet.width):
                 pet.x, pet.y, pet.current = x, area.bottom-pet.height, name
                 pet.draw(20 if name == 'standing' else 200)
-                for picker in (False, True):
-                    pet.menu(picker=picker)
+                for view in ('menu', 'expressions', 'voices'):
+                    pet.menu(picker=view == 'expressions', voices=view == 'voices')
                     beside_visible_pet()
                     send(0x0100, 27)
     pet.resize(1)

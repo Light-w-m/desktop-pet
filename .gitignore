@@ -38,3 +38,5 @@ pet-frames.json
 
 # Downloaded voice recordings and their local indexes stay on this machine.
 /local-media/
+/assets/voices/
+/work/voice-playback-qa.json

@@ -6,10 +6,10 @@ import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 WIDTH, HEIGHT = 140, 220
-COMMANDS = (10, 11, 12, 13, 50, 20, 31, 32, 33, 40)
+COMMANDS = (10, 11, 12, 13, 50, 60, 20, 31, 32, 33, 40)
 HITS = {10: (9, 31, 131, 50), 11: (9, 51, 131, 70),
         12: (9, 71, 131, 90), 13: (9, 91, 131, 110),
-        50: (9, 115, 131, 136), 20: (9, 140, 131, 161),
+        50: (9, 115, 68, 136), 60: (72, 115, 131, 136), 20: (9, 140, 131, 161),
         31: (9, 167, 47, 188), 32: (51, 167, 89, 188),
         33: (93, 167, 131, 188), 40: (9, 195, 131, 214)}
 
@@ -98,7 +98,11 @@ def render_menu(state, hover=None, dpi=1.0):
     for x in (17, 21):
         draw.ellipse(box((x, 123, x+1, 124)), fill='#b2698b')
     text(31, 119, '表情', 9.5, '#985d7b', True)
-    text(122, 120, '9 款 ›', 8, '#b18498', anchor='rt')
+    rounded(HITS[60], 6, '#f6d5e3' if hover == 60 else '#fff1f6', '#efcedc')
+    draw.polygon([box((78, 123)), box((81, 123)), box((85, 120)),
+                  box((85, 131)), box((81, 128)), box((78, 128))], fill='#b2698b')
+    draw.arc(box((83, 120, 90, 132)), -70, 70, fill='#b2698b', width=factor)
+    text(96, 119, '语音', 9.5, '#985d7b', True)
     rounded(HITS[20], 6, '#f9e0eb' if hover == 20 else '#fcebf2', '#efcedc')
     text(70, 144, '▷  继续播放' if state['paused'] else 'Ⅱ  暂停动画', 9.5, '#985d7b', anchor='mt')
     for command, label, scale in ((31, '小', .7), (32, '中', 1), (33, '大', 1.3)):
