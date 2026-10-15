@@ -1,6 +1,8 @@
 # 茜特菈莉桌宠 · 高清完整待机版
 
-双击 **CitlaliDesktopPet.exe** 运行，无需安装 Python。默认站立，背景和窗口边框透明。
+从 [Releases](https://github.com/Light-w-m/desktop-pet/releases) 下载 **CitlaliDesktopPet.exe**，双击运行，无需安装 Python。默认站立，背景和窗口边框透明。EXE 内置全部播放素材。
+
+源码仓库不包含大型 EXE、动画 WebP 和播放帧包。需要从源码运行或构建时，另下载同一版本的 **CitlaliDesktopPet-source-assets.zip**，解压到项目根目录。MP4 原始录屏不随仓库或 Release 分发。发布步骤见 [GitHub 发布说明](docs/PUBLISHING.md)。
 
 - 按住角色拖动：移动位置。
 - 鼠标滚轮：调整大小。
@@ -24,7 +26,7 @@
 
 选择另一个动作时，当前动作先自然结束并回到站立，再进入所选动作。因此，切换可能需要等待当前动作的剩余时间；右键菜单会显示待切换动作。连续选择以最后一次为准，重新选择正在播放的动作会取消待切换请求并继续播放。暂停时保持当前帧，恢复后继续衔接。
 
-素材记录在 `references/obs-source.json`，帧数、时长和编码信息在 `assets/manifest.json`。完整取景参考保存在 `references/requested-full-framing.png`。以前的素材和处理脚本保留供历史对照。
+素材记录在 `references/obs-source.json`，帧数、时长和编码信息在 `assets/manifest.json`。完整取景参考保存在 `references/requested-full-framing.png`。以前的处理脚本和小型预览保留供历史对照，大型素材留在本机。
 
 站立的两只鞋分别按实际鞋底轮廓跟踪，去掉原录屏的地面倒影；两条飘带保留浅色连接处，并跟随原动画摆动。动作起始和收尾的公共站姿使用同样的处理，避免切换时倒影重新闪现。
 
@@ -40,11 +42,11 @@
 
 本机 45 秒后台回归中，默认尺寸的进程组工作集峰值为 45.0 MiB，大号为 72.4 MiB；旧版默认尺寸约 546.5 MiB。默认三组动作约 60 FPS，大号约 58–59 FPS。1914 帧默认尺寸均与原版显示像素一致，其他尺寸抽查也一致；菜单连续开关后 GDI 句柄数不变。记录保存在 `work/memory-*.json`、`work/exe-playback-*-validation.json`、`work/stream-quality-validation.json` 和 `work/menu-validation.json`。
 
-1. 用 `work/extract_obs.py` 从上述本地 OBS 文件生成素材到 `work/repaired-assets`，需要 Pillow、NumPy、OpenCV 和 ffmpeg。
+1. Windows x64 使用 Python 3.12，运行 `python -m pip install -r requirements-build.txt`。把 Release 源码素材包解压到根目录，再运行 `python work/prepare_assets.py`。也可用 `work/extract_obs.py` 从上述本地 OBS 文件重新提取素材，额外需要 NumPy、OpenCV 和 ffmpeg。
 2. 运行 `work/validate_assets.py` 检查所有帧的轮廓边距、完整性、时长和公共站姿接缝。
    运行 `work/validate_standing_edges.py` 检查脚底倒影、鞋底边界稳定性和飘带连接处。
 3. 运行 `work/test_playback.py` 检查动作中途切换、连续选择和自动轮换。
 4. 用 `work/build_frame_pack.py` 生成无损帧包，再运行 `work/validate_stream.py` 对照原 WebP 逐帧检查默认尺寸，以及抽查其他尺寸和任意跳帧。
 5. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放。`work/test_pink_menu.py` 检查菜单交互和 GDI 资源释放。
 
-MP4 原始素材与预览、构建缓存、日志、设置和本地备份由 `.gitignore` 排除。完成修改并验证后创建本地 Git 提交。角色与录屏内容属于原权利人，本程序用于个人桌面体验。
+EXE、动画 WebP、播放帧包、MP4、构建缓存、日志、设置和本地备份由 `.gitignore` 排除。`work/prepare_release.py` 可以生成本地 Release 附件；`work/check_publish_repo.py` 检查所有可推送历史中的大文件。完成修改并验证后创建本地 Git 提交。角色与录屏内容属于原权利人，本程序用于个人桌面体验。

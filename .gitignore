@@ -24,3 +24,14 @@ __pycache__/
 /work/obs-source-return-pair.jpg
 /work/*-obs-motion.jpg
 /work/menu-playback-qa.json
+
+# Large runtime assets and executables are distributed through GitHub Releases.
+*.exe
+*.EXE
+*.webp
+*.WEBP
+pet-frames.bin
+pet-frames.json
+/release/
+/work/github-publish-check/
+/work/git-publish-tmp/

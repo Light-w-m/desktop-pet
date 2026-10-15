@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "files": {
+    "standing-obs.webp": {
+      "bytes": 19903322,
+      "sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977"
+    },
+    "reading-obs.webp": {
+      "bytes": 107260108,
+      "sha256": "09df0f83b1b16c39bfd30fab1d7d735872592dbb3603c1062ef633376b107053"
+    },
+    "drinking-obs.webp": {
+      "bytes": 107357886,
+      "sha256": "0abfe221c48b35b72e2ae582614692aefcdaa12a8139fabdda0d49233c099fbd"
+    }
+  }
+}
