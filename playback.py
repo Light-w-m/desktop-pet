@@ -11,6 +11,7 @@ class Playback:
         self.pending=None
         self.automatic=False
         self.playlist_index=0
+        self.cycle=0
 
     @property
     def requested(self):
@@ -35,6 +36,7 @@ class Playback:
             remaining-=step
             if self.position+1e-9<duration:break
             self.position=0.0
+            self.cycle+=1
             target=self.pending
             if target is None and self.automatic:
                 hold=self.PLAYLIST[self.playlist_index][1]

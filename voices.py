@@ -10,13 +10,14 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from menu_view import font
 from pet_menu import PinkMenu, rgba_pixels
+from voice_output import WaveOutput
 
-WIDTH, HEIGHT, PAGE_SIZE = 188, 244, 6
+WIDTH, HEIGHT, PAGE_SIZE = 188, 244, 5
 
 
 class VoicePlayer:
-    def __init__(self, backend=None):
-        self.backend = backend or winsound.PlaySound
+    def __init__(self, backend=None, *, volume=100, muted=False):
+        self.backend = backend if backend is not None else WaveOutput()
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='PetVoice')
         self.future = None
         self.revision = 0
@@ -24,10 +25,16 @@ class VoicePlayer:
         self.current_id = self.deadline = None
         self.duration = 0
         self.error = None
+        self.volume = max(0,min(100,round(volume)))
+        self.muted = bool(muted)
 
     def _run(self, revision, path):
         if self.closed or revision != self.revision:
             return None
+        if path and (self.muted or self.volume == 0):
+            return None
+        if path:
+            self._apply_volume()
         self.backend(str(path) if path else None,
                      winsound.SND_ASYNC | winsound.SND_FILENAME | winsound.SND_NODEFAULT if path else 0)
         return time.perf_counter()
@@ -39,11 +46,27 @@ class VoicePlayer:
         self.future = self.executor.submit(self._run, self.revision, path)
 
     def play(self, record):
-        if self.closed:
-            return
+        if self.closed or self.muted or self.volume == 0:
+            return False
         self.current_id, self.duration = record['id'], record['duration_seconds']
         self.deadline = self.error = None
         self._submit(record['path'])
+        return True
+
+    def _apply_volume(self):
+        if hasattr(self.backend,'set_volume'):
+            self.backend.set_volume(0 if self.muted else self.volume)
+
+    def configure(self, *, volume=None, muted=None):
+        if volume is not None:
+            self.volume = max(0,min(100,round(volume)))
+        if muted is not None:
+            self.muted = bool(muted)
+        if self.muted or self.volume == 0:
+            self.stop()
+        elif not self.closed:
+            # This runs on the same worker as open/stop, including live adjustments.
+            self.executor.submit(self._apply_volume)
 
     def stop(self):
         self.current_id = self.deadline = self.error = None
@@ -61,8 +84,8 @@ class VoicePlayer:
                 self.error = str(error)
                 self.current_id = self.deadline = None
             self.future = None
-        if self.deadline is not None and time.perf_counter() >= self.deadline:
-            self.current_id = self.deadline = None
+        if self.deadline is not None and getattr(self.backend,'finished',time.perf_counter() >= self.deadline):
+            self.stop()
 
     def close(self):
         self.revision += 1
@@ -97,14 +120,16 @@ class VoicePicker(PinkMenu):
 
     def update_hits(self):
         self.hits = {61:(10,9,48,29), 62:(140,9,178,29),
-                     63:(10,201,45,221), 64:(143,201,178,221)}
+                     63:(10,201,45,221), 64:(143,201,178,221),
+                     65:(10,173,69,194),66:(75,173,97,194),67:(156,173,178,194)}
         self.hits.update({1000+r['id']:(10,38+26*i,178,63+26*i)
                           for i,r in enumerate(self.page_records())})
-        self.commands = (61, 62, *(1000+r['id'] for r in self.page_records()), 63, 64)
+        self.commands = (61, 62, *(1000+r['id'] for r in self.page_records()), 65,66,67,63,64)
 
     def state(self):
         return {'page':self.page,'playing':self.owner.voice_player.current_id,
-                'error':self.owner.voice_player.error}
+                'error':self.owner.voice_player.error,'muted':self.owner.voice_player.muted,
+                'volume':self.owner.voice_player.volume}
 
     def change_page(self, step):
         page = max(0, min(self.pages-1, self.page+step))
@@ -166,13 +191,20 @@ class VoicePicker(PinkMenu):
             text(173,top+8,f'{seconds//60}:{seconds%60:02}',7.5,'#b18498',anchor='rt')
         if not records:
             text(94,106,'还没有可用语音',10,'#ae8396',anchor='mt')
+        for command,rect,label in ((65,(10,173,69,194),'语音关' if state['muted'] else '语音开'),
+                                   (66,(75,173,97,194),'−'),(67,(156,173,178,194),'+')):
+            rounded(rect,5,'#f3cfdf' if hover == command else '#fff0f6','#eac3d4')
+            text((rect[0]+rect[2])/2,177,label,8.5,anchor='mt')
+        text(126,177,f"{state['volume']}%",8.5,anchor='mt')
         for command, rect, label, enabled in (
                 (63,(10,201,45,221),'‹',state['page'] > 0),
                 (64,(143,201,178,221),'›',state['page']+1 < self.pages)):
             rounded(rect,5,'#f3cfdf' if hover == command and enabled else '#fff5f9','#eac3d4')
             text((rect[0]+rect[2])/2,203,label,11,'#985d7b' if enabled else '#cbb4c0',anchor='mt')
         text(94,206,f"{state['page']+1} / {self.pages}",8.5,'#b18498',anchor='mt')
-        text(94,227,'播放失败，请重新点选' if state['error'] else '点击播放 · 滚轮或箭头翻页',7.5,'#b18498',anchor='mt')
+        footer = ('语音已关闭' if state['muted'] else '音量为零' if not state['volume'] else
+                  '播放失败，请重新点选' if state['error'] else '点击播放 · 滚轮或箭头翻页')
+        text(94,227,footer,7.5,'#b18498',anchor='mt')
         return canvas.resize((round(WIDTH*dpi),round(HEIGHT*dpi)),Image.Resampling.LANCZOS)
 
     def invoke(self, command):
@@ -181,10 +213,16 @@ class VoicePicker(PinkMenu):
             self.close()
             self.owner.menu(position=origin)
         elif command == 62:
-            self.owner.voice_player.stop()
+            self.owner.stop_voice()
             self.paint()
         elif command in (63,64):
             self.change_page(-1 if command == 63 else 1)
+        elif command in (65,66,67):
+            if command == 65:
+                self.owner.configure_voice(muted=not self.owner.voice_player.muted)
+            else:
+                self.owner.configure_voice(volume=self.owner.voice_player.volume+(-10 if command == 66 else 10))
+            self.paint()
         elif command >= 1000:
             if not self.owner.play_voice(command-1000):
                 self.records = list(self.owner.voices.records)

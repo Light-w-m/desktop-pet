@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from voice_library import LOCAL_VOICES, VoiceLibrary
 from voices import VoicePlayer
+from voice_output import WaveOutput
 
 
 def settle(player):
@@ -68,9 +69,63 @@ with tempfile.TemporaryDirectory(prefix='voice-test-',dir=ROOT/'work'/'sources')
     player.close()
     assert player.closed and calls[-1][0] is None
     # Exercise the real native backend silently with the same PCM format.
-    winsound.PlaySound(str(silence),winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
-    time.sleep(.12)
-    winsound.PlaySound(None,0)
+    native = WaveOutput()
+    native.set_volume(70)
+    native(str(silence))
+    assert native.handle and native.buffer is not None
+    native.set_volume(30)
+    native.api.waveOutGetVolume.argtypes = [C.c_void_p,C.POINTER(C.c_ulong)]
+    native.api.waveOutGetVolume.restype = C.c_uint
+    actual_volume = C.c_ulong()
+    native.check(native.api.waveOutGetVolume(native.handle,C.byref(actual_volume)))
+    gain = round(.3*65535)
+    assert actual_volume.value == gain | (gain << 16), actual_volume.value
+    time.sleep(.16)
+    assert native.finished
+    native.stop()
+    assert not native.handle and native.buffer is None
+    native_player = VoicePlayer()
+    native_player.configure(volume=40)
+    for _ in range(8):
+        native_player.play(dict(records[0],path=silence))
+        settle(native_player)
+        native_player.stop()
+        settle(native_player)
+        assert not native_player.backend.handle and native_player.backend.buffer is None
+    native_player.play(dict(records[0],path=silence))
+    settle(native_player)
+    time.sleep(.18)
+    native_player.poll()
+    settle(native_player)
+    assert native_player.current_id is None and native_player.backend.buffer is None
+    native_player.close()
+    class AdjustableBackend:
+        def __init__(self):
+            self.calls, self.volumes = [],[]
+        def __call__(self,path,flags):
+            self.calls.append(path)
+        def set_volume(self,volume):
+            self.volumes.append(volume)
+    adjustable = AdjustableBackend()
+    player = VoicePlayer(adjustable,volume=70)
+    assert player.play(dict(records[0],path=silence))
+    settle(player)
+    assert adjustable.volumes[-1] == 70
+    player.configure(volume=30)
+    player.executor.submit(lambda:None).result(timeout=2)
+    assert adjustable.volumes[-1] == 30 and player.current_id == 1
+    player.configure(muted=True)
+    settle(player)
+    assert player.muted and player.current_id is None and adjustable.calls[-1] is None
+    assert not player.play(dict(records[0],path=silence))
+    player.configure(muted=False,volume=0)
+    settle(player)
+    assert not player.play(dict(records[0],path=silence))
+    player.configure(volume=999)
+    assert player.volume == 100
+    player.configure(volume=-10)
+    assert player.volume == 0
+    player.close()
 
 sys.argv += ['--qa-seconds','300','--qa-assets',str(ROOT/'work'/'repaired-assets')]
 import desktop_pet as app
@@ -91,6 +146,7 @@ app.signature(app.kernel,'GetCurrentProcess',app.W.HANDLE)
 pet = app.DesktopPet()
 pet.qa_report = ROOT/'work'/'voice-playback-qa.json'
 app.user.ShowWindow(pet.hwnd,0)
+pet.configure_voice(volume=100,muted=False)
 played = []
 pet.voice_player.backend = lambda path,flags:played.append(path)
 
@@ -150,6 +206,65 @@ try:
     click(62)
     ready()
     assert pet.voice_player.current_id is None and played[-1] is None
+    volume_before = pet.voice_player.volume
+    click(66)
+    ready()
+    assert pet.voice_player.volume == max(0,volume_before-10)
+    click(67)
+    ready()
+    assert pet.voice_player.volume == volume_before
+    click(65)
+    ready()
+    assert pet.voice_player.muted
+    click(1000+popup.page_records()[0]['id'])
+    ready()
+    assert pet.voice_player.current_id is None
+    click(65)
+    ready()
+    assert not pet.voice_player.muted
+    # Exercise the application wiring without a real speaker or changing its QA clock.
+    pet.current = 'drinking'
+    pet.clock.cycle += 1
+    pet.update_automatic_voice(.02)
+    settle(pet.voice_player)
+    assert pet.voice_player.current_id == 3
+    pet.stop_voice()
+    settle(pet.voice_player)
+    pet.update_automatic_voice(.02)
+    assert pet.voice_player.current_id is None
+    pet.current = 'standing'
+    pet.popup.close()
+    pet.update_automatic_voice(.02)
+    pet.voice_actions.remaining = 0
+    pet.update_automatic_voice(.02)
+    settle(pet.voice_player)
+    assert pet.voice_player.current_id in (2,4)
+    pet.play_voice(1)
+    settle(pet.voice_player)
+    pet.current = 'drinking'
+    pet.clock.cycle += 1
+    pet.update_automatic_voice(.02)
+    assert pet.voice_player.current_id == 1, 'Automatic voice interrupted manual selection'
+    pet.stop_voice()
+    settle(pet.voice_player)
+    pet.current = pet.clock.current
+    # Persistence uses an isolated settings file; preserve unrelated user preferences.
+    saved_path, saved_qa = app.SETTINGS,pet.qa_mode
+    with tempfile.TemporaryDirectory(prefix='voice-preferences-',dir=ROOT/'work'/'sources') as directory:
+        app.SETTINGS = Path(directory)/'pet-settings.json'
+        pet.qa_mode = False
+        try:
+            pet.settings['preserve_test_preference'] = 'kept'
+            pet.configure_voice(volume=40,muted=True)
+            preferences = json.loads(app.SETTINGS.read_text(encoding='utf-8'))
+            assert preferences['voice_volume'] == 40 and preferences['voice_muted']
+            assert preferences['preserve_test_preference'] == 'kept'
+        finally:
+            app.SETTINGS,pet.qa_mode = saved_path,saved_qa
+    pet.configure_voice(volume=volume_before,muted=False)
+    pet.menu(voices=True)
+    popup = pet.popup
+    popup.change_page(popup.pages-1)
     app.user.SendMessageW(popup.hwnd,0x0100,37,0)
     assert popup.page == popup.pages-2
     app.user.SendMessageW(popup.hwnd,0x020A,120 << 16,0)
@@ -169,6 +284,9 @@ try:
               'deleted_files_filtered':True,'native_pcm_playback_smoke_test':True,
               'latest_request_wins_stop_and_completion':True,'voice_picker_keeps_animation_playing':True,
               'page_mouse_keyboard_wheel':True,'same_row_expression_voice_buttons':True,
+              'private_handle_live_volume_and_buffer_release':True,'mute_zero_volume_and_bounds':True,
+              'native_mute_volume_controls':True,'automatic_action_wiring_and_manual_priority':True,
+              'voice_settings_saved_and_other_preferences_preserved':True,
               'gdi_handles_before':before,'gdi_handles_after':after}
     (ROOT/'work'/'voice-validation.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2),flush=True)

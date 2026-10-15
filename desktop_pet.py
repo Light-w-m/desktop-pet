@@ -17,6 +17,7 @@ from pet_menu import PinkMenu
 from playback import Playback
 from voice_library import VoiceLibrary
 from voices import VoicePicker, VoicePlayer
+from voice_actions import VoiceActions
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -128,7 +129,13 @@ class DesktopPet:
         self.expression_expires_at = None
         self.stickers = StickerLibrary(APP_DIR/'assets'/'expressions', RESOURCE_DIR/'assets'/'expressions')
         self.voices = VoiceLibrary(APP_DIR,RESOURCE_DIR)
-        self.voice_player = VoicePlayer()
+        try:
+            voice_volume = int(self.settings.get('voice_volume',100))
+        except (TypeError,ValueError):
+            voice_volume = 100
+        self.voice_player = VoicePlayer(volume=voice_volume,muted=self.settings.get('voice_muted',False))
+        self.voice_actions = VoiceActions()
+        self.voice_manual = False
         self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
@@ -270,6 +277,8 @@ class DesktopPet:
         if self.current!=previous:
             self.last_frame=-1
             logging.info('Animation %s after native return from %s',self.current,previous)
+        if not self.qa_mode:
+            self.update_automatic_voice(dt)
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
         index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
@@ -332,15 +341,53 @@ class DesktopPet:
             self.expression_expires_at=None
         logging.info('Expression %s',key)
 
-    def play_voice(self,identifier):
+    def update_automatic_voice(self,seconds):
+        player = self.voice_player
+        busy = player.current_id is not None
+        if self.current == 'drinking':
+            busy = busy and self.voice_manual
+        else:
+            busy = busy or isinstance(self.popup,VoicePicker)
+        title = self.voice_actions.advance(seconds,self.current,self.clock.cycle,
+                                           enabled=not player.muted and player.volume > 0,
+                                           busy=busy,paused=self.paused)
+        if title:
+            record = next((r for r in self.voices.records if r['title'] == title),None)
+            if record:
+                self.play_voice(record['id'],automatic=True)
+
+    def play_voice(self,identifier,*,automatic=False):
         try:
-            self.voice_player.play(self.voices.get(identifier))
+            if self.voice_player.play(self.voices.get(identifier)):
+                self.voice_manual = not automatic
+                if not automatic:
+                    self.voice_actions.defer()
             return True
         except (FileNotFoundError,StopIteration):
-            self.voice_player.stop()
+            if not automatic:
+                self.voice_player.stop()
             self.voices.refresh()
             logging.info('Selected voice is no longer available: %s',identifier)
             return False
+
+    def stop_voice(self):
+        self.voice_player.stop()
+        self.voice_actions.defer()
+
+    def configure_voice(self,*,volume=None,muted=None):
+        self.voice_player.configure(volume=volume,muted=muted)
+        self.voice_actions.defer()
+        self.save_settings()
+
+    def save_settings(self):
+        if self.qa_mode:
+            return
+        self.settings.update(x=self.x,y=self.y,scale=self.scale,height=self.height,
+                             voice_volume=self.voice_player.volume,voice_muted=self.voice_player.muted)
+        try:
+            SETTINGS.write_text(json.dumps(self.settings,ensure_ascii=False),encoding='utf-8')
+        except OSError:
+            logging.warning('Could not save pet preferences',exc_info=True)
 
     def menu_command(self,command,position=None):
         if command==10:
@@ -418,9 +465,7 @@ class DesktopPet:
                 self.voice_player.close()
                 self.stream.close()
                 self.free_surface()
-                if not self.qa_mode:
-                    try:SETTINGS.write_text(json.dumps({'x':self.x,'y':self.y,'scale':self.scale,'height':self.height}),encoding='utf-8')
-                    except OSError:pass
+                self.save_settings()
                 logging.info('Exited cleanly')
                 if self.qa_mode:
                     qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times],

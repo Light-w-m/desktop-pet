@@ -7,6 +7,11 @@
   "voice_picker_keeps_animation_playing": true,
   "page_mouse_keyboard_wheel": true,
   "same_row_expression_voice_buttons": true,
-  "gdi_handles_before": 10,
-  "gdi_handles_after": 10
+  "private_handle_live_volume_and_buffer_release": true,
+  "mute_zero_volume_and_bounds": true,
+  "native_mute_volume_controls": true,
+  "automatic_action_wiring_and_manual_priority": true,
+  "voice_settings_saved_and_other_preferences_preserved": true,
+  "gdi_handles_before": 2,
+  "gdi_handles_after": 2
 }
