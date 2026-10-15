@@ -105,7 +105,7 @@ try:
     send(0x0100, 40)
     send(0x0100, 13)
     assert not pet.auto and pet.clock.requested == 'standing'
-    for command, scale in ((31, .7), (33, 1.3), (32, 1.0)):
+    for command, scale in ((31, .7), (31, .7), (33, 1.3), (32, 1.0), (32,1.0)):
         pet.menu()
         click(command)
         assert pet.scale == scale
@@ -131,7 +131,7 @@ try:
         for name in pet.animations:
             for x in (area.left, (area.left+area.right-pet.width)//2, area.right-pet.width):
                 pet.x, pet.y, pet.current = x, area.bottom-pet.height, name
-                pet.draw(20 if name == 'standing' else 200)
+                pet.draw(min(20 if name == 'standing' else 200,len(pet.animations[name]['frames'])-1))
                 for view in ('menu', 'expressions', 'voices'):
                     pet.menu(picker=view == 'expressions', voices=view == 'voices')
                     beside_visible_pet()
@@ -172,6 +172,7 @@ try:
     after = app.user.GetGuiResources(process, 0)
     assert after <= before+1, ('GDI handles leaked', before, after)
     result = {'native_window_rendered': True, 'menu_keeps_animation_playing': True,
+              'reselect_same_size_keeps_frame_reader_running':True,
               'both_popups_beside_all_poses_at_screen_edges': True,
               'open_popup_follows_pose_changes': True, 'narrow_work_area_fits': True,
               'secondary_monitor_negative_coordinates': True,

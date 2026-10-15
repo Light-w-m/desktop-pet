@@ -7,6 +7,9 @@ manifest=json.loads((stage/'manifest.json').read_text(encoding='utf-8'))
 pack=json.loads((stage/manifest['playback_pack']).read_text(encoding='utf-8'))
 datas=[(str(stage/name),'assets') for name in ['manifest.json',manifest['playback_pack'],pack['data']]]
 datas += [(str(path),'assets/expressions') for path in (root/'assets'/'expressions').glob('*.png')]
+drag=root/'assets'/'dragging'
+assert (drag/'pet-frames.json').is_file(),'Missing prepared dragging animation; extract the matching source-assets package'
+datas += [(str(drag/name),'assets/dragging') for name in ('pet-frames.json','pet-frames.bin','source.json')]
 assert len(list((root/'assets'/'expressions').glob('*.png')))==9,'Missing expression stickers'
 voice_folder=runpy.run_path(str(root/'work'/'prepare_voices.py'))['prepare'](root)
 if voice_folder:

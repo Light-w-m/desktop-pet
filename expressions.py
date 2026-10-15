@@ -150,12 +150,13 @@ class ExpressionBadge(PinkMenu):
 
     def follow(self):
         a, owner = self.api, self.owner
-        placement = (owner.x, owner.y, owner.scale, owner.current)
+        pose = owner.visual_pose
+        placement = (owner.x, owner.y, owner.scale, pose)
         if getattr(self, 'placement', None) == placement:
             return
         self.placement = placement
         # Use one fixed pose boundary, not a changing frame bbox: no breathing jitter.
-        right, top = owner.expression_anchors[owner.current]
+        right, top = owner.expression_anchors[pose]
         x = owner.x+round(right*owner.scale)+round(10*owner.scale)
         y = owner.y+round(top*owner.scale)-round(self.height*.66)
         monitor = monitor_work_area(a, owner.x+owner.width//2, owner.y+owner.height//2)

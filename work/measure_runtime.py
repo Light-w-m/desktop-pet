@@ -9,7 +9,9 @@ import time
 ROOT = Path(__file__).resolve().parent.parent
 exe = ROOT/'work'/'dist'/'CitlaliDesktopPet.exe'
 import sys
-scale = float(sys.argv[1]) if len(sys.argv)>1 else 1.0
+drag_mode = '--drag' in sys.argv
+scales = [value for value in sys.argv[1:] if value != '--drag']
+scale = float(scales[0]) if scales else 1.0
 settings = exe.parent/'pet-settings.json'
 saved_settings = settings.read_bytes() if settings.exists() else None
 settings.write_text(json.dumps({'scale':scale}),encoding='utf-8')
@@ -34,7 +36,10 @@ class MEMORY(C.Structure):
 
 
 psapi.GetProcessMemoryInfo.argtypes = [W.HANDLE, C.POINTER(MEMORY), W.DWORD]
-process = subprocess.Popen([str(exe), '--qa-seconds', '45'], creationflags=subprocess.CREATE_NO_WINDOW)
+arguments = [str(exe),'--qa-seconds','12' if drag_mode else '45']
+if drag_mode:
+    arguments.append('--qa-drag')
+process = subprocess.Popen(arguments, creationflags=subprocess.CREATE_NO_WINDOW)
 samples = []
 started = time.perf_counter()
 
@@ -92,5 +97,5 @@ report = {'display_scale':scale,'samples':len(samples),
           'child_peak_private_mib': max(s['child']['private'] for s in samples)/1024/1024,
           'group_peak_working_mib': max(s['child']['working']+(s['launcher'] or {}).get('working',0) for s in samples)/1024/1024,
           'group_peak_private_mib': max(s['child']['private']+(s['launcher'] or {}).get('private',0) for s in samples)/1024/1024}
-(ROOT/'work'/'memory-after.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+(ROOT/'work'/('memory-drag.json' if drag_mode else 'memory-after.json')).write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(report,indent=2),flush=True)

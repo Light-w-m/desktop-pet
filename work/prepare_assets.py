@@ -32,6 +32,13 @@ def prepare(check_only=False):
         expected = checksums[name]
         if path.stat().st_size != expected['bytes'] or digest(path) != expected['sha256']:
             raise ValueError('Source asset does not match its checksum: '+name)
+    drag = assets/'dragging'
+    if (drag/'source.json').is_file():
+        metadata = json.loads((drag/'source.json').read_text(encoding='utf-8'))
+        for name,expected in metadata['files'].items():
+            path = drag/name
+            if path.stat().st_size != expected['bytes'] or digest(path) != expected['sha256']:
+                raise ValueError('Dragging animation does not match its checksum: '+name)
     if not check_only:
         stage = ROOT/'work'/'repaired-assets'
         stage.mkdir(parents=True, exist_ok=True)

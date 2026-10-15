@@ -1,6 +1,7 @@
 {
   "native_window_rendered": true,
   "menu_keeps_animation_playing": true,
+  "reselect_same_size_keeps_frame_reader_running": true,
   "both_popups_beside_all_poses_at_screen_edges": true,
   "open_popup_follows_pose_changes": true,
   "narrow_work_area_fits": true,
@@ -8,5 +9,5 @@
   "mouse_keyboard_pause_auto_resize_dismiss": true,
   "gdi_handles_before": 2,
   "gdi_handles_after": 2,
-  "max_hover_dispatch_ms": 3.7767000030726194
+  "max_hover_dispatch_ms": 0.4703000304289162
 }

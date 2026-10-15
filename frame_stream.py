@@ -34,6 +34,7 @@ class FrameArchive:
         self.canvas = tuple(data['canvas'])
         self.display_canvas = tuple(data['display_canvas'])
         self.animations = {}
+        self.sources = {}
         for name, spec in data['animations'].items():
             endpoints = []
             duration = 0.0
@@ -41,12 +42,22 @@ class FrameArchive:
                 duration += max(1, frame['ms'])/1000
                 endpoints.append(duration)
             self.animations[name] = {'frames': spec['frames'], 'endpoints': endpoints, 'duration': duration}
+            self.sources[name] = self.path
+
+    def include(self, path):
+        other = FrameArchive(path)
+        if (other.canvas,other.display_canvas) != (self.canvas,self.display_canvas):
+            raise ValueError('Animation canvas sizes must match')
+        if self.animations.keys() & other.animations.keys():
+            raise ValueError('Duplicate animation in optional archive')
+        self.animations.update(other.animations)
+        self.sources.update(other.sources)
 
     def read(self, name, number, size):
         display = size == self.display_canvas
         record = self.animations[name]['frames'][number]['display' if display else 'native']
         offset, length, x, y, right, bottom = record
-        with self.path.open('rb') as source:
+        with self.sources[name].open('rb') as source:
             source.seek(offset)
             data = source.read(length)
         pixels = zlib.decompress(data)
@@ -78,6 +89,8 @@ class FrameStream:
         self.worker.start()
 
     def get(self, name, number, size):
+        if not 0 <= number < len(self.archive.animations[name]['frames']):
+            raise IndexError(f'Animation frame out of range: {name} {number}')
         key = (name, number, size)
         with self.condition:
             self.plan = key
@@ -96,6 +109,7 @@ class FrameStream:
             self.plan = None
             self.cache.clear()
             self.cache_bytes = 0
+            self.condition.notify_all()
 
     def close(self):
         with self.condition:
@@ -143,7 +157,9 @@ class FrameStream:
                     next(iter(pending.values())).result()
                 else:
                     with self.condition:
-                        self.condition.wait_for(lambda: self.stopped or self.plan != plan)
+                        # clear() may invalidate the cache while a resize keeps
+                        # exactly the same plan; a missing current frame must wake us.
+                        self.condition.wait_for(lambda: self.stopped or self.plan != plan or plan not in self.cache)
         except Exception as error:
             with self.condition:
                 self.error = error

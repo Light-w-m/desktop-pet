@@ -1,0 +1,12 @@
+{
+  "all_186_frames_and_checksums": true,
+  "transparent_premultiplied_edges_and_margins": true,
+  "native_drag_starts_gif": true,
+  "previous_action_phase_held_and_resumed": true,
+  "release_crossfade_and_fast_regrab": true,
+  "resize_during_drag": true,
+  "drag_animation_while_main_paused": true,
+  "capture_loss_fades_back": true,
+  "interaction_expression_preserved": true,
+  "single_bounded_frame_cache": true
+}

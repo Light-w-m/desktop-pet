@@ -1,0 +1,11 @@
+{
+  "source_frames": 71,
+  "frames": 186,
+  "fps": 60,
+  "loop_seam_difference": 0.15989235043525696,
+  "max_frame_difference": 4.429848670959473,
+  "median_frame_difference": 2.6426472663879395,
+  "transparent_canvas_margin": true,
+  "source_partial_framing_accepted": true,
+  "mask_reference_only_original_pixels_preserved": true
+}

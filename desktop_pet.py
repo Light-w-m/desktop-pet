@@ -19,6 +19,7 @@ from playback import Playback
 from voice_library import VoiceLibrary
 from voices import VoicePicker, VoicePlayer
 from voice_actions import VoiceActions
+from drag_motion import DragMotion
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -112,10 +113,12 @@ class DesktopPet:
         self.scale = max(.6, min(1.5, self.scale))
         self.auto = False
         self.paused = False
+        self.drag_motion = DragMotion()
         self.reset_drag()
         self.interaction_random = random.Random()
         self.current = 'standing'
         self.last_frame = -1
+        self.last_drag_frame = None
         self.draw_times = []
         self.render_times = []
         self.frame_index = 0
@@ -124,7 +127,8 @@ class DesktopPet:
         self.started = self.last_tick
         self.qa_seconds = float(sys.argv[sys.argv.index('--qa-seconds') + 1]) if '--qa-seconds' in sys.argv else 0
         self.qa_mode = '--qa-seconds' in sys.argv
-        self.qa_report = APP_DIR/'work'/'playback-qa.json'
+        self.qa_drag = '--qa-drag' in sys.argv
+        self.qa_report = APP_DIR/'work'/('drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
         self.animations = {}
         self.popup = None
         self.expression = None
@@ -191,6 +195,11 @@ class DesktopPet:
                 folder=RESOURCE_DIR/'assets' if getattr(sys,'frozen',False) else APP_DIR/'work'/'repaired-assets'
                 archive_path=folder/manifest['playback_pack']
             archive = FrameArchive(archive_path)
+            for folder in (APP_DIR/'assets',RESOURCE_DIR/'assets',ASSETS):
+                optional = folder/'dragging'/'pet-frames.json'
+                if optional.is_file():
+                    archive.include(optional)
+                    break
             self.animations = archive.animations
             # Stable upper-right pose bounds in default display coordinates.
             sx, sy = (d/n for d, n in zip(archive.display_canvas, archive.canvas))
@@ -230,7 +239,19 @@ class DesktopPet:
     def draw(self,index):
         render_start=time.perf_counter()
         self.frame_index=index
-        frame=self.stream.get(self.current,index,(self.width,self.height))
+        size=self.width,self.height
+        render_name,render_index=self.current,index
+        if self.drag_motion.visible and 'dragging' in self.animations:
+            if self.drag_motion.held_frame is None:
+                self.drag_motion.held_frame=self.stream.get(self.current,index,size)
+            animation=self.animations['dragging']
+            phase=self.drag_motion.elapsed%animation['duration']
+            render_index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+            render_name='dragging'
+            frame=self.drag_motion.blend(self.stream.get('dragging',render_index,size),size)
+        else:
+            self.drag_motion.held_frame=None
+            frame=self.stream.get(self.current,index,size)
         self.displayed_frame=frame
         C.memset(self.bits,0,self.width*self.height*4)
         x,y=frame['offset']
@@ -244,10 +265,11 @@ class DesktopPet:
         if not user.UpdateLayeredWindow(self.hwnd,None,C.byref(pt),C.byref(size),self.dc,C.byref(src),0,C.byref(self.blend),2):
             raise C.WinError(C.get_last_error())
         self.last_frame=index
+        self.last_drag_frame=render_index if render_name == 'dragging' else None
         if self.expression:self.expression.follow()
         if self.popup:self.popup.follow()
         if self.qa_mode:
-            self.draw_times.append((self.current,index,render_start))
+            self.draw_times.append((render_name,render_index,render_start))
             self.render_times.append(time.perf_counter()-render_start)
 
     def switch(self,name,automatic=False):
@@ -263,7 +285,12 @@ class DesktopPet:
         if self.qa_seconds and now-self.started>=self.qa_seconds:
             user.DestroyWindow(self.hwnd)
             return
-        if self.qa_mode:
+        if self.qa_drag:
+            active=1.5 <= now-self.started < self.qa_seconds-1.5
+            if active != self.drag_motion.active:
+                if active:self.start_drag_animation()
+                else:self.drag_motion.stop()
+        elif self.qa_mode:
             names=['standing','drinking','reading']
             name=names[min(2,int((now-self.started)/max(3,self.qa_seconds/3)))]
             if self.qa_target!=name:
@@ -273,20 +300,29 @@ class DesktopPet:
             self.show_expression(None)
         self.voice_player.poll()
         if self.popup:self.popup.refresh()
-        if self.paused:return
+        was_dragging=self.drag_motion.visible
+        self.drag_motion.advance(dt)
+        if self.paused and not (was_dragging or self.drag_motion.visible):return
         previous=self.current
-        self.clock.advance(dt)
+        if not self.paused and not (was_dragging or self.drag_motion.visible):
+            self.clock.advance(dt)
         self.current=self.clock.current
         self.elapsed=self.clock.position
         if self.current!=previous:
             self.last_frame=-1
             logging.info('Animation %s after native return from %s',self.current,previous)
-        if not self.qa_mode:
+        if not self.qa_mode and not self.drag_motion.visible and not self.paused:
             self.update_automatic_voice(dt)
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
         index=min(bisect_right(animation['endpoints'],t),len(animation['frames'])-1)
-        if index!=self.last_frame:self.draw(index)
+        drag_changed=False
+        if self.drag_motion.visible:
+            drag=self.animations['dragging']
+            phase=self.drag_motion.elapsed%drag['duration']
+            drag_index=min(bisect_right(drag['endpoints'],phase),len(drag['frames'])-1)
+            drag_changed=drag_index!=self.last_drag_frame or 0 < self.drag_motion.weight < 1
+        if index!=self.last_frame or drag_changed or (was_dragging and not self.drag_motion.visible):self.draw(index)
 
     def clamp_position(self):
         left=user.GetSystemMetrics(76)
@@ -300,6 +336,7 @@ class DesktopPet:
         oldwidth,oldheight=self.width,self.height
         self.scale=max(.6,min(1.5,scale))
         self.load_frames()
+        self.drag_motion.held_frame=None
         self.x+=(oldwidth-self.width)//2
         self.y+=oldheight-self.height
         self.clamp_position()
@@ -314,7 +351,7 @@ class DesktopPet:
         logging.info('Resize %s',self.scale)
 
     def popup_bounds(self,name=None):
-        left,top,right,bottom=self.pose_bounds[name or self.current]
+        left,top,right,bottom=self.pose_bounds[name or self.visual_pose]
         return (self.x+math.floor(left*self.scale),self.y+math.floor(top*self.scale),
                 self.x+math.ceil(right*self.scale),self.y+math.ceil(bottom*self.scale))
 
@@ -332,6 +369,16 @@ class DesktopPet:
     def reset_drag(self):
         self.drag_offset = self.drag_origin = None
         self.dragging = False
+        self.drag_motion.stop()
+
+    @property
+    def visual_pose(self):
+        return 'dragging' if self.drag_motion.visible and 'dragging' in self.animations else self.current
+
+    def start_drag_animation(self):
+        if 'dragging' in self.animations:
+            self.drag_motion.start(self.displayed_frame)
+            self.last_frame=-1
 
     def show_interaction_expression(self,interaction):
         self.show_expression(self.interaction_random.choice(self.INTERACTION_EXPRESSIONS[interaction]))
@@ -453,6 +500,7 @@ class DesktopPet:
                 user.SetWindowPos(hwnd,None,self.x,self.y,0,0,0x0001|0x0004|0x0010)
                 if not self.dragging:
                     self.dragging=True
+                    self.start_drag_animation()
                     self.show_interaction_expression('drag')
                 if self.expression:self.expression.follow()
                 return 0
@@ -519,7 +567,13 @@ class DesktopPet:
                 user.DispatchMessageW(C.byref(message))
             self.tick()
             if not self.bits:continue
-            if self.paused:
+            if self.drag_motion.visible:
+                animation=self.animations['dragging']
+                phase=self.drag_motion.elapsed%animation['duration']
+                index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+                remaining=animation['endpoints'][index]-phase
+                timeout=max(1,math.ceil(remaining*1000-(time.perf_counter()-self.last_tick)*1000))
+            elif self.paused:
                 timeout=30
             else:
                 animation=self.animations[self.current]

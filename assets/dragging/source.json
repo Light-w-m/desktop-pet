@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "source_file": "64e08c4b4b4b2fe56386aa8dfe188c41.gif",
+  "source_sha256": "ec0cbbb95e8d6c4abaaa942435808aba05849714916cac4c7ff6337ace4a0714",
+  "source_frames": 71,
+  "source_duration_ms": 2960,
+  "output_frames": 186,
+  "duration_ms": 3100,
+  "fps": 60,
+  "canvas": [
+    840,
+    720
+  ],
+  "display_canvas": [
+    560,
+    480
+  ],
+  "source_partial_framing_accepted": true,
+  "original_gif_colours": true,
+  "mask_reference": {
+    "tool": "image_gen__imagegen",
+    "mode": "built-in",
+    "prompt": "Use case: background-extraction. Edit target: supplied single frame from an animated video, exactly 720x720. Extract ONLY the existing pink-haired character and the blue/white pillow she holds. Remove the entire dark room background, all furniture/window details and the tiny bottom-right white watermark to true transparent alpha. This output is a technical segmentation reference for preserving the original animation. Maintain EXACTLY the original 720x720 framing, same coordinates, same scale and existing cut-off at the bottom edge. Do NOT zoom, crop, move, rotate, add margins, complete any missing body, redraw facial expression, or change the character/pillow shape. Preserve all existing character pixels/colours, hair wisps, hands and clothing. Return an aligned transparent PNG cutout with clean soft anti-aliased contours. No shadows, no added text.",
+    "use": "Alpha reference only; animated colours are sampled from the original GIF."
+  },
+  "files": {
+    "pet-frames.bin": {
+      "bytes": 84993035,
+      "sha256": "ec1fc9e957e639c645374ead32f6646f44dbe919a5bb0c3853143523fbef4663"
+    },
+    "pet-frames.json": {
+      "bytes": 17762,
+      "sha256": "bfd3293356a408bbf815e28fce2ae0f152a052ec40814ad0a1318284923f8e0a"
+    }
+  },
+  "layout_native_offset": [
+    189,
+    63
+  ],
+  "bottom_edge_feather_pixels": 24
+}
