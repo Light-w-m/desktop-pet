@@ -10,10 +10,10 @@ from pet_menu import PinkMenu, monitor_work_area, rgba_pixels
 EXPRESSIONS = (('panic', '慌张'), ('sleep', '睡了'), ('suspicious', '怀疑'),
                ('hide', '不想面对'), ('wake', '刚醒'), ('blush', '脸红'),
                ('annoyed', '有点烦'), ('hello', '来了'), ('wink', '眨眼'))
-PICKER_WIDTH, PICKER_HEIGHT = 306, 432
-PICKER_HITS = {51: (18, 20, 72, 52), 52: (222, 21, 286, 51)}
-PICKER_HITS.update({101+i: (18+92*(i % 3), 89+104*(i//3),
-                          102+92*(i % 3), 187+104*(i//3)) for i in range(9)})
+PICKER_WIDTH, PICKER_HEIGHT = 176, 244
+PICKER_HITS = {51: (10, 9, 48, 29), 52: (133, 9, 166, 29)}
+PICKER_HITS.update({101+i: (10+54*(i % 3), 38+62*(i//3),
+                          58+54*(i % 3), 96+62*(i//3)) for i in range(9)})
 
 
 class StickerLibrary:
@@ -58,36 +58,35 @@ def render_picker(library, state, hover=None, dpi=1):
                   font=font(round(size*factor), bold), fill=fill, anchor=anchor)
 
     shadow = Image.new('RGBA', canvas.size)
-    ImageDraw.Draw(shadow).rounded_rectangle(box((10, 10, 296, 426)), radius=16*factor,
+    ImageDraw.Draw(shadow).rounded_rectangle(box((6, 6, 170, 240)), radius=11*factor,
                                              fill=(106, 52, 76, 35))
-    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(5*factor)))
-    rounded((8, 6, 298, 424), 15, '#fff8fb', '#ecc5d5')
-    rounded((9, 7, 297, 58), 14, '#fce5ee')
-    draw.rectangle(box((9, 44, 297, 59)), fill='#fce5ee')
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(3*factor)))
+    rounded((4, 3, 172, 240), 10, '#fff8fb', '#ecc5d5')
+    rounded((5, 4, 171, 30), 9, '#fce5ee')
+    draw.rectangle(box((5, 20, 171, 31)), fill='#fce5ee')
     if hover == 51:
-        rounded(PICKER_HITS[51], 9, '#f3cfdf')
-    text(24, 27, '‹ 返回', 11)
-    text(78, 23, '今天的心情', 14, '#824b65', True)
+        rounded(PICKER_HITS[51], 5, '#f3cfdf')
+    text(14, 12, '‹ 返回', 8.5)
+    text(58, 10, '今天的心情', 10, '#824b65', True)
     selected = state['expression']
-    rounded(PICKER_HITS[52], 9, '#f3cfdf' if hover == 52 else '#fff5f9', '#eac3d4')
-    text(254, 28, '清除表情', 10, '#985d7b' if selected else '#b597a6', anchor='mt')
-    text(20, 67, '点一下，让小表情陪在她的右上角', 10, '#ae8396')
+    rounded(PICKER_HITS[52], 5, '#f3cfdf' if hover == 52 else '#fff5f9', '#eac3d4')
+    text(149, 12, '清除', 8.5, '#985d7b' if selected else '#b597a6', anchor='mt')
     for i, (key, label) in enumerate(EXPRESSIONS):
         command = 101+i
         left, top, right, bottom = PICKER_HITS[command]
         active = selected == key
-        rounded((left, top, right, bottom), 10,
+        rounded((left, top, right, bottom), 6,
                 '#fce2ee' if active else '#fff0f6' if command == hover else '#fffafd',
                 '#d68daa' if active else '#edc5d6' if command == hover else '#f0dce5',
                 1.5 if active else 1)
-        image = library.image(key, round(68*factor))
+        image = library.image(key, round(40*factor))
         canvas.alpha_composite(image, (round((left+right)*factor/2-image.width/2),
-                                        round((top+38)*factor-image.height/2)))
-        text((left+right)/2, top+77, label, 10.5, '#824b65' if active else '#957285', active, 'mt')
+                                        round((top+23)*factor-image.height/2)))
+        text((left+right)/2, top+44, label, 8.5, '#824b65' if active else '#957285', active, 'mt')
         if active:
-            rounded((right-19, top+5, right-5, top+19), 7, '#cd84a4')
-            text(right-12, top+4.5, '✓', 10, '#ffffff', True, 'mt')
-    text(153, 406, '5 秒后自动消失 · 再次选择重新计时', 9, '#b18498', anchor='mt')
+            rounded((right-13, top+3, right-3, top+13), 5, '#cd84a4')
+            text(right-8, top+2, '✓', 8, '#ffffff', True, 'mt')
+    text(88, 226, '5 秒后自动消失', 8.5, '#b18498', anchor='mt')
     return canvas.resize((round(PICKER_WIDTH*dpi), round(PICKER_HEIGHT*dpi)), Image.Resampling.LANCZOS)
 
 
@@ -128,6 +127,7 @@ class ExpressionPicker(PinkMenu):
 class ExpressionBadge(PinkMenu):
     """No focus or mouse capture: the sticker never interrupts dragging/playback."""
     activate = False
+    beside_pet = False
     extra_style = 0x08000000 | 0x00000020  # NOACTIVATE | TRANSPARENT
     title = '茜特菈莉 · 表情'
 

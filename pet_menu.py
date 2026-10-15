@@ -34,11 +34,22 @@ def menu_pixels(state, hover, dpi):
     return rgba_pixels(render_menu(state, hover, dpi))
 
 
+def place_beside(bounds, size, work, gap):
+    """Keep the whole popup outside the pet's stable animation silhouette."""
+    left, top, right, bottom = bounds
+    width, height = size
+    x = right+gap if right+gap+width <= work.right-4 else left-gap-width
+    y = (top+bottom-height)//2
+    return (max(work.left+4, min(x, work.right-width-4)),
+            max(work.top+4, min(y, work.bottom-height-4)))
+
+
 class PinkMenu:
     logical_width, logical_height = WIDTH, HEIGHT
     commands, hits = COMMANDS, HITS
     activate = True
     extra_style = 0
+    beside_pet = True
     title = '茜特菈莉 · 小小日常'
 
     def __init__(self, owner, api):
@@ -69,6 +80,25 @@ class PinkMenu:
     def render_pixels(self, state, hover, dpi):
         return menu_pixels(state, hover, dpi)
 
+    def position(self, x, y):
+        if not self.beside_pet:
+            work = monitor_work_area(self.api, x, y)
+            return (max(work.left, min(x-12, work.right-self.width)),
+                    max(work.top, min(y-10, work.bottom-self.height)))
+        bounds = self.owner.popup_bounds()
+        work = monitor_work_area(self.api, (bounds[0]+bounds[2])//2, (bounds[1]+bounds[3])//2)
+        return place_beside(bounds, (self.width, self.height), work, self.gap)
+
+    def follow(self):
+        placement = (self.owner.x, self.owner.y, self.owner.scale, self.owner.current)
+        if not self.hwnd or getattr(self, 'placement', None) == placement:
+            return
+        self.placement = placement
+        x, y = self.position(self.x, self.y)
+        if (x, y) != (self.x, self.y):
+            self.x, self.y = x, y
+            self.api.user.SetWindowPos(self.hwnd, None, x, y, 0, 0, 0x0001 | 0x0004 | 0x0010)
+
     def open(self, x, y):
         a = self.api
         a.signature(a.user, 'GetDpiForWindow', W.UINT, W.HWND)
@@ -81,9 +111,19 @@ class PinkMenu:
         a.signature(a.user, 'TrackMouseEvent', W.BOOL, C.POINTER(TRACKMOUSEEVENT))
         self.dpi = max(1, a.user.GetDpiForWindow(self.owner.hwnd)/96)
         self.width, self.height = self.dimensions()
-        work = monitor_work_area(a, x, y)
-        self.x = max(work.left, min(x-12, work.right-self.width))
-        self.y = max(work.top, min(y-10, work.bottom-self.height))
+        self.gap = max(6, round(8*self.dpi))
+        if self.beside_pet:
+            bounds = self.owner.popup_bounds()
+            work = monitor_work_area(a, (bounds[0]+bounds[2])//2, (bounds[1]+bounds[3])//2)
+            # Leave room for every pose while the non-modal menu stays open.
+            # On a narrow screen, fit the menu to the larger free side.
+            space = min(max(self.owner.popup_bounds(name)[0]-work.left,
+                            work.right-self.owner.popup_bounds(name)[2])-self.gap-4
+                        for name in self.owner.animations)
+            fit = min(1, max(1, space)/self.width, max(1, work.bottom-work.top-8)/self.height)
+            self.dpi *= fit
+            self.width, self.height = self.dimensions()
+        self.x, self.y = self.position(x, y)
         self.hwnd = a.user.CreateWindowExW(0x00080000 | 0x00000008 | 0x00000080 | self.extra_style,
             'CitlaliDesktopPetWindow_20261014', self.title, 0x80000000,
             self.x, self.y, self.width, self.height, self.owner.hwnd, None, self.owner.instance, None)
@@ -140,6 +180,7 @@ class PinkMenu:
             raise C.WinError(C.get_last_error())
 
     def refresh(self):
+        self.follow()
         if self.hwnd and not self.closing and self.last_state != self.state():
             self.paint()
 

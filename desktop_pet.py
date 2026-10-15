@@ -179,10 +179,13 @@ class DesktopPet:
             self.animations = archive.animations
             # Stable upper-right pose bounds in default display coordinates.
             sx, sy = (d/n for d, n in zip(archive.display_canvas, archive.canvas))
-            self.expression_anchors = {
-                name: (max(f['native'][4] for f in animation['frames'])*sx,
-                       min(f['native'][3] for f in animation['frames'])*sy)
+            self.pose_bounds = {
+                name: (min(f['native'][2] for f in animation['frames'])*sx,
+                       min(f['native'][3] for f in animation['frames'])*sy,
+                       max(f['native'][4] for f in animation['frames'])*sx,
+                       max(f['native'][5] for f in animation['frames'])*sy)
                 for name, animation in self.animations.items()}
+            self.expression_anchors = {name:(bounds[2],bounds[1]) for name,bounds in self.pose_bounds.items()}
             self.stream = FrameStream(archive)
         else:
             self.stream.clear()
@@ -227,6 +230,7 @@ class DesktopPet:
             raise C.WinError(C.get_last_error())
         self.last_frame=index
         if self.expression:self.expression.follow()
+        if self.popup:self.popup.follow()
         if self.qa_mode:
             self.draw_times.append((self.current,index,render_start))
             self.render_times.append(time.perf_counter()-render_start)
@@ -290,6 +294,11 @@ class DesktopPet:
         # Decoding resized frames takes real time; it must not advance media.
         self.last_tick=time.perf_counter()
         logging.info('Resize %s',self.scale)
+
+    def popup_bounds(self,name=None):
+        left,top,right,bottom=self.pose_bounds[name or self.current]
+        return (self.x+math.floor(left*self.scale),self.y+math.floor(top*self.scale),
+                self.x+math.ceil(right*self.scale),self.y+math.ceil(bottom*self.scale))
 
     def menu(self, position=None, picker=False):
         self.drag_offset=None
