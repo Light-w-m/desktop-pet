@@ -213,6 +213,15 @@ try:
     click(67)
     ready()
     assert pet.voice_player.volume == volume_before
+    # Menus share the double-click-enabled window class: the second press is still a button click.
+    left,top,right,bottom = popup.hits[66]
+    x,y = round((left+right)/2*popup.dpi),round((top+bottom)/2*popup.dpi)
+    for message in (0x0201,0x0202,0x0203,0x0202):
+        app.user.SendMessageW(popup.hwnd,message,message != 0x0202,x | (y << 16))
+    ready()
+    assert pet.voice_player.volume == volume_before-20
+    assert pet.expression is None, 'Menu double click triggered a pet reaction'
+    pet.configure_voice(volume=volume_before)
     click(65)
     ready()
     assert pet.voice_player.muted
@@ -293,6 +302,7 @@ try:
               'page_mouse_keyboard_wheel':True,'same_row_expression_voice_buttons':True,
               'private_handle_live_volume_and_buffer_release':True,'mute_zero_volume_and_bounds':True,
               'native_mute_volume_controls':True,'automatic_action_wiring_and_manual_priority':True,
+              'rapid_menu_double_clicks_remain_normal_buttons':True,
               'drinking_voice_waits_half_second_of_animation':True,
               'voice_settings_saved_and_other_preferences_preserved':True,
               'gdi_handles_before':before,'gdi_handles_after':after}

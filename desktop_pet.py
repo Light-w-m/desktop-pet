@@ -9,6 +9,7 @@ import logging
 import math
 import os
 from pathlib import Path
+import random
 import sys
 import time
 from frame_stream import FrameArchive, FrameStream
@@ -99,6 +100,7 @@ signature(gdi, 'DeleteDC', W.BOOL, W.HDC)
 
 class DesktopPet:
     LABELS = {'standing': '站立待机', 'drinking': '坐着喝饮料', 'reading': '趴着读书'}
+    INTERACTION_EXPRESSIONS = {'double_click':('annoyed','blush'),'drag':('hide','hello')}
 
     def __init__(self):
         self.settings = {}
@@ -110,7 +112,8 @@ class DesktopPet:
         self.scale = max(.6, min(1.5, self.scale))
         self.auto = False
         self.paused = False
-        self.drag_offset = None
+        self.reset_drag()
+        self.interaction_random = random.Random()
         self.current = 'standing'
         self.last_frame = -1
         self.draw_times = []
@@ -158,6 +161,7 @@ class DesktopPet:
         self.instance = kernel.GetModuleHandleW(None)
         classname = 'CitlaliDesktopPetWindow_20261014'
         wc = WNDCLASS()
+        wc.style = 0x0008  # CS_DBLCLKS: let Windows recognize the user's double-click timing.
         wc.lpfnWndProc = self.callback
         wc.hInstance = self.instance
         wc.hCursor = user.LoadCursorW(None, C.c_void_p(32512))
@@ -315,7 +319,7 @@ class DesktopPet:
                 self.x+math.ceil(right*self.scale),self.y+math.ceil(bottom*self.scale))
 
     def menu(self, position=None, picker=False, voices=False):
-        self.drag_offset=None
+        self.reset_drag()
         user.ReleaseCapture()
         p=POINT()
         user.GetCursorPos(C.byref(p))
@@ -324,6 +328,13 @@ class DesktopPet:
         menu_type=VoicePicker if voices else ExpressionPicker if picker else PinkMenu
         self.popup=menu_type(self,sys.modules[__name__])
         self.popup.open(p.x,p.y)
+
+    def reset_drag(self):
+        self.drag_offset = self.drag_origin = None
+        self.dragging = False
+
+    def show_interaction_expression(self,interaction):
+        self.show_expression(self.interaction_random.choice(self.INTERACTION_EXPRESSIONS[interaction]))
 
     def show_expression(self,key,*,reset_timer=True):
         if key is not None:self.stickers.path(key)
@@ -412,27 +423,45 @@ class DesktopPet:
             if msg==0x0113:
                 self.tick()
                 return 0
-            if msg==0x0201:
+            if msg in (0x0201,0x0203):
                 p=POINT()
                 user.GetCursorPos(C.byref(p))
                 self.drag_offset=(p.x-self.x,p.y-self.y)
+                self.drag_origin=(p.x,p.y)
+                self.dragging=False
                 user.SetCapture(hwnd)
+                if msg==0x0203:
+                    self.show_interaction_expression('double_click')
                 return 0
             if msg==0x0200 and self.drag_offset:
+                if not wparam & 1:
+                    self.reset_drag()
+                    user.ReleaseCapture()
+                    return 0
                 p=POINT()
                 user.GetCursorPos(C.byref(p))
+                if not self.dragging:
+                    dx,dy=p.x-self.drag_origin[0],p.y-self.drag_origin[1]
+                    if abs(dx)<max(4,abs(user.GetSystemMetrics(68))) and abs(dy)<max(4,abs(user.GetSystemMetrics(69))):
+                        return 0
+                old_position=self.x,self.y
                 self.x=p.x-self.drag_offset[0]
                 self.y=p.y-self.drag_offset[1]
                 self.clamp_position()
+                if (self.x,self.y)==old_position:
+                    return 0
                 user.SetWindowPos(hwnd,None,self.x,self.y,0,0,0x0001|0x0004|0x0010)
+                if not self.dragging:
+                    self.dragging=True
+                    self.show_interaction_expression('drag')
                 if self.expression:self.expression.follow()
                 return 0
             if msg==0x0202:
-                self.drag_offset=None
+                self.reset_drag()
                 user.ReleaseCapture()
                 return 0
             if msg==0x0215:
-                self.drag_offset=None
+                self.reset_drag()
                 return 0
             if msg==0x0205:
                 self.menu()

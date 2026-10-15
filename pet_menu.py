@@ -231,7 +231,7 @@ class PinkMenu:
                 self.hover = None
                 self.paint()
             return 0
-        if message in (0x0200, 0x0201, 0x0202, 0x0205):
+        if message in (0x0200, 0x0201, 0x0202, 0x0203, 0x0205):
             x = C.c_short(lparam & 0xffff).value / self.dpi
             y = C.c_short((lparam >> 16) & 0xffff).value / self.dpi
             command = self.hit_test(x, y)
@@ -242,7 +242,7 @@ class PinkMenu:
                 if command != self.hover:
                     self.hover = command
                     self.paint()
-            elif message == 0x0201:
+            elif message in (0x0201, 0x0203):
                 self.pressed = command
                 if command is None:
                     self.close()

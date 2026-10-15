@@ -75,7 +75,76 @@ def snapshot(window, path):
     Image.frombytes('RGBA', (window.width, window.height), pixels, 'raw', 'BGRA').save(path)
 
 
+def main_mouse(message, x, y, buttons=1):
+    # Keep the real cursor untouched while dispatching to our own window.
+    def cursor(pointer):
+        point = C.cast(pointer,C.POINTER(app.POINT)).contents
+        point.x,point.y = x,y
+        return True
+    with patch.object(app.user,'GetCursorPos',side_effect=cursor):
+        app.user.SendMessageW(pet.hwnd,message,buttons,0)
+    assert pet.bits, 'An interaction closed the pet'
+
+
 try:
+    app.signature(app.user,'GetClassLongW',app.W.DWORD,app.W.HWND,C.c_int)
+    assert app.user.GetClassLongW(pet.hwnd,-26) & 8, 'Native double-click events are disabled'
+    pet.x,pet.y = 400,300
+    app.user.SetWindowPos(pet.hwnd,None,pet.x,pet.y,0,0,0x0001 | 0x0004 | 0x0010)
+    start_x,start_y = pet.x+100,pet.y+100
+    main_mouse(0x0201,start_x,start_y)
+    main_mouse(0x0200,start_x+1,start_y+1)
+    main_mouse(0x0202,start_x+1,start_y+1,0)
+    assert pet.expression is None and (pet.x,pet.y) == (400,300), 'A click/jitter triggered a drag'
+    with patch.object(pet.interaction_random,'choice',side_effect=['annoyed','blush','hide','hello']) as choose:
+        for key in ('annoyed','blush'):
+            main_mouse(0x0201,start_x,start_y)
+            main_mouse(0x0202,start_x,start_y,0)
+            main_mouse(0x0203,start_x,start_y)
+            main_mouse(0x0202,start_x,start_y,0)
+            assert pet.expression_key == key
+            ready(pet.expression)
+            assert choose.call_args.args[0] == ('annoyed','blush')
+        for key in ('hide','hello'):
+            start_x,start_y = pet.x+100,pet.y+100
+            old_x,old_y = pet.x,pet.y
+            dx,dy = max(30,abs(app.user.GetSystemMetrics(68))+10),max(20,abs(app.user.GetSystemMetrics(69))+10)
+            main_mouse(0x0201,start_x,start_y)
+            main_mouse(0x0200,start_x+dx,start_y+dy)
+            assert pet.dragging and pet.expression_key == key
+            assert (pet.x,pet.y) == (old_x+dx,old_y+dy)
+            assert choose.call_args.args[0] == ('hide','hello')
+            ready(pet.expression)
+            badge,deadline = pet.expression,pet.expression_expires_at
+            badge_position = badge.x,badge.y
+            calls = choose.call_count
+            main_mouse(0x0200,start_x+dx+17,start_y+dy+13)
+            assert pet.expression is badge and pet.expression_expires_at == deadline
+            assert choose.call_count == calls, 'Continuous dragging retriggered the expression'
+            assert (badge.x,badge.y) == (badge_position[0]+17,badge_position[1]+13)
+            main_mouse(0x0202,start_x+dx+17,start_y+dy+13,0)
+            assert pet.drag_offset is None and not pet.dragging
+            with patch.object(app.time,'perf_counter',return_value=deadline):
+                pet.tick()
+            assert pet.expression is None, 'Interaction expression did not expire'
+    # Losing capture or opening a menu cancels a pending drag.
+    for cancel in ('capture','menu','button_released'):
+        pet.show_expression(None)
+        start_x,start_y = pet.x+100,pet.y+100
+        main_mouse(0x0201,start_x,start_y)
+        if cancel == 'capture':
+            app.user.SendMessageW(pet.hwnd,0x0215,0,0)
+        elif cancel == 'menu':
+            pet.menu()
+            pet.popup.close()
+        else:
+            main_mouse(0x0200,start_x+100,start_y+100,0)
+        position = pet.x,pet.y
+        main_mouse(0x0200,start_x+150,start_y+150)
+        assert (pet.x,pet.y) == position and pet.expression is None
+        assert pet.drag_offset is None and pet.drag_origin is None and not pet.dragging
+        app.user.ReleaseCapture()
+    pet.last_tick = time.perf_counter()
     picker()
     snapshot(pet.popup, ROOT/'work'/'expression-picker-native.png')
     before_elapsed = pet.elapsed
@@ -201,6 +270,9 @@ try:
     pet.show_expression(None)
     assert pet.expression_expires_at is None, 'Manual clear left a timer active'
     report = {'all_9_selected': True, 'gallery_keeps_animation_playing': True,
+              'native_double_click_both_reactions': True,'drag_both_reactions_and_follow': True,
+              'single_click_and_jitter_ignored': True,'one_reaction_per_drag_and_five_second_timeout': True,
+              'capture_menu_and_button_release_cancel_drag': True,
               'clear_back_keyboard': True, 'follows_move_resize_action': True,
               'stable_between_frames': True, 'monitor_edges_visible': True,
               'click_through_no_activate': True, 'five_second_timeout_while_paused': True,

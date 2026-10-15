@@ -1,6 +1,11 @@
 {
   "all_9_selected": true,
   "gallery_keeps_animation_playing": true,
+  "native_double_click_both_reactions": true,
+  "drag_both_reactions_and_follow": true,
+  "single_click_and_jitter_ignored": true,
+  "one_reaction_per_drag_and_five_second_timeout": true,
+  "capture_menu_and_button_release_cancel_drag": true,
   "clear_back_keyboard": true,
   "follows_move_resize_action": true,
   "stable_between_frames": true,

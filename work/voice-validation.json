@@ -11,6 +11,7 @@
   "mute_zero_volume_and_bounds": true,
   "native_mute_volume_controls": true,
   "automatic_action_wiring_and_manual_priority": true,
+  "rapid_menu_double_clicks_remain_normal_buttons": true,
   "drinking_voice_waits_half_second_of_animation": true,
   "voice_settings_saved_and_other_preferences_preserved": true,
   "gdi_handles_before": 2,
