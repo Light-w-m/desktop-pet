@@ -20,6 +20,7 @@ from voice_library import VoiceLibrary
 from voices import VoicePicker, VoicePlayer
 from voice_actions import VoiceActions
 from drag_motion import DragMotion
+from shake_motion import ShakeDetector, StompMotion
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -114,11 +115,15 @@ class DesktopPet:
         self.auto = False
         self.paused = False
         self.drag_motion = DragMotion()
+        self.stomp_motion = StompMotion()
+        self.shake = ShakeDetector()
+        self.last_stomp_time = float('-inf')
         self.reset_drag()
         self.interaction_random = random.Random()
         self.current = 'standing'
         self.last_frame = -1
         self.last_drag_frame = None
+        self.last_stomp_frame = None
         self.draw_times = []
         self.render_times = []
         self.frame_index = 0
@@ -128,7 +133,9 @@ class DesktopPet:
         self.qa_seconds = float(sys.argv[sys.argv.index('--qa-seconds') + 1]) if '--qa-seconds' in sys.argv else 0
         self.qa_mode = '--qa-seconds' in sys.argv
         self.qa_drag = '--qa-drag' in sys.argv
-        self.qa_report = APP_DIR/'work'/('drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
+        self.qa_stomp = '--qa-stomp' in sys.argv
+        self.qa_report = APP_DIR/'work'/('stomp-playback-qa.json' if self.qa_stomp else
+                                       'drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
         self.animations = {}
         self.popup = None
         self.expression = None
@@ -195,11 +202,12 @@ class DesktopPet:
                 folder=RESOURCE_DIR/'assets' if getattr(sys,'frozen',False) else APP_DIR/'work'/'repaired-assets'
                 archive_path=folder/manifest['playback_pack']
             archive = FrameArchive(archive_path)
-            for folder in (APP_DIR/'assets',RESOURCE_DIR/'assets',ASSETS):
-                optional = folder/'dragging'/'pet-frames.json'
-                if optional.is_file():
-                    archive.include(optional)
-                    break
+            for name in ('dragging', 'stomping'):
+                for folder in (APP_DIR/'assets',RESOURCE_DIR/'assets',ASSETS):
+                    optional = folder/name/'pet-frames.json'
+                    if optional.is_file():
+                        archive.include(optional)
+                        break
             self.animations = archive.animations
             # Stable upper-right pose bounds in default display coordinates.
             sx, sy = (d/n for d, n in zip(archive.display_canvas, archive.canvas))
@@ -241,16 +249,26 @@ class DesktopPet:
         self.frame_index=index
         size=self.width,self.height
         render_name,render_index=self.current,index
-        if self.drag_motion.visible and 'dragging' in self.animations:
+        if self.stomp_motion.visible:
+            base = self.stream.get(self.current,index,size) if self.stomp_motion.held_frame is None else None
+            if base is not None:
+                self.stomp_motion.held_frame = self.stomp_motion.entry_frame = base
+            animation = self.animations['stomping']
+            render_index = min(bisect_right(animation['endpoints'],self.stomp_motion.elapsed),len(animation['frames'])-1)
+            render_name = 'stomping'
+            frame = self.stomp_motion.blend(self.stream.get('stomping',render_index,size),size)
+        elif self.drag_motion.visible and 'dragging' in self.animations:
             if self.drag_motion.held_frame is None:
                 self.drag_motion.held_frame=self.stream.get(self.current,index,size)
+                self.drag_motion.entry_frame=self.drag_motion.held_frame
             animation=self.animations['dragging']
             phase=self.drag_motion.elapsed%animation['duration']
             render_index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
             render_name='dragging'
             frame=self.drag_motion.blend(self.stream.get('dragging',render_index,size),size)
         else:
-            self.drag_motion.held_frame=None
+            self.drag_motion.clear()
+            self.stomp_motion.clear()
             frame=self.stream.get(self.current,index,size)
         self.displayed_frame=frame
         C.memset(self.bits,0,self.width*self.height*4)
@@ -266,6 +284,7 @@ class DesktopPet:
             raise C.WinError(C.get_last_error())
         self.last_frame=index
         self.last_drag_frame=render_index if render_name == 'dragging' else None
+        self.last_stomp_frame=render_index if render_name == 'stomping' else None
         if self.expression:self.expression.follow()
         if self.popup:self.popup.follow()
         if self.qa_mode:
@@ -285,7 +304,11 @@ class DesktopPet:
         if self.qa_seconds and now-self.started>=self.qa_seconds:
             user.DestroyWindow(self.hwnd)
             return
-        if self.qa_drag:
+        if self.qa_stomp:
+            if now-self.started >= 1 and self.qa_target is None:
+                self.qa_target = 'stomping'
+                self.start_stomp(now)
+        elif self.qa_drag:
             active=1.5 <= now-self.started < self.qa_seconds-1.5
             if active != self.drag_motion.active:
                 if active:self.start_drag_animation()
@@ -300,18 +323,24 @@ class DesktopPet:
             self.show_expression(None)
         self.voice_player.poll()
         if self.popup:self.popup.refresh()
+        if self.dragging and self.shake.idle(now):
+            self.try_stomp(now)
         was_dragging=self.drag_motion.visible
+        was_stomping=self.stomp_motion.visible
+        was_interacting=was_dragging or was_stomping
         self.drag_motion.advance(dt)
-        if self.paused and not (was_dragging or self.drag_motion.visible):return
+        self.stomp_motion.advance(dt)
+        interacting=self.drag_motion.visible or self.stomp_motion.visible
+        if self.paused and not (was_interacting or interacting):return
         previous=self.current
-        if not self.paused and not (was_dragging or self.drag_motion.visible):
+        if not self.paused and not (was_interacting or interacting):
             self.clock.advance(dt)
         self.current=self.clock.current
         self.elapsed=self.clock.position
         if self.current!=previous:
             self.last_frame=-1
             logging.info('Animation %s after native return from %s',self.current,previous)
-        if not self.qa_mode and not self.drag_motion.visible and not self.paused:
+        if not self.qa_mode and not interacting and not self.paused:
             self.update_automatic_voice(dt)
         animation=self.animations[self.current]
         t=self.elapsed%animation['duration']
@@ -322,7 +351,12 @@ class DesktopPet:
             phase=self.drag_motion.elapsed%drag['duration']
             drag_index=min(bisect_right(drag['endpoints'],phase),len(drag['frames'])-1)
             drag_changed=drag_index!=self.last_drag_frame or 0 < self.drag_motion.weight < 1
-        if index!=self.last_frame or drag_changed or (was_dragging and not self.drag_motion.visible):self.draw(index)
+        stomp_changed=False
+        if self.stomp_motion.visible:
+            stomp=self.animations['stomping']
+            stomp_index=min(bisect_right(stomp['endpoints'],self.stomp_motion.elapsed),len(stomp['frames'])-1)
+            stomp_changed=stomp_index!=self.last_stomp_frame or 0 < self.stomp_motion.weight < 1
+        if index!=self.last_frame or drag_changed or stomp_changed or (was_interacting and not interacting):self.draw(index)
 
     def clamp_position(self):
         left=user.GetSystemMetrics(76)
@@ -337,6 +371,8 @@ class DesktopPet:
         self.scale=max(.6,min(1.5,scale))
         self.load_frames()
         self.drag_motion.held_frame=None
+        self.drag_motion.entry_frame=None
+        self.stomp_motion.held_frame=self.stomp_motion.entry_frame=None
         self.x+=(oldwidth-self.width)//2
         self.y+=oldheight-self.height
         self.clamp_position()
@@ -370,15 +406,51 @@ class DesktopPet:
         self.drag_offset = self.drag_origin = None
         self.dragging = False
         self.drag_motion.stop()
+        self.shake.cancel()
 
     @property
     def visual_pose(self):
+        if self.stomp_motion.visible:
+            return 'stomping'
         return 'dragging' if self.drag_motion.visible and 'dragging' in self.animations else self.current
 
     def start_drag_animation(self):
         if 'dragging' in self.animations:
-            self.drag_motion.start(self.displayed_frame)
+            if self.stomp_motion.visible:
+                base = self.stomp_motion.held_frame
+                self.stomp_motion.clear()
+                self.drag_motion.clear()
+                self.drag_motion.start(self.displayed_frame,base)
+            else:
+                self.drag_motion.start(self.displayed_frame)
             self.last_frame=-1
+
+    def try_stomp(self, now):
+        if not self.shake.consume(now) or now-self.last_stomp_time < 2.5:
+            return False
+        return self.start_stomp(now)
+
+    def start_stomp(self, now):
+        if 'stomping' not in self.animations:
+            return False
+        try:
+            self.stickers.path('shake_angry')
+        except FileNotFoundError:
+            logging.warning('Hidden shake sticker is unavailable; skipping reaction')
+            return False
+        base = self.drag_motion.held_frame
+        if base is None:
+            animation = self.animations[self.current]
+            index = min(bisect_right(animation['endpoints'],self.elapsed),len(animation['frames'])-1)
+            base = self.stream.get(self.current,index,(self.width,self.height))
+        self.stomp_motion.start_once(self.displayed_frame,base,self.animations['stomping']['duration'])
+        self.drag_motion.clear()
+        self.last_stomp_time = now
+        self.last_stomp_frame = None
+        self.last_frame = -1
+        self.show_expression('shake_angry')
+        logging.info('Shake easter egg: one stomp, then resume %s at %.3fs',self.current,self.clock.position)
+        return True
 
     def show_interaction_expression(self,interaction):
         self.show_expression(self.interaction_random.choice(self.INTERACTION_EXPRESSIONS[interaction]))
@@ -476,6 +548,7 @@ class DesktopPet:
                 self.drag_offset=(p.x-self.x,p.y-self.y)
                 self.drag_origin=(p.x,p.y)
                 self.dragging=False
+                self.shake.begin(p.x,p.y,time.perf_counter(),self.scale)
                 user.SetCapture(hwnd)
                 if msg==0x0203:
                     self.show_interaction_expression('double_click')
@@ -498,13 +571,18 @@ class DesktopPet:
                 if (self.x,self.y)==old_position:
                     return 0
                 user.SetWindowPos(hwnd,None,self.x,self.y,0,0,0x0001|0x0004|0x0010)
-                if not self.dragging:
-                    self.dragging=True
+                first_drag = not self.dragging
+                self.dragging=True
+                self.shake.record(p.x,p.y,time.perf_counter())
+                if not self.drag_motion.active:
                     self.start_drag_animation()
+                if first_drag:
                     self.show_interaction_expression('drag')
                 if self.expression:self.expression.follow()
                 return 0
             if msg==0x0202:
+                if self.dragging:
+                    self.try_stomp(time.perf_counter())
                 self.reset_drag()
                 user.ReleaseCapture()
                 return 0
@@ -567,7 +645,13 @@ class DesktopPet:
                 user.DispatchMessageW(C.byref(message))
             self.tick()
             if not self.bits:continue
-            if self.drag_motion.visible:
+            if self.stomp_motion.visible:
+                animation=self.animations['stomping']
+                phase=self.stomp_motion.elapsed
+                index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+                remaining=animation['endpoints'][index]-phase
+                timeout=max(1,math.ceil(remaining*1000-(time.perf_counter()-self.last_tick)*1000))
+            elif self.drag_motion.visible:
                 animation=self.animations['dragging']
                 phase=self.drag_motion.elapsed%animation['duration']
                 index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)

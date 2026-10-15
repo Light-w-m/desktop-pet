@@ -10,6 +10,7 @@ from pet_menu import PinkMenu, monitor_work_area, rgba_pixels
 EXPRESSIONS = (('panic', '慌张'), ('sleep', '睡了'), ('suspicious', '怀疑'),
                ('hide', '不想面对'), ('wake', '刚醒'), ('blush', '脸红'),
                ('annoyed', '有点烦'), ('hello', '来了'), ('wink', '眨眼'))
+HIDDEN_EXPRESSIONS = {'shake_angry': 'shake-angry.png'}
 PICKER_WIDTH, PICKER_HEIGHT = 176, 244
 PICKER_HITS = {51: (10, 9, 48, 29), 52: (133, 9, 166, 29)}
 PICKER_HITS.update({101+i: (10+54*(i % 3), 38+62*(i//3),
@@ -21,6 +22,14 @@ class StickerLibrary:
         self.folder, self.fallback = folder, fallback
 
     def path(self, key):
+        if key in HIDDEN_EXPRESSIONS:
+            filename = HIDDEN_EXPRESSIONS[key]
+            path = self.folder.parent/'easter-eggs'/filename
+            if not path.is_file():
+                path = self.fallback.parent/'easter-eggs'/filename
+            if not path.is_file():
+                raise FileNotFoundError('Missing hidden expression: '+key)
+            return path
         if key not in dict(EXPRESSIONS):
             raise ValueError('Unknown expression: '+key)
         path = self.folder/(key+'.png')

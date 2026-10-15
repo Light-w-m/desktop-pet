@@ -10,6 +10,12 @@ datas += [(str(path),'assets/expressions') for path in (root/'assets'/'expressio
 drag=root/'assets'/'dragging'
 assert (drag/'pet-frames.json').is_file(),'Missing prepared dragging animation; extract the matching source-assets package'
 datas += [(str(drag/name),'assets/dragging') for name in ('pet-frames.json','pet-frames.bin','source.json')]
+stomp=root/'assets'/'stomping'
+assert (stomp/'pet-frames.json').is_file(),'Missing prepared stomp animation; extract the matching source-assets package'
+datas += [(str(stomp/name),'assets/stomping') for name in ('pet-frames.json','pet-frames.bin','source.json')]
+secret=root/'assets'/'easter-eggs'
+assert (secret/'shake-angry.png').is_file(),'Missing hidden shake sticker'
+datas += [(str(path),'assets/easter-eggs') for path in secret.iterdir() if path.suffix in ('.png','.json')]
 assert len(list((root/'assets'/'expressions').glob('*.png')))==9,'Missing expression stickers'
 voice_folder=runpy.run_path(str(root/'work'/'prepare_voices.py'))['prepare'](root)
 if voice_folder:

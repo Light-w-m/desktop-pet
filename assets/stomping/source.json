@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "source_file": "8d8b557ec2dc9b49294c660c96fb38c2.gif",
+  "source_sha256": "3d13d958a84ff496ca0e116a90c02f0e0f8f332fa694c5425643d6b6201b1f1d",
+  "source_total_frames": 85,
+  "source_selected_frames": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "output_frames": 60,
+  "duration_ms": 1000,
+  "fps": 60,
+  "canvas": [
+    840,
+    720
+  ],
+  "display_canvas": [
+    560,
+    480
+  ],
+  "layout_native_offset": [
+    239,
+    104
+  ],
+  "one_shot": true,
+  "original_gif_colours": true,
+  "mask_reference": {
+    "tool": "image_gen__imagegen",
+    "mode": "built-in",
+    "prompt": "Use case: background-extraction. Edit target: the provided Citlali animation frame. Isolate only the complete visible character, including hair strands, sleep mask, both arms and hands, dress, ribbons, legs and both boots. Remove the entire colorful game scenery and ground, retaining transparent gaps between limbs and hair. Preserve the exact original position, proportions, pose, colors and framing; do not redraw, extend or invent cropped parts. Output a genuinely transparent RGBA cutout on the exact same 390 by 596 canvas, character aligned to the original pixels. This output is only a foreground alpha reference for extracting the original animated GIF pixels.",
+    "use": "Alpha guidance only; animated RGB is sampled from the original GIF."
+  },
+  "end_mask_reference": {
+    "tool": "image_gen__imagegen",
+    "mode": "built-in",
+    "prompt": "Use case: background-extraction. Edit target: the provided full-body Citlali animation frame after stomping. Remove only the game scenery, rainbow, stone, grass, decorations and ground. Preserve the complete visible character, entire sleep mask, hair tips, BOTH arms and hands, the dress and all ribbons, BOTH legs and BOTH complete boots including their soles. Keep the original exact pose, position, scale and framing on the same 390 by 596 image canvas, with transparent holes between limbs and hair. Do not crop, redraw, add or extend the character. Return one actual transparent RGBA cutout. It is an alpha guide for extracting the original animated pixels."
+  },
+  "files": {
+    "pet-frames.bin": {
+      "bytes": 14859403,
+      "sha256": "4db580d9a192624ae67137729ccd07f5077e8318df1202dbd61d4dbee886e30c"
+    },
+    "pet-frames.json": {
+      "bytes": 5750,
+      "sha256": "b9da745ddebf4f05eb82fda50b5a3a119714a8236d55e5a907e38a0da0755b2c"
+    }
+  }
+}

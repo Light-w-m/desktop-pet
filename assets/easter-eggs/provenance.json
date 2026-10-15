@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "key": "shake_angry",
+  "picker_entry": false,
+  "source_file": "ed96b6eea662ceb2161c923ee8f4f2f3.png",
+  "source_sha256": "534239c35678727e212dbd64c7b9b1138b91830edd0ea589063f599091e585b2",
+  "tool": "image_gen__imagegen",
+  "mode": "built-in",
+  "prompt": "Use case: background-extraction. Edit target: the supplied chibi Citlali sticker. Remove only the uniform very pale pink outer background. Preserve the complete character, raised pillow, red anger marks, all white interior details and the pink/cyan sticker outline exactly as provided. Keep original drawing, pose, colors, proportions and framing. No new elements or text. Output one clean cutout on a genuinely transparent background with a small transparent margin. This will be a hidden desktop-pet reaction sticker.",
+  "output": "shake-angry.png",
+  "output_sha256": "bd11c20ba642f0459b5c2f1502a6427f2e17750373b2da8e96b74c3d47d133b1"
+}

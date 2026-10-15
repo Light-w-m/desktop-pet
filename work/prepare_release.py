@@ -43,12 +43,13 @@ def prepare(executable):
     voice_catalog = json.loads((voices/'catalog.json').read_text(encoding='utf-8')) if (voices/'catalog.json').is_file() else None
     extra = ({'assets/voices/'+name:voices/name for name in
               ['catalog.json']+[r['file'] for r in voice_catalog['records']]} if voice_catalog else {})
-    drag = assets/'dragging'
-    drag_metadata = None
-    if (drag/'source.json').is_file():
-        drag_metadata = json.loads((drag/'source.json').read_text(encoding='utf-8'))
-        extra.update({'assets/dragging/'+name:drag/name for name in
-                      ('source.json','pet-frames.json','pet-frames.bin')})
+    motion_metadata = {}
+    for motion in ('dragging', 'stomping'):
+        folder = assets/motion
+        if (folder/'source.json').is_file():
+            motion_metadata[motion] = json.loads((folder/'source.json').read_text(encoding='utf-8'))
+            extra.update({'assets/'+motion+'/'+name:folder/name for name in
+                          ('source.json','pet-frames.json','pet-frames.bin')})
     # WebP files are already compressed; store them without another costly pass.
     with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_STORED) as package:
         for name in names:
@@ -68,9 +69,9 @@ def prepare(executable):
             assert json.loads(package.read('assets/voices/catalog.json')) == voice_catalog
             for record in voice_catalog['records']:
                 assert hashlib.sha256(package.read('assets/voices/'+record['file'])).hexdigest() == record['sha256']
-        if drag_metadata:
-            for name,expected in drag_metadata['files'].items():
-                assert hashlib.sha256(package.read('assets/dragging/'+name)).hexdigest() == expected['sha256']
+        for motion, metadata in motion_metadata.items():
+            for name,expected in metadata['files'].items():
+                assert hashlib.sha256(package.read('assets/'+motion+'/'+name)).hexdigest() == expected['sha256']
     shutil.copy2(ROOT/'docs'/'RELEASE_NOTES.md', output/'RELEASE_NOTES.md')
     (output/'SHA256SUMS.txt').write_text(
         f'{executable_hash}  {destination.name}\n{digest(archive)}  {archive.name}\n',encoding='utf-8')
