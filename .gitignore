@@ -35,3 +35,6 @@ pet-frames.json
 /release/
 /work/github-publish-check/
 /work/git-publish-tmp/
+
+# Downloaded voice recordings and their local indexes stay on this machine.
+/local-media/
