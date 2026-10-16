@@ -1,0 +1,37 @@
+{
+  "animations": {
+    "standing": {
+      "native_and_default_frames_compared": 153,
+      "pixel_differences": 0,
+      "additional_sizes_compared": 12,
+      "random_seeks_compared": 4
+    },
+    "reading": {
+      "native_and_default_frames_compared": 816,
+      "pixel_differences": 0,
+      "additional_sizes_compared": 40,
+      "random_seeks_compared": 4
+    },
+    "drinking": {
+      "native_and_default_frames_compared": 945,
+      "pixel_differences": 0,
+      "additional_sizes_compared": 44,
+      "random_seeks_compared": 4
+    },
+    "dragging": {
+      "native_and_default_frames_compared": 186,
+      "pixel_differences": 0,
+      "additional_sizes_compared": 12,
+      "random_seeks_compared": 4
+    },
+    "stomping": {
+      "native_and_default_frames_compared": 60,
+      "pixel_differences": 0,
+      "additional_sizes_compared": 8,
+      "random_seeks_compared": 4
+    }
+  },
+  "all_native_pixels_alpha_offsets_and_timings_identical": true,
+  "native_cache_peak_bytes": 11488480,
+  "compact_pack_bytes": 174694630
+}

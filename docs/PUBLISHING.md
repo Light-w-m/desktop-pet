@@ -25,7 +25,7 @@ GitHub 普通 Git 仓库阻止超过 100 MiB 的单文件；Release 每个附件
 ```powershell
 python -m pip install -r requirements-build.txt
 python work/prepare_assets.py
-python work/build_frame_pack.py
+python work/validate_compact_pack.py
 python work/validate_stream.py
 python -m PyInstaller --noconfirm --distpath work/dist --workpath work/pyinstaller-build work/CitlaliDesktopPet.spec
 ```
@@ -49,6 +49,8 @@ v1.2.0 还包含 `assets/dragging/pet-frames.json` 和 `pet-frames.bin`，提供
 
 ## 本地历史备份
 
-首次整理前的完整 Git 历史保存在 `backups/github-history-before-cleanup-*.bundle`。本机 EXE 和所有动画仍保留原位置。旧对象与恢复记录也可能仍占用本机 `.git` 空间；正常推送只传输分支可达的整理后历史。
+本次按用户选择，只保留最近一版的独立 EXE、Git bundle 和设置快照，放在 `backups/before-compact-*`。更早的备份已移入 Windows 回收站，可从回收站恢复；原始动画与语音素材仍保留。旧的不可达 Git 对象在保留备份后清理，分支和已有提交不改写。
 
-需要查阅原历史时，可以用 `git bundle verify` 检查对应备份，再用 `git clone <备份文件路径> <另一个空目录>` 恢复到独立目录。此次本地整理会改变旧提交的哈希；代码内容和提交说明保留。
+需要查阅备份时，可以用 `git bundle verify` 检查对应 bundle，再用 `git clone <备份文件路径> <另一个空目录>` 恢复到独立目录。需要更早的历史时，先从回收站恢复当时的 bundle。
+
+`work/compact_cleanup.ps1` 默认只预览可重建缓存的清理计划。显式使用 `-Apply` 执行；清理旧备份还需要 `-RecycleOlderBackups -KeepBackup backups/<要保留的快照目录>`。它检查目标留在项目目录内，不遍历目录链接；原始素材不在清理列表中。

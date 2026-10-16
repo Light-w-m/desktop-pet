@@ -1,0 +1,112 @@
+{
+  "preserved_backup": "backups/before-compact-20261016-094204",
+  "recycled_bytes": 4715348677,
+  "generated_bytes_removed": 1486985149,
+  "entries": [
+    {
+      "relative": "work/pyinstaller-build",
+      "bytes": 238543547,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/dist",
+      "bytes": 234579630,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/github-publish-check",
+      "bytes": 486546222,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/git-publish-tmp",
+      "bytes": 8248,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/sources/compact-candidate",
+      "bytes": 174856498,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/sources/drag-deps",
+      "bytes": 117624567,
+      "mode": "generated"
+    },
+    {
+      "relative": "__pycache__",
+      "bytes": 201100,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/__pycache__",
+      "bytes": 104021,
+      "mode": "generated"
+    },
+    {
+      "relative": "work/repaired-assets/standing-obs.webp",
+      "bytes": 19903322,
+      "mode": "duplicate"
+    },
+    {
+      "relative": "work/repaired-assets/reading-obs.webp",
+      "bytes": 107260108,
+      "mode": "duplicate"
+    },
+    {
+      "relative": "work/repaired-assets/drinking-obs.webp",
+      "bytes": 107357886,
+      "mode": "duplicate"
+    },
+    {
+      "relative": "backups/before-animation-repair",
+      "bytes": 47755975,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/before-full-idles",
+      "bytes": 96303025,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/before-obs-rebuild",
+      "bytes": 99716492,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/before-pink-menu-memory",
+      "bytes": 249298427,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/before-standing-stabilization",
+      "bytes": 483449726,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/CitlaliDesktopPet-before-shake-20261016.exe",
+      "bytes": 730520070,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/CitlaliDesktopPet-before-stomp-smooth-20261016-005300.exe",
+      "bytes": 746706380,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/CitlaliDesktopPet-before-voice-tail-20261016-090015.exe",
+      "bytes": 747442763,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/github-cleanup-20261015-134213.json",
+      "bytes": 842,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/github-history-before-cleanup-20261015-134213.bundle",
+      "bytes": 1514154977,
+      "mode": "recycle"
+    }
+  ]
+}

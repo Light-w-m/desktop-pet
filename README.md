@@ -4,6 +4,8 @@
 
 从 [Releases](https://github.com/Light-w-m/desktop-pet/releases) 下载 **CitlaliDesktopPet.exe**，双击运行，无需安装 Python。默认站立，背景和窗口边框透明。EXE 内置全部播放素材。
 
+本地瘦身版使用无损动画差分压缩，EXE 从约 713 MiB 缩小到约 224 MiB。保留全部 2160 帧、原始分辨率、透明边缘与语音，逐帧像素对比无差异；日常运行只需要 EXE。此更新尚未发布到 GitHub。
+
 源码仓库不包含大型 EXE、动画 WebP 和播放帧包。需要从源码运行或构建时，另下载同一版本的 **CitlaliDesktopPet-source-assets.zip**，解压到项目根目录。MP4 原始录屏不随仓库或 Release 分发。发布步骤见 [GitHub 发布说明](docs/PUBLISHING.md)。
 
 - 左键双击角色：随机显示“有点烦”或“脸红”。
@@ -61,19 +63,19 @@
 
 本次仅补回跺脚需要的五条中文语音，当前本地保留 34 条；其余已删除录音继续排除。`work/restore_stomp_voices.py` 按原始索引与 SHA256 明确恢复这五条，下载与播放缓存仍由 Git 忽略。`work/test_stomp_voices.py` 验证文件、随机选择及播放优先级；`work/test_frame_stream.py` 检查异步预读、缓存失效与内存上限。普通运行和构建不会自动下载语音。
 
-播放器按需读取 `pet-frames.bin`，后台预读接下来 8 帧，已解压帧缓存不超过 12 帧或 24 MiB，不再把 1914 帧全部放进内存。素材包同时保存原生分辨率与默认尺寸的无损帧：默认尺寸提前完成缩放，其他尺寸仍从 840 × 720 原图缩放。透明命中检测复用当前帧的 alpha，省去另一份遮罩。原 WebP 保留用于素材检查，EXE 只包含播放需要的索引和帧包。
+播放器按需读取 `pet-frames.bin`，后台预读接下来 8 帧，显示帧缓存不超过 12 帧或 24 MiB。新版帧包合并五种动画，仅保存 840 × 720 原生像素，用无损 WebP 编码相邻帧的差异；每 8 帧重新设置完整帧，随机读取最多追溯 7 帧。解码所需的原生帧另外限于 12 帧或 16 MiB，避免把整段动画加载进内存。所有显示尺寸仍使用相同的 Lanczos 缩放与预乘透明处理，命中检测复用当前帧的 alpha。
 
-两种尺寸的无损数据会增加磁盘体积，用于减少运行时的内存和解码开销。菜单图像也在后台绘制，鼠标悬停时不会阻塞动画播放。
+原始 WebP 与拖动、跺脚源帧包保留用于开发和素材检查；EXE 只包含合并后的紧凑帧包，避免重复存储默认尺寸和两套互动素材。菜单图像仍在后台绘制。运行时直接注册 WebP 解码器，并排除不用的 AVIF 库，避免首次播放加载无关格式。
 
 帧包内置在可独立运行的 EXE 中，不在旁边重复保存。源码运行时会读取 `work/repaired-assets` 中生成的帧包；如需外部覆盖，也可把完整的帧包索引和数据放入 `assets`。
 
-本机 45 秒后台回归中，默认尺寸的进程组工作集峰值为 45.0 MiB，大号为 72.4 MiB；旧版默认尺寸约 546.5 MiB。默认三组动作约 60 FPS，大号约 58–59 FPS。1914 帧默认尺寸均与原版显示像素一致，其他尺寸抽查也一致；菜单连续开关后 GDI 句柄数不变。记录保存在 `work/memory-*.json`、`work/exe-playback-*-validation.json`、`work/stream-quality-validation.json` 和 `work/menu-validation.json`。
+本次全部 2160 帧的原生像素、默认尺寸、透明度和时序均通过对比，并检查其他四种尺寸及随机跳帧。持续播放与内存测量见 `work/compact-runtime-validation.json`，完整素材比对见 `work/compact-quality-validation.json`。早期按需播放版本的内存记录保存在 `work/memory-*.json`；菜单连续开关后的 GDI 检查见 `work/menu-validation.json`。
 
 1. Windows x64 使用 Python 3.12，运行 `python -m pip install -r requirements-build.txt`。把 Release 源码素材包解压到根目录，再运行 `python work/prepare_assets.py`。也可用 `work/extract_obs.py` 从上述本地 OBS 文件重新提取素材，额外需要 NumPy、OpenCV 和 ffmpeg。
 2. 运行 `work/validate_assets.py` 检查所有帧的轮廓边距、完整性、时长和公共站姿接缝。
    运行 `work/validate_standing_edges.py` 检查脚底倒影、鞋底边界稳定性和飘带连接处。
 3. 运行 `work/test_playback.py` 检查动作中途切换、连续选择和自动轮换。
-4. 用 `work/build_frame_pack.py` 生成无损帧包，再运行 `work/validate_stream.py` 对照原 WebP 逐帧检查默认尺寸，以及抽查其他尺寸和任意跳帧。
+4. `work/prepare_assets.py` 自动调用 `work/build_compact_pack.py` 生成或复用紧凑无损帧包，无需再运行旧的 `work/build_frame_pack.py`。运行 `work/validate_compact_pack.py` 对照全部原素材，`work/validate_stream.py` 额外对照主动作 WebP。构建缓存匹配素材校验值时会直接复用。
 5. 通过 `work/CitlaliDesktopPet.spec` 打包 EXE，再使用 `--qa-seconds 45` 实际验证三种动作的播放（自动 QA 不播放语音）。`work/test_pink_menu.py` 检查菜单交互和 GDI 资源释放，`work/test_expressions.py` 检查表情，`work/test_voices.py` 检查已删除语音过滤、后台播放、停止、音量、偏好保存及原生菜单交互，`work/test_voice_actions.py` 检查动作语音触发、随机间隔、暂停和手动点播优先级。
 
 EXE、动画 WebP、播放帧包、MP4、构建缓存、日志、设置和本地备份由 `.gitignore` 排除。`work/prepare_release.py` 可以生成本地 Release 附件；`work/check_publish_repo.py` 检查所有可推送历史中的大文件。完成修改并验证后创建本地 Git 提交。角色与录屏内容属于原权利人，本程序用于个人桌面体验。

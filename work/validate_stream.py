@@ -15,8 +15,10 @@ manifest = json.loads((stage/'manifest.json').read_text(encoding='utf-8'))
 index = json.loads((stage/'pet-frames.json').read_text(encoding='utf-8'))
 report = {}
 for name, spec in manifest['animations'].items():
-    source = stage/spec['file']
-    assert hashlib.sha256(source.read_bytes()).hexdigest() == index['animations'][name]['source_sha256']
+    source = ROOT/'assets'/spec['file']
+    expected = (index['source_files']['assets/'+spec['file']]['sha256'] if index['version'] == 2
+                else index['animations'][name]['source_sha256'])
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == expected
     checked_sizes = 0
     with Image.open(source) as animation:
         for number in range(animation.n_frames):

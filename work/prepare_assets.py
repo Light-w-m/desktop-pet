@@ -3,7 +3,6 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import shutil
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -41,12 +40,8 @@ def prepare(check_only=False):
                 if path.stat().st_size != expected['bytes'] or digest(path) != expected['sha256']:
                     raise ValueError(motion+' animation does not match its checksum: '+name)
     if not check_only:
-        stage = ROOT/'work'/'repaired-assets'
-        stage.mkdir(parents=True, exist_ok=True)
-        for name in names+['manifest.json']:
-            source, target = assets/name, stage/name
-            if not target.exists() or digest(source) != digest(target):
-                shutil.copy2(source, target)
+        from build_compact_pack import build
+        build(ROOT)
     print('Verified all 3 source animations'+(' (check only)' if check_only else '; build assets prepared'), flush=True)
 
 

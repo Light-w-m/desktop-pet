@@ -208,6 +208,8 @@ class DesktopPet:
                 archive_path=folder/manifest['playback_pack']
             archive = FrameArchive(archive_path)
             for name in ('dragging', 'stomping'):
+                if name in archive.animations:
+                    continue
                 for folder in (APP_DIR/'assets',RESOURCE_DIR/'assets',ASSETS):
                     optional = folder/name/'pet-frames.json'
                     if optional.is_file():
@@ -722,6 +724,7 @@ class DesktopPet:
                 if self.qa_mode:
                     qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times],
                         'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames,
+                        'native_cache_peak_bytes':self.stream.archive.peak_raw_cache_bytes,
                         'reaction_states':self.reaction_states}
                     self.qa_report.parent.mkdir(exist_ok=True)
                     self.qa_report.write_text(json.dumps(qa),encoding='utf-8')

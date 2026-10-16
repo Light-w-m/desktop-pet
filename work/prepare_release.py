@@ -55,7 +55,10 @@ def prepare(executable):
         for name in names:
             package.write(assets/name, 'assets/'+name)
         for name, path in extra.items():
-            package.write(path, name)
+            if path.suffix in ('.wav','.json'):
+                package.write(path,name,compress_type=zipfile.ZIP_DEFLATED,compresslevel=6)
+            else:
+                package.write(path,name)
     with zipfile.ZipFile(archive) as package:
         assert set(package.namelist()) == {'assets/'+name for name in names} | set(extra)
         for name, expected in files.items():

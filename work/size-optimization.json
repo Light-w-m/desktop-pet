@@ -1,0 +1,25 @@
+{
+  "initial_exe_bytes": 747442324,
+  "optimized_exe_bytes": 234325517,
+  "exe_reduction_percent": 68.64968580505484,
+  "initial_project_gib_approx": 11.27,
+  "project_bytes_at_measurement": 2516784759,
+  "project_gib_at_measurement": 2.3439384615048766,
+  "directory_bytes": {
+    "[root files]": 280311373,
+    ".git": 23613742,
+    "assets": 437552477,
+    "docs": 221872,
+    "references": 5014034,
+    "release": 601741356,
+    "work": 320616476,
+    "backups": 770992259,
+    "local-media": 76721170
+  },
+  "retained_previous_version": "backups/before-compact-20261016-094204",
+  "older_backups_moved_to_recycle_bin_bytes": 4715348677,
+  "regenerable_and_duplicate_bytes_deleted": 1486985149,
+  "git_branches_tags_and_head_preserved": true,
+  "lossless_quality_report": "work/compact-quality-validation.json",
+  "actual_exe_performance_report": "work/compact-runtime-validation.json"
+}

@@ -7,6 +7,7 @@ import subprocess
 import time
 
 from PyInstaller.archive.readers import CArchiveReader
+from verify_embedded_motion import verify_motion
 
 ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
@@ -16,10 +17,7 @@ executable = args.exe.resolve()
 archive = CArchiveReader(str(executable))
 names = {name.replace('\\', '/'): name for name in archive.toc}
 metadata = json.loads((ROOT/'assets'/'stomping'/'source.json').read_text(encoding='utf-8'))
-assert json.loads(archive.extract(names['assets/stomping/source.json'])) == metadata
-for name, expected in metadata['files'].items():
-    contents = archive.extract(names['assets/stomping/'+name])
-    assert len(contents) == expected['bytes'] and hashlib.sha256(contents).hexdigest() == expected['sha256']
+verify_motion(archive,names,'stomping')
 sticker = ROOT/'assets'/'easter-eggs'/'shake-angry.png'
 assert archive.extract(names['assets/easter-eggs/shake-angry.png']) == sticker.read_bytes()
 assert sum(name.startswith('assets/expressions/') and name.endswith('.png') for name in names) == 9

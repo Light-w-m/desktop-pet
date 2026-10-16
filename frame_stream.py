@@ -1,14 +1,17 @@
-"""Bounded, asynchronous playback of independently compressed lossless frames."""
+"""Bounded, asynchronous playback of lossless animation packs."""
 from __future__ import annotations
 
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 import json
+import io
 from pathlib import Path
 import threading
 import zlib
 
-from PIL import Image, ImageChops
+# Register the required decoder directly; opening the first WebP must not load
+# every unrelated Pillow format (and their native libraries) into the pet.
+from PIL import Image, ImageChops, WebPImagePlugin
 
 
 def pack_frame(rgba):
@@ -26,8 +29,10 @@ class FrameArchive:
     def __init__(self, path):
         path = Path(path)
         data = json.loads(path.read_text(encoding='utf-8'))
-        if data['version'] != 1:
+        if data['version'] not in (1, 2):
             raise ValueError('Unsupported frame archive')
+        if data['version'] == 2 and data.get('codec') != 'webp-lossless-native-delta':
+            raise ValueError('Unsupported compact frame codec')
         self.path = path.parent/data['data']
         if self.path.stat().st_size != data['data_bytes']:
             raise ValueError('Incomplete frame archive')
@@ -35,6 +40,10 @@ class FrameArchive:
         self.display_canvas = tuple(data['display_canvas'])
         self.animations = {}
         self.sources = {}
+        self.formats = {}
+        self.raw_cache = OrderedDict()
+        self.raw_cache_bytes = self.peak_raw_cache_bytes = 0
+        self.raw_lock = threading.RLock()
         for name, spec in data['animations'].items():
             endpoints = []
             duration = 0.0
@@ -43,6 +52,7 @@ class FrameArchive:
                 endpoints.append(duration)
             self.animations[name] = {'frames': spec['frames'], 'endpoints': endpoints, 'duration': duration}
             self.sources[name] = self.path
+            self.formats[name] = data['version']
 
     def include(self, path):
         other = FrameArchive(path)
@@ -52,8 +62,53 @@ class FrameArchive:
             raise ValueError('Duplicate animation in optional archive')
         self.animations.update(other.animations)
         self.sources.update(other.sources)
+        self.formats.update(other.formats)
+
+    def _native(self, name, number):
+        # A short dependency chain shares its native bytes between neighboring
+        # reads. Keep this cache bounded, including when resizing or warming a
+        # different animation. Resizing runs outside the decoder lock.
+        key = name, number
+        with self.raw_lock:
+            if key in self.raw_cache:
+                self.raw_cache.move_to_end(key)
+                return self.raw_cache[key]
+            frame = self.animations[name]['frames'][number]
+            offset,length,x,y,right,bottom = frame['native']
+            with self.sources[name].open('rb') as source:
+                source.seek(offset)
+                encoded = source.read(length)
+            with Image.open(io.BytesIO(encoded)) as source:
+                tile = source.convert('RGBA')
+            if tile.size != (right-x,bottom-y):
+                raise ValueError('Invalid compact frame dimensions')
+            base = frame.get('base')
+            if base is not None:
+                if (not 0 <= base < number or base != number-1 or frame.get('depth',0) not in range(1,8) or
+                        frame['depth'] != self.animations[name]['frames'][base].get('depth',0)+1):
+                    raise ValueError('Invalid compact frame dependency')
+                previous,box = self._native(name,base)
+                aligned = Image.new('RGBA',tile.size)
+                aligned.paste(Image.frombytes('RGBA',(box[2]-box[0],box[3]-box[1]),previous),
+                              (box[0]-x,box[1]-y))
+                tile = ImageChops.add_modulo(tile,aligned)
+            pixels = tile.tobytes()
+            result = pixels,(x,y,right,bottom)
+            self.raw_cache[key] = result
+            self.raw_cache_bytes += len(pixels)
+            while len(self.raw_cache) > 12 or self.raw_cache_bytes > 16*1024*1024:
+                _,old = self.raw_cache.popitem(last=False)
+                self.raw_cache_bytes -= len(old[0])
+            self.peak_raw_cache_bytes = max(self.peak_raw_cache_bytes,self.raw_cache_bytes)
+            return result
 
     def read(self, name, number, size):
+        if self.formats[name] == 2:
+            pixels,box = self._native(name,number)
+            tile = Image.frombytes('RGBA',(box[2]-box[0],box[3]-box[1]),pixels)
+            rgba = Image.new('RGBA',self.canvas)
+            rgba.paste(tile,box[:2])
+            return pack_frame(rgba.resize(size,Image.Resampling.LANCZOS))
         display = size == self.display_canvas
         record = self.animations[name]['frames'][number]['display' if display else 'native']
         offset, length, x, y, right, bottom = record
