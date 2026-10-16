@@ -1,6 +1,6 @@
 {
-  "preserved_backup": "backups/before-stomp-tone-20261016",
-  "recycled_bytes": 918824978,
+  "preserved_backup": "backups/before-stomp-recovery-20261016",
+  "recycled_bytes": 1168328255,
   "generated_bytes_removed": 0,
   "entries": [
     {
@@ -10,38 +10,38 @@
       "mode": "recycle"
     },
     {
-      "relative": "backups/before-stomp-video-20261016",
-      "bytes": 257887934,
+      "relative": "backups/before-stomp-tone-20261016",
+      "bytes": 314287103,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "local-media/stomp-video (generated frames only)",
-      "bytes": 59117804,
-      "paths": 171,
+      "bytes": 185219484,
+      "paths": 445,
       "mode": "recycle"
     },
     {
       "relative": "work/__pycache__",
-      "bytes": 27894,
+      "bytes": 55358,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 239905964,
+      "bytes": 273413840,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/github-publish-check",
-      "bytes": 216,
+      "bytes": 434,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/pyinstaller-build",
-      "bytes": 244076369,
+      "bytes": 277543239,
       "paths": 1,
       "mode": "recycle"
     },

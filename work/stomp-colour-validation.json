@@ -15,20 +15,6 @@
   },
   "old_stomp": {
     "rgb_mean": [
-      144.78306579589844,
-      130.19921875,
-      173.6134796142578
-    ],
-    "rgb_median": [
-      152.0,
-      144.0,
-      174.0
-    ],
-    "luminance_mean": 136.43425163497298,
-    "opaque_pixels": 57004
-  },
-  "new_stomp": {
-    "rgb_mean": [
       191.2245330810547,
       171.37464904785156,
       194.41876220703125
@@ -41,9 +27,41 @@
     "luminance_mean": 177.25851538515528,
     "opaque_pixels": 56990
   },
-  "old_luminance_error": 42.5892717582594,
-  "new_luminance_error": 1.7650080080771033,
-  "new_rgb_median_error": 1.3333333333333333,
+  "new_stomp": {
+    "rgb_mean": [
+      191.90586853027344,
+      172.74163818359375,
+      195.61700439453125
+    ],
+    "rgb_median": [
+      211.0,
+      197.0,
+      207.0
+    ],
+    "luminance_mean": 178.46755685510524,
+    "opaque_pixels": 57490
+  },
+  "old_luminance_error": 1.7650080080771033,
+  "new_luminance_error": 0.5559665381271373,
+  "new_rgb_median_error": 0.6666666666666666,
   "two_hand_intro_removed": true,
-  "one_fixed_colour_curve_avoids_exposure_pumping": true
+  "fixed_palette_anchors_and_background_exposure_tracking": true,
+  "complete_source_ending_retained": true,
+  "source_range_seconds": [
+    1.1333333333333333,
+    6.066666666666666
+  ],
+  "ending_standing_silhouette_iou": 0.9072079024540824,
+  "reference_bbox": [
+    327,
+    97,
+    564,
+    665
+  ],
+  "ending_bbox": [
+    328,
+    96,
+    559,
+    665
+  ]
 }

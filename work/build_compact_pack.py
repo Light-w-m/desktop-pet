@@ -15,6 +15,7 @@ from PIL import Image,ImageChops
 from frame_stream import FrameArchive
 
 GROUP=8
+STANDING_ENTRY_KEYS=24  # Cover the full .24-second return and its decoder lookahead.
 
 
 def digest(path):
@@ -101,10 +102,11 @@ def build(root=ROOT,output=None):
                 assert depth < GROUP
                 packed.write(encoded);frames.append(record)
             for number,(ms,raw,box) in enumerate(source_frames()):
-                # A short reaction overlaps the outgoing drag and incoming
-                # idle. Independent lossless frames avoid rebuilding a delta
-                # chain when both motions compete for the bounded raw cache.
-                key_number=0 if name == 'stomping' else number
+                # The reaction and first idle frames overlap during recovery.
+                # Keep both sides independent: rebuilding an evicted idle
+                # dependency chain otherwise stalls the last reaction frames.
+                independent=name == 'stomping' or (name == 'standing' and number < STANDING_ENTRY_KEYS)
+                key_number=0 if independent else number
                 jobs.append((number,ms,box,pool.submit(encode,key_number,raw,box,previous,previous_box)))
                 previous,previous_box=raw,box
                 if len(jobs) >= 8:

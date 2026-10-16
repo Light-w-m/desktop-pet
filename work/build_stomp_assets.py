@@ -24,10 +24,10 @@ OUTPUT = ROOT/'assets/stomping'
 VIDEO = Path('E:/DJI_video/8790CBFF-D122-4739-9F87-A955A3C94149.mp4')
 SIZE = (736, 864)
 START = 10/120
-DURATION = 2.35
+DURATION = 359/60  # Through the last decoded pose: full turn, arm recovery and stance.
 CLIP_START = 63  # Skip the burst's two-hand reach; keep only the foot reaction.
 FPS = 60
-GUIDES = (1, 33, 82, 136)
+GUIDES = (1, 33, 82, 136, 193, 340)
 cv2.setNumThreads(3)
 
 
@@ -105,15 +105,11 @@ def matte(rgb, guide):
     return np.dstack((rgb,np.uint8(np.clip(alpha*255+.5,0,255))))
 
 
-def standing_colour_curve(guide):
-    """One fixed per-channel curve, calibrated against the normal idle.
-
-    Use opaque character pixels from a recovered video stance and the real
-    standing asset. Fixed quantiles avoid per-frame auto-exposure flicker.
-    """
+def standing_colour_curve(guide, number):
+    """Fixed palette anchors for the two lighting conditions in the recording."""
     reference=ROOT/'assets/standing-obs.webp'
     target=np.asarray(Image.open(reference).convert('RGBA'))
-    original=np.asarray(Image.open(LOCAL/'frame-136.png').convert('RGB'))
+    original=np.asarray(Image.open(LOCAL/f'frame-{number:03}.png').convert('RGB'))
     target_core=cv2.erode((target[:,:,3] > 220).astype('uint8'),np.ones((5,5),'uint8')) > 0
     source_core=cv2.erode((guide[1] > 220).astype('uint8'),np.ones((7,7),'uint8')) > 0
     percentiles=(2,10,25,50,75,90,98)
@@ -126,8 +122,74 @@ def standing_colour_curve(guide):
         unique=np.r_[True,np.diff(x) > 0]
         curves.append(np.uint8(np.clip(np.interp(np.arange(256),x[unique],y[unique])+.5,0,255)))
     return curves,{'reference':'assets/standing-obs.webp','reference_sha256':digest(reference),
-        'source_frame':136,'percentiles':list(percentiles),'source_rgb':source_values.tolist(),
-        'standing_rgb':target_values.tolist(),'fixed_across_all_frames':True}
+        'source_frame':number,'percentiles':list(percentiles),'source_rgb':source_values.tolist(),
+        'standing_rgb':target_values.tolist()}
+
+
+def lighting_curves(raw, guides):
+    """Follow the recorded light change using a static background patch.
+
+    Character histograms change with poses. Measure the same unobstructed rock
+    instead, then interpolate the *input* levels of two fixed palette anchors.
+    This removes the night-to-day exposure change without pose-driven flicker.
+    """
+    dark=standing_colour_curve(guides[136],136)[1]
+    light=standing_colour_curve(guides[340],340)[1]
+    background=np.array([np.median(rgb[300:500,600:700],axis=(0,1)) for rgb in raw])
+    a,b=background[135],background[339]
+    delta=b-a
+    weights=np.clip((background-a) @ delta/(delta @ delta),0,1)
+    weights=cv2.GaussianBlur(weights.reshape(-1,1),(1,0),1.0).reshape(-1)
+    weights[:135]=0
+    weights[193:]=1
+    source_a,source_b=np.array(dark['source_rgb']),np.array(light['source_rgb'])
+    target=np.array(dark['standing_rgb'])
+    curves=[]
+    for weight in weights:
+        source=source_a*(1-weight)+source_b*weight
+        channels=[]
+        for channel in range(3):
+            x=np.r_[0,source[:,channel],255]
+            y=np.r_[0,target[:,channel],255]
+            unique=np.r_[True,np.diff(x) > 0]
+            channels.append(np.uint8(np.clip(np.interp(np.arange(256),x[unique],y[unique])+.5,0,255)))
+        curves.append(channels)
+    return curves,{'reference':dark['reference'],'reference_sha256':dark['reference_sha256'],
+        'anchors':[dark,light],'exposure_tracking':'fixed rock patch x600:700 y300:500; smoothed 1 frame',
+        'fixed_palette_anchors':True,'pose_independent':True,
+        'lighting_weights':np.round(weights,4).tolist()}
+
+
+def recovered_placement():
+    """Register the final frontal pose once to the actual idle, not each frame."""
+    rgb=np.asarray(Image.open(LOCAL/'frame-340.png').convert('RGB'))
+    target=np.asarray(Image.open(ROOT/'assets/standing-obs.webp').convert('RGBA'))
+    guide=register_guide(340)[1]
+    sift=cv2.SIFT_create()
+    a,da=sift.detectAndCompute(cv2.cvtColor(rgb,cv2.COLOR_RGB2GRAY),np.uint8(guide > 220)*255)
+    b,db=sift.detectAndCompute(cv2.cvtColor(target,cv2.COLOR_RGBA2GRAY),target[:,:,3])
+    matches=[x for x,y in cv2.BFMatcher().knnMatch(da,db,k=2) if x.distance < .72*y.distance]
+    transform,accepted=cv2.estimateAffinePartial2D(
+        np.float32([a[m.queryIdx].pt for m in matches]),np.float32([b[m.trainIdx].pt for m in matches]),
+        method=cv2.RANSAC,ransacReprojThreshold=4)
+    if transform is None or accepted.sum() < 20:
+        raise ValueError('Recovered stance does not register to the standing asset')
+    # Correct the recording's small camera change gradually after the footfall.
+    # Keep the vertical axis upright and preserve all actual body motion.
+    source_y,source_x=np.where(guide > 128)
+    target_y,target_x=np.where(target[:,:,3] > 128)
+    # Match the full head-to-sole height as well as torso features. A torso-only
+    # fit left the final boots twelve pixels below the real standing soles.
+    scale=float((target_y.max()-target_y.min())/(source_y.max()-source_y.min()))
+    center=np.median(np.array([b[m.trainIdx].pt for m,k in zip(matches,accepted) if k[0]])-
+                     scale*np.array([a[m.queryIdx].pt for m,k in zip(matches,accepted) if k[0]]),axis=0)
+    center[1]=target_y.min()-scale*source_y.min()
+    placement=np.array([[scale,0,center[0]],[0,scale,center[1]]],'float32')
+    if not .70 < scale < .88:
+        raise ValueError('Unexpected recovered camera scale')
+    return placement,{'source_frame':340,'inliers':int(accepted.sum()),'transform':placement.tolist(),
+        'head_and_sole_extent_matched':True,
+        'correction_source_seconds':[2.45,4.4]}
 
 
 def remove_light(rgba, curves):
@@ -185,8 +247,9 @@ def build(extract=False, reuse_mattes=False):
             '-t',str(DURATION),'-vf','fps=60,crop=1840:2160:840:0,scale=736:864:flags=lanczos',
             '-y',str(LOCAL/'frame-%03d.png')],check=True)
     guides={n:register_guide(n) for n in GUIDES}
-    curves,colour_metadata=standing_colour_curve(guides[136])
     raw=[np.asarray(Image.open(LOCAL/f'frame-{i+1:03}.png').convert('RGB')) for i in range(round(DURATION*FPS))]
+    curves,colour_metadata=lighting_curves(raw,guides)
+    final_placement,placement_metadata=recovered_placement()
     # Detect captured holds instead of treating 120 FPS screen capture as
     # 120 distinct animation poses. Ignore sub-pixel compression noise.
     starts=[0]+[i for i in range(1,len(raw)) if np.abs(raw[i].astype('int16')-raw[i-1]).mean() > 1.5]
@@ -208,9 +271,12 @@ def build(extract=False, reuse_mattes=False):
     # A fixed transform preserves the real crouch/jump and prevents per-frame
     # bounding-box normalization from making the body grow or feet swim.
     placement=np.array([[.76,0,209],[0,.76,37]],'float32')
-    for i,rgba in enumerate(mattes):
-        adjusted=remove_light(rgba.copy(),curves)
-        canvas=cv2.warpAffine(premultiply(adjusted),placement,(840,720),flags=cv2.INTER_LANCZOS4)
+    for i,((start,end),rgba) in enumerate(zip(groups,mattes)):
+        adjusted=remove_light(rgba.copy(),curves[start])
+        progress=float(np.clip((START+start/FPS-2.45)/(4.4-2.45),0,1))
+        progress=progress*progress*(3-2*progress)
+        transform=placement*(1-progress)+final_placement*progress
+        canvas=cv2.warpAffine(premultiply(adjusted),transform,(840,720),flags=cv2.INTER_LANCZOS4)
         frames.append(canvas)
         straight(canvas).save(LOCAL/f'stabilized-{i:03}.png')
     times=np.array([start for start,end in groups],dtype='float64')/FPS
@@ -240,7 +306,7 @@ def build(extract=False, reuse_mattes=False):
             display=canvas.resize((560,480),Image.Resampling.LANCZOS)
             index['animations']['stomping']['frames'].append({'ms':round((number+1)*1000/FPS)-round(number*1000/FPS),
                 'native':encode(packed,canvas),'display':encode(packed,display,True)})
-            if number in (0,12,24,36,54,count-1):
+            if number in (0,24,78,150,210,count-1):
                 previews.append(display)
             if number == 0:display.save(ROOT/'work/stomping-cutout.png')
     temporary.replace(OUTPUT/'pet-frames.bin')
@@ -254,16 +320,21 @@ def build(extract=False, reuse_mattes=False):
         'duration_ms':sum(f['ms'] for f in index['animations']['stomping']['frames']),'fps':FPS,'canvas':index['canvas'],
         'display_canvas':index['display_canvas'],'one_shot':True,'return_pose':'standing',
         'sequence':['stomp','settle_to_standing'],'colour_match':colour_metadata,
-        'processing':{'colors':'original video; fixed monotone RGB curves matched to standing; bounded unsharp .6 at sigma 1',
+        'recovery':{'complete_source_seconds':4.4,'source_ending_retained':True,
+            'handoff_source_seconds':[START+DURATION-.24,START+DURATION],
+            'final_pose':'front facing, arms relaxed, both feet planted'},
+        'processing':{'colors':'original video; two fixed standing palette anchors with background exposure tracking; bounded unsharp .6 at sigma 1',
             'matting':'registered alpha guides, dense optical flow, seeded GrabCut',
-            'stabilization':'fixed similarity calibrated to upright body size and standing baseline; preserve crouch and jump',
+            'stabilization':'fixed entry similarity, one smooth camera correction to registered final standing; preserve crouch and jump',
             'interpolation':'bidirectional optical flow on premultiplied RGBA at original timestamps',
             'light_cleanup':'cyan effects below skirt only, local adjacent pixel reconstruction'},
         'alpha_references':{'tool':'image_gen__imagegen','mode':'built-in',
             'prompt':(LOCAL/'mask-prompt.txt').read_text(encoding='utf-8'),
+            'ending_prompt':(LOCAL/'mask-ending-prompt.txt').read_text(encoding='utf-8'),
             'use':'Only registered alpha guidance; generated RGB never enters the animation.',
             'registrations':[guides[n][2] for n in GUIDES]},
         'layout_native_transform':placement.tolist(),
+        'recovered_standing_alignment':placement_metadata,
         'files':{name:{'bytes':(OUTPUT/name).stat().st_size,'sha256':digest(OUTPUT/name)}
                  for name in ('pet-frames.bin','pet-frames.json')}}
     (OUTPUT/'source.json').write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8')

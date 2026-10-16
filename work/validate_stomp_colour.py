@@ -33,7 +33,7 @@ def statistics(image):
 
 
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--previous-pack',type=Path,default=ROOT/'backups/before-stomp-tone-20261016/stomping')
+parser.add_argument('--previous-pack',type=Path,default=ROOT/'backups/before-stomp-recovery-20261016/stomping')
 args=parser.parse_args()
 reference=Image.open(ROOT/'assets/standing-obs.webp').convert('RGBA')
 before=native(args.previous_pack) if (args.previous_pack/'pet-frames.json').is_file() else None
@@ -43,19 +43,30 @@ before_stats=statistics(before) if before is not None else None
 old_error=abs(before_stats['luminance_mean']-reference_stats['luminance_mean']) if before_stats else None
 new_error=abs(after_stats['luminance_mean']-reference_stats['luminance_mean'])
 assert new_error < 10,new_error
-if old_error is not None:assert new_error < old_error*.35,(old_error,new_error)
 median_error=float(np.abs(np.array(after_stats['rgb_median'])-reference_stats['rgb_median']).mean())
 assert median_error < 14,median_error
 metadata=json.loads((ROOT/'assets/stomping/source.json').read_text(encoding='utf-8'))
 assert metadata['sequence'] == ['stomp','settle_to_standing']
-assert metadata['discarded_intro_frames'] == 63 and metadata['output_frames'] == 78
-assert metadata['colour_match']['fixed_across_all_frames']
+assert metadata['discarded_intro_frames'] == 63 and metadata['output_frames'] >= 294
+assert metadata['colour_match']['fixed_palette_anchors'] and metadata['colour_match']['pose_independent']
+assert metadata['recovery']['source_ending_retained']
+reference_mask=np.asarray(reference)[:,:,3] > 128
+ending_mask=np.asarray(after)[:,:,3] > 128
+overlap=float(np.sum(reference_mask & ending_mask)/np.sum(reference_mask | ending_mask))
+def extent(mask):
+    y,x=np.where(mask)
+    return [int(x.min()),int(y.min()),int(x.max()+1),int(y.max()+1)]
+reference_box,ending_box=extent(reference_mask),extent(ending_mask)
+assert overlap > .82,('Final pose is not the normal frontal stance',overlap)
+assert max(abs(ending_box[i]-reference_box[i]) for i in (1,3)) <= 6,('Head/soles jump on return',reference_box,ending_box)
 report={'standing':reference_stats,'old_stomp':before_stats,'new_stomp':after_stats,
     'old_luminance_error':old_error,'new_luminance_error':new_error,
     'new_rgb_median_error':median_error,'two_hand_intro_removed':True,
-    'one_fixed_colour_curve_avoids_exposure_pumping':True}
+    'fixed_palette_anchors_and_background_exposure_tracking':True,
+    'complete_source_ending_retained':True,'source_range_seconds':metadata['source_range_seconds'],
+    'ending_standing_silhouette_iou':overlap,'reference_bbox':reference_box,'ending_bbox':ending_box}
 (ROOT/'work/stomp-colour-validation.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-panels=[('Standing reference',reference)]+([('Previous dark stomp',before)] if before is not None else [])+[('Updated stomp',after)]
+panels=[('Standing reference',reference)]+([('Previous truncated ending',before)] if before is not None else [])+[('Complete recovered ending',after)]
 preview=Image.new('RGB',(len(panels)*420,380),'#e9e3e7');draw=ImageDraw.Draw(preview)
 for i,(title,image) in enumerate(panels):
     bg=Image.new('RGBA',image.size,'#e9e3e7');bg.alpha_composite(image)

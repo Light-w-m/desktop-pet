@@ -9,7 +9,7 @@
   "regrab_smoothly_cancels_stomp": true,
   "capture_loss_cancels_pending_shake": true,
   "cooldown_and_expression_timeout": true,
-  "all_frames_valid_premultiplied_with_margins": 78,
+  "all_frames_valid_premultiplied_with_margins": 296,
   "shared_bounded_cache": true,
   "live_outgoing_motion_during_fade": true,
   "cold_start_is_nonblocking_and_preserves_intro": true,

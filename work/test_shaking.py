@@ -49,6 +49,9 @@ assert len(archive.animations['stomping']['frames']) == count
 assert abs(archive.animations['stomping']['duration']-duration) < 1e-8
 assert metadata['sequence'] == ['stomp','settle_to_standing']
 assert metadata['discarded_intro_frames'] == 63 and metadata['source_range_seconds'][0] >= 1.1
+assert metadata['source_range_seconds'][1] >= 6.0 and duration >= 4.9, 'Original recovery was truncated'
+assert metadata['recovery']['source_ending_retained']
+assert metadata['recovery']['handoff_source_seconds'][0] > metadata['recovery']['complete_source_seconds']+1
 for index in range(count):
     frame = archive.read('stomping', index, (560, 480))
     assert all(frame['pixels'][i] <= frame['pixels'][i-i % 4+3]

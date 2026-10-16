@@ -18,6 +18,8 @@ archive = CArchiveReader(str(executable))
 names = {name.replace('\\', '/'): name for name in archive.toc}
 metadata = json.loads((ROOT/'assets'/'stomping'/'source.json').read_text(encoding='utf-8'))
 verify_motion(archive,names,'stomping')
+pack=json.loads(archive.extract(names['assets/pet-frames.json']))
+assert all(frame.get('base') is None for frame in pack['animations']['standing']['frames'][:24]), 'Idle return can rebuild cold dependencies'
 sticker = ROOT/'assets'/'easter-eggs'/'shake-angry.png'
 assert archive.extract(names['assets/easter-eggs/shake-angry.png']) == sticker.read_bytes()
 assert sum(name.startswith('assets/expressions/') and name.endswith('.png') for name in names) == 9
@@ -49,6 +51,9 @@ for scale in (.6,1.0,1.3):
     assert max(entry_gap,exit_gap) < 75, 'Animation stalled at a transition boundary'
     assert max(entry_ms,exit_ms) < 35, 'Transition waited for a cold frame decode'
     states=[row for row in raw['reaction_states'] if row['pose'] == 'stomping']
+    recovery_end=metadata['recovery']['complete_source_seconds']-metadata['source_range_seconds'][0]
+    recovery_states=[row for row in states if .25 < row['elapsed'] < recovery_end]
+    assert recovery_states and all(row['weight'] == 1 for row in recovery_states), 'Fade hid the original recovery'
     assert sum(0 < row['elapsed'] < .2 for row in states) >= 8, 'Intro fade was skipped'
     exit_states=[row for row in states if row['elapsed'] > expected_duration-.24]
     assert len(exit_states) >= 10
@@ -61,5 +66,7 @@ for scale in (.6,1.0,1.3):
 report = {'embedded_pack_checksums': True, 'hidden_sticker_embedded': True, 'normal_picker_still_nine': True,
           'actual_exe_one_shot_and_resume':True,'outgoing_drag_and_live_return':True,
           'intro_and_outro_frames_not_skipped':True,'samples':samples}
+report['complete_video_recovery_before_outro']=True
+report['idle_return_frames_independently_decodable']=24
 (ROOT/'work'/'stomp-package-validation.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
 print(json.dumps(report, indent=2), flush=True)

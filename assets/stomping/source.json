@@ -10,7 +10,7 @@
   },
   "source_range_seconds": [
     1.1333333333333333,
-    2.4333333333333336
+    6.066666666666666
   ],
   "decoded_crop": [
     840,
@@ -39,11 +39,40 @@
     122,
     128,
     132,
-    135
+    135,
+    143,
+    146,
+    152,
+    154,
+    161,
+    162,
+    171,
+    181,
+    185,
+    191,
+    197,
+    200,
+    205,
+    208,
+    212,
+    214,
+    219,
+    221,
+    227,
+    231,
+    237,
+    243,
+    246,
+    253,
+    258,
+    264,
+    273,
+    282,
+    294
   ],
   "discarded_intro_frames": 63,
-  "output_frames": 78,
-  "duration_ms": 1300,
+  "output_frames": 296,
+  "duration_ms": 4933,
   "fps": 60,
   "canvas": [
     840,
@@ -62,96 +91,562 @@
   "colour_match": {
     "reference": "assets/standing-obs.webp",
     "reference_sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977",
-    "source_frame": 136,
-    "percentiles": [
-      2,
-      10,
-      25,
-      50,
-      75,
-      90,
-      98
+    "anchors": [
+      {
+        "reference": "assets/standing-obs.webp",
+        "reference_sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977",
+        "source_frame": 136,
+        "percentiles": [
+          2,
+          10,
+          25,
+          50,
+          75,
+          90,
+          98
+        ],
+        "source_rgb": [
+          [
+            30.0,
+            19.0,
+            69.0
+          ],
+          [
+            55.0,
+            44.0,
+            91.0
+          ],
+          [
+            89.0,
+            73.0,
+            122.0
+          ],
+          [
+            118.0,
+            110.0,
+            143.0
+          ],
+          [
+            143.0,
+            129.0,
+            174.0
+          ],
+          [
+            165.0,
+            141.0,
+            183.0
+          ],
+          [
+            168.0,
+            158.0,
+            201.0
+          ]
+        ],
+        "standing_rgb": [
+          [
+            70.0,
+            34.0,
+            101.0
+          ],
+          [
+            110.0,
+            81.0,
+            141.0
+          ],
+          [
+            168.0,
+            141.0,
+            178.0
+          ],
+          [
+            211.0,
+            196.0,
+            208.0
+          ],
+          [
+            229.0,
+            216.0,
+            221.0
+          ],
+          [
+            236.0,
+            223.0,
+            229.0
+          ],
+          [
+            239.0,
+            233.0,
+            239.0
+          ]
+        ]
+      },
+      {
+        "reference": "assets/standing-obs.webp",
+        "reference_sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977",
+        "source_frame": 340,
+        "percentiles": [
+          2,
+          10,
+          25,
+          50,
+          75,
+          90,
+          98
+        ],
+        "source_rgb": [
+          [
+            44.0,
+            28.0,
+            82.0
+          ],
+          [
+            77.0,
+            60.0,
+            116.0
+          ],
+          [
+            127.0,
+            102.0,
+            154.0
+          ],
+          [
+            173.0,
+            154.0,
+            176.0
+          ],
+          [
+            200.0,
+            176.0,
+            214.0
+          ],
+          [
+            228.0,
+            188.0,
+            224.0
+          ],
+          [
+            231.0,
+            201.0,
+            239.0
+          ]
+        ],
+        "standing_rgb": [
+          [
+            70.0,
+            34.0,
+            101.0
+          ],
+          [
+            110.0,
+            81.0,
+            141.0
+          ],
+          [
+            168.0,
+            141.0,
+            178.0
+          ],
+          [
+            211.0,
+            196.0,
+            208.0
+          ],
+          [
+            229.0,
+            216.0,
+            221.0
+          ],
+          [
+            236.0,
+            223.0,
+            229.0
+          ],
+          [
+            239.0,
+            233.0,
+            239.0
+          ]
+        ]
+      }
     ],
-    "source_rgb": [
-      [
-        30.0,
-        19.0,
-        69.0
-      ],
-      [
-        55.0,
-        44.0,
-        91.0
-      ],
-      [
-        89.0,
-        73.0,
-        122.0
-      ],
-      [
-        118.0,
-        110.0,
-        143.0
-      ],
-      [
-        143.0,
-        129.0,
-        174.0
-      ],
-      [
-        165.0,
-        141.0,
-        183.0
-      ],
-      [
-        168.0,
-        158.0,
-        201.0
-      ]
+    "exposure_tracking": "fixed rock patch x600:700 y300:500; smoothed 1 frame",
+    "fixed_palette_anchors": true,
+    "pose_independent": true,
+    "lighting_weights": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0003,
+      0.0012,
+      0.002,
+      0.002,
+      0.0048,
+      0.0105,
+      0.0141,
+      0.0149,
+      0.015,
+      0.0163,
+      0.0319,
+      0.1023,
+      0.2213,
+      0.3079,
+      0.3564,
+      0.3866,
+      0.3986,
+      0.4008,
+      0.4023,
+      0.4189,
+      0.5021,
+      0.6792,
+      0.8527,
+      0.9314,
+      0.9468,
+      0.948,
+      0.948,
+      0.948,
+      0.9483,
+      0.9495,
+      0.9514,
+      0.9528,
+      0.9532,
+      0.9531,
+      0.9529,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9528,
+      0.9531,
+      0.9542,
+      0.9552,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "recovery": {
+    "complete_source_seconds": 4.4,
+    "source_ending_retained": true,
+    "handoff_source_seconds": [
+      5.826666666666666,
+      6.066666666666666
     ],
-    "standing_rgb": [
-      [
-        70.0,
-        34.0,
-        101.0
-      ],
-      [
-        110.0,
-        81.0,
-        141.0
-      ],
-      [
-        168.0,
-        141.0,
-        178.0
-      ],
-      [
-        211.0,
-        196.0,
-        208.0
-      ],
-      [
-        229.0,
-        216.0,
-        221.0
-      ],
-      [
-        236.0,
-        223.0,
-        229.0
-      ],
-      [
-        239.0,
-        233.0,
-        239.0
-      ]
-    ],
-    "fixed_across_all_frames": true
+    "final_pose": "front facing, arms relaxed, both feet planted"
   },
   "processing": {
-    "colors": "original video; fixed monotone RGB curves matched to standing; bounded unsharp .6 at sigma 1",
+    "colors": "original video; two fixed standing palette anchors with background exposure tracking; bounded unsharp .6 at sigma 1",
     "matting": "registered alpha guides, dense optical flow, seeded GrabCut",
-    "stabilization": "fixed similarity calibrated to upright body size and standing baseline; preserve crouch and jump",
+    "stabilization": "fixed entry similarity, one smooth camera correction to registered final standing; preserve crouch and jump",
     "interpolation": "bidirectional optical flow on premultiplied RGBA at original timestamps",
     "light_cleanup": "cyan effects below skirt only, local adjacent pixel reconstruction"
   },
@@ -159,6 +654,7 @@
     "tool": "image_gen__imagegen",
     "mode": "built-in",
     "prompt": "Background extraction for a video alpha-matte reference. Remove all scenery, ground, floating symbols, blue/purple glowing ribbons, sparkles and horizontal light streaks. Keep ONLY the entire visible Citlali character, including every hair tip, sleeping mask, all fingers, both arms, the complete skirt and its attached tails, both legs, both boots and their soles. Preserve EXACT original pose, position, proportions, canvas framing and pixel coordinates on the 736x864 canvas. Do not recenter, resize, redraw, sharpen, add, or invent any body parts. Preserve transparent holes between limbs and strands. The large floating purple symbol at the left is NOT part of her. The cyan star and light streaks are NOT part of her. Output a genuinely transparent PNG. This will be used ONLY as an alpha reference; animation colors will come from the original video.\n",
+    "ending_prompt": "Use case: background-extraction. Edit target: the attached 736x864 original video frame. This is an alpha-matte reference for a desktop pet animation. Remove ALL rock, ground, sky, banners and background. Keep ONLY the entire visible Citlali character: every hair tip, sleeping mask, both hands and all fingers, both arms, complete skirt, attached fabric tails and ribbons, both legs, boots and their soles. Preserve EXACT pose, pixel position, proportions and canvas framing, including transparent gaps between limbs, hair and clothes. Do NOT recenter, resize, redraw, sharpen or invent parts. Preserve the original natural soft edge; no added outline, shadow, floor or reflection. Output a genuinely transparent PNG. Animation RGB comes from the original video; this image is used only for registered alpha.",
     "use": "Only registered alpha guidance; generated RGB never enters the animation.",
     "registrations": [
       {
@@ -228,6 +724,40 @@
           ]
         ],
         "guide_sha256": "765a4bc82d0942a6ac808c8b0a2d74047ad2d68e8789a33705a7e0dee75f1d5f"
+      },
+      {
+        "source_frame": 193,
+        "inliers": 249,
+        "transform": [
+          [
+            0.5447861459902195,
+            -0.0006310009013139856,
+            25.456533539717686
+          ],
+          [
+            0.0006310009013139856,
+            0.5447861459902195,
+            76.76167460853351
+          ]
+        ],
+        "guide_sha256": "ce459e9046a297c43c2af2cf86967f0e50ccc84bd6b5017a5841c224b09ca9b4"
+      },
+      {
+        "source_frame": 340,
+        "inliers": 335,
+        "transform": [
+          [
+            0.5569594787280828,
+            -0.001931266483821816,
+            9.456924934819009
+          ],
+          [
+            0.001931266483821816,
+            0.5569594787280828,
+            60.220557456376824
+          ]
+        ],
+        "guide_sha256": "77fdef097bf5f6a6b44006654f14b244f4df26f163b8dad1ef3b79d7da03cc82"
       }
     ]
   },
@@ -243,14 +773,35 @@
       37.0
     ]
   ],
+  "recovered_standing_alignment": {
+    "source_frame": 340,
+    "inliers": 148,
+    "transform": [
+      [
+        0.7820689678192139,
+        0.0,
+        201.13247680664062
+      ],
+      [
+        0.0,
+        0.7820689678192139,
+        36.78068923950195
+      ]
+    ],
+    "head_and_sole_extent_matched": true,
+    "correction_source_seconds": [
+      2.45,
+      4.4
+    ]
+  },
   "files": {
     "pet-frames.bin": {
-      "bytes": 24044045,
-      "sha256": "ed107c3a82668eb4fec1cf3d7d6212aa42c14bea5dcac648d35c605ae1c44eec"
+      "bytes": 96050764,
+      "sha256": "4eba247daa13cd1154634f487ddb040456cdf8140a32c5fa2a22203ed8a7e9d6"
     },
     "pet-frames.json": {
-      "bytes": 7476,
-      "sha256": "acfab6636124c205c78dbda4b3498bb893fdea12bc9396d5148c398ed055783d"
+      "bytes": 28195,
+      "sha256": "f8cf1be06c8392fbdbeed96e4bea8cb772aeb0ee30f0026b6ea2a8fb6a8621c4"
     }
   }
 }

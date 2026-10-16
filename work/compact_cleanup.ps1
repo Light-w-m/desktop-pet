@@ -65,11 +65,12 @@ foreach ($animation in $manifest.animations.PSObject.Properties) {
         $plan += [pscustomobject]@{relative=('work/repaired-assets/' + $name); path=$path; bytes=(Get-Bytes $path); mode='duplicate'}
     }
 }
-# Video decoding is reproducible; keep the exact four imagegen source frames
+# Video decoding is reproducible; keep the exact imagegen source frames
 # and all guides/prompts while allowing the remaining diagnostics to be recycled.
 $videoCache = Assert-WorkspacePath (Join-Path $workspace 'local-media/stomp-video')
 if (Test-Path -LiteralPath $videoCache -PathType Container) {
-    $retainedFrames = @('frame-001.png', 'frame-033.png', 'frame-082.png', 'frame-136.png')
+    $retainedFrames = @('frame-001.png', 'frame-033.png', 'frame-082.png', 'frame-136.png',
+        'frame-193.png', 'frame-340.png')
     foreach ($item in Get-ChildItem -LiteralPath $videoCache -File) {
         if ($item.Name -match '^(frame|matte|stabilized)-[0-9]+\.png$' -and $item.Name -notin $retainedFrames) {
             $checked = Assert-WorkspacePath $item.FullName

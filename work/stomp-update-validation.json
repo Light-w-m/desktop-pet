@@ -1,23 +1,35 @@
 {
-  "executable_bytes": 239857961,
-  "sha256": "b132890ed66e809296c5dcfa4e10c38605ea5f8140288a4734590ce6669f415f",
+  "executable_bytes": 273324945,
+  "sha256": "e445f78a97bc25c820ba14db62f67bba129b2ae9e793ae4f468e30cc911b8c67",
   "interactive_window": {
-    "pid": 26816,
+    "pid": 23452,
     "visible": true,
     "layered": true
   },
   "preferences_preserved": true,
   "main_frames_unchanged": 1914,
   "drag_frames_unchanged": 186,
-  "new_stomp_frames": 78,
-  "duration_ms": 1300,
+  "new_stomp_frames": 296,
+  "duration_ms": 4933,
   "sequence": [
     "stomp",
     "settle_to_standing"
   ],
+  "complete_video_recovery": {
+    "complete_source_seconds": 4.4,
+    "source_ending_retained": true,
+    "handoff_source_seconds": [
+      5.826666666666666,
+      6.066666666666666
+    ],
+    "final_pose": "front facing, arms relaxed, both feet planted"
+  },
+  "source_range_seconds": [
+    1.1333333333333333,
+    6.066666666666666
+  ],
   "reference_qa": "stomp-package-validation.json",
   "all_source_pixels_match_compact_pack": true,
-  "independent_lossless_stomp_frames": true,
   "colour_match": "stomp-colour-validation.json",
   "automatic_rotation": "automatic-rotation-validation.json",
   "automatic_standing_seconds": 30,
