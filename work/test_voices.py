@@ -24,6 +24,13 @@ def settle(player):
         time.sleep(.002)
 
 
+def finished(output):
+    until = time.perf_counter()+3
+    while not output.finished:
+        assert time.perf_counter() < until
+        time.sleep(.002)
+
+
 with tempfile.TemporaryDirectory(prefix='voice-test-',dir=ROOT/'work'/'sources') as directory:
     temporary = Path(directory)
     local = temporary/LOCAL_VOICES
@@ -80,7 +87,7 @@ with tempfile.TemporaryDirectory(prefix='voice-test-',dir=ROOT/'work'/'sources')
     native.check(native.api.waveOutGetVolume(native.handle,C.byref(actual_volume)))
     gain = round(.3*65535)
     assert actual_volume.value == gain | (gain << 16), actual_volume.value
-    time.sleep(.16)
+    finished(native)
     assert native.finished
     native.stop()
     assert not native.handle and native.buffer is None
@@ -94,7 +101,7 @@ with tempfile.TemporaryDirectory(prefix='voice-test-',dir=ROOT/'work'/'sources')
         assert not native_player.backend.handle and native_player.backend.buffer is None
     native_player.play(dict(records[0],path=silence))
     settle(native_player)
-    time.sleep(.18)
+    finished(native_player.backend)
     native_player.poll()
     settle(native_player)
     assert native_player.current_id is None and native_player.backend.buffer is None

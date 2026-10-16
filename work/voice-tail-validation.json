@@ -1,0 +1,40 @@
+{
+  "all_retained_pcm_preserved": 34,
+  "quiet_tail_seconds": 0.25,
+  "embedded_audio_backend": true,
+  "natural_completion_releases_without_reset": true,
+  "explicit_stop_remains_immediate": true,
+  "stereo_and_different_sample_rate": true,
+  "truncated_wav_rejected": true,
+  "native_completion_ignores_short_catalog_duration": true,
+  "native_silent_playback": [
+    {
+      "id": 51,
+      "source_seconds": 1.5413333333333334,
+      "output_seconds": 1.817897099999982,
+      "all_queued_samples_played": 85984,
+      "natural_completion_reset_calls": 0
+    },
+    {
+      "id": 66,
+      "source_seconds": 1.084,
+      "output_seconds": 1.3581409000000804,
+      "all_queued_samples_played": 64032,
+      "natural_completion_reset_calls": 0
+    },
+    {
+      "id": 3,
+      "source_seconds": 9.070666666666666,
+      "output_seconds": 9.335641599999917,
+      "all_queued_samples_played": 447392,
+      "natural_completion_reset_calls": 0
+    },
+    {
+      "id": 29,
+      "source_seconds": 35.59466666666667,
+      "output_seconds": 35.86978189999991,
+      "all_queued_samples_played": 1720544,
+      "natural_completion_reset_calls": 0
+    }
+  ]
+}

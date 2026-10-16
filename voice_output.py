@@ -22,6 +22,8 @@ class WaveOutput:
 
     Handle-scoped volume: https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/nf-mmeapi-waveoutsetvolume
     """
+    TAIL_SECONDS = .25
+
     def __init__(self):
         self.api = C.WinDLL('winmm')
         signatures = {
@@ -58,7 +60,11 @@ class WaveOutput:
 
     def stop(self):
         if self.handle:
-            self.check(self.api.waveOutReset(self.handle))
+            # Reset is an abort, not an end-of-stream notification. Once the
+            # driver returns the completed buffer, release it without flushing
+            # the output path and clipping its last audible samples.
+            if self.header is not None and not self.finished:
+                self.check(self.api.waveOutReset(self.handle))
             if self.header is not None:
                 self.check(self.api.waveOutUnprepareHeader(self.handle,C.byref(self.header),C.sizeof(WaveHeader)))
             self.check(self.api.waveOutClose(self.handle))
@@ -74,10 +80,16 @@ class WaveOutput:
             if (source.getcomptype() != 'NONE' or source.getsampwidth() != 2
                     or channels not in (1,2) or source.getnframes() > rate*120):
                 raise ValueError('Expected a short mono/stereo 16-bit PCM voice')
-            pcm = source.readframes(source.getnframes())
+            frames = source.getnframes()
+            pcm = source.readframes(frames)
         if not pcm:
             raise ValueError('Empty voice')
         alignment = channels*2
+        if len(pcm) != frames*alignment:
+            raise ValueError('Incomplete PCM voice')
+        # Leave the original PCM intact. A short silent tail lets the output
+        # device/resampler drain before WHDR_DONE makes the clip releasable.
+        pcm += bytes(round(rate*self.TAIL_SECONDS)*alignment)
         format = WaveFormat(1,channels,rate,rate*alignment,alignment,16,0)
         self.check(self.api.waveOutOpen(C.byref(self.handle),0xffffffff,C.byref(format),0,0,0))
         try:
