@@ -43,13 +43,13 @@ python work/check_publish_repo.py
 
 新克隆的仓库没有动画文件。下载同一版本 Release 中的 `CitlaliDesktopPet-source-assets.zip`，解压到项目根目录，得到 `assets/standing-obs.webp`、`assets/reading-obs.webp` 和 `assets/drinking-obs.webp`。运行 `python work/prepare_assets.py` 会检查 SHA-256，并准备本机的构建目录。
 
-v1.2.0 还包含 `assets/dragging/pet-frames.json` 和 `pet-frames.bin`，提供已处理好的透明拖动动画。`assets/dragging/source.json` 随源码保存处理说明和校验值；`work/prepare_assets.py` 同时检查拖动帧包。使用准备好的素材包构建不需要重新抠图或补帧，拖动动画与主动作共用受限帧缓存。
+v1.3.0 素材包包含 `assets/dragging` 和 `assets/stomping` 下的 `pet-frames.json`、`pet-frames.bin`，提供已处理好的拖动和跺脚动画。两组 `source.json` 随源码保存处理说明和校验值；`work/prepare_assets.py` 同时检查两组帧包。使用准备好的素材包构建不需要重新抠图或补帧，互动动画与主动作共用受限帧缓存。
 
 带语音的版本还会在源码素材包中提供 `assets/voices/catalog.json` 和 PCM WAV；这些文件同样保持 Git 忽略。使用本地原始语音时，先按需要删除 `local-media/citlali-voices-zh-cn` 中的 OGG，再运行 `python work/prepare_voices.py` 同步索引并转换保留的文件，转换需要 ffmpeg。EXE 只内置当前保留的语音，运行时使用 Windows 原生接口，无需 ffmpeg。
 
 ## 本地历史备份
 
-本次按用户选择，只保留最近一版的独立 EXE、Git bundle 和设置快照，放在 `backups/before-compact-*`。更早的备份已移入 Windows 回收站，可从回收站恢复；原始动画与语音素材仍保留。旧的不可达 Git 对象在保留备份后清理，分支和已有提交不改写。
+按用户选择，只保留最近一版的独立 EXE、Git bundle 和设置快照，放在 `backups` 的最近快照目录中。更早的备份已移入 Windows 回收站，可从回收站恢复；原始动画与语音素材仍保留。旧的不可达 Git 对象在保留备份后清理，分支和已有提交不改写。
 
 需要查阅备份时，可以用 `git bundle verify` 检查对应 bundle，再用 `git clone <备份文件路径> <另一个空目录>` 恢复到独立目录。需要更早的历史时，先从回收站恢复当时的 bundle。
 

@@ -4,7 +4,7 @@
 
 从 [Releases](https://github.com/Light-w-m/desktop-pet/releases) 下载 **CitlaliDesktopPet.exe**，双击运行，无需安装 Python。默认站立，背景和窗口边框透明。EXE 内置全部播放素材。
 
-本地版本使用无损动画差分压缩，EXE 约 229 MiB，五种动画共 2178 帧。主动作和拖动素材保持原像素，所有素材在压缩前后逐帧对比无差异；日常运行只需要 EXE。此更新尚未发布到 GitHub。
+[v1.3.0](https://github.com/Light-w-m/desktop-pet/releases/tag/v1.3.0) 使用无损动画差分压缩，EXE 约 229 MiB，五种动画共 2178 帧。主动作和拖动素材保持原像素，所有素材在压缩前后逐帧对比无差异；日常运行只需要 EXE。
 
 源码仓库不包含大型 EXE、动画 WebP 和播放帧包。需要从源码运行或构建时，另下载同一版本的 **CitlaliDesktopPet-source-assets.zip**，解压到项目根目录。MP4 原始录屏不随仓库或 Release 分发。发布步骤见 [GitHub 发布说明](docs/PUBLISHING.md)。
 
