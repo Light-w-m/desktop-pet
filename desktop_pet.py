@@ -372,7 +372,11 @@ class DesktopPet:
                     self.drag_motion.active=True
                     self.stream.prefetch(self.drag_keys(self.drag_motion.elapsed+dt))
                 else:
-                    self.stream.prefetch(self.return_keys(dt))
+                    keys=self.return_keys(dt)
+                    self.stream.prefetch(keys)
+                    base=self.stream.peek(*keys[0])
+                    if base is not None:
+                        self.stomp_motion.held_frame=base
         self.drag_motion.advance(dt)
         before_return=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT) if was_stomping else 0
         self.stomp_motion.advance(dt)
@@ -528,12 +532,20 @@ class DesktopPet:
             return False
         base = self.drag_motion.held_frame or self.displayed_frame
         self.stomp_motion.start_once(self.displayed_frame,base,self.animations['stomping']['duration'])
+        # This reaction includes its own standing recovery. Start the main
+        # standing clock at the shared neutral pose, preserving auto/manual
+        # playback and pause preferences while cancelling the previous pose.
+        self.clock.current = self.current = 'standing'
+        self.clock.position = self.elapsed = 0.0
+        self.clock.stage_elapsed = 0.0
+        self.clock.playlist_index = 0
+        self.clock.pending = None
         self.warm_stomp()
         self.last_stomp_time = now
         self.last_stomp_frame = None
         self.last_frame = -1
         self.show_expression('shake_angry')
-        logging.info('Shake easter egg: one stomp, then resume %s at %.3fs',self.current,self.clock.position)
+        logging.info('Shake easter egg: raise hands, stomp, then normal standing')
         return True
 
     def play_stomp_voice(self):

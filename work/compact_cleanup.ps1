@@ -1,6 +1,7 @@
 param(
     [switch]$Apply,
     [switch]$RecycleOlderBackups,
+    [switch]$RecycleGenerated,
     [string]$KeepBackup
 )
 $ErrorActionPreference = 'Stop'
@@ -64,6 +65,18 @@ foreach ($animation in $manifest.animations.PSObject.Properties) {
         $plan += [pscustomobject]@{relative=('work/repaired-assets/' + $name); path=$path; bytes=(Get-Bytes $path); mode='duplicate'}
     }
 }
+# Video decoding is reproducible; keep the exact four imagegen source frames
+# and all guides/prompts while allowing the remaining diagnostics to be recycled.
+$videoCache = Assert-WorkspacePath (Join-Path $workspace 'local-media/stomp-video')
+if (Test-Path -LiteralPath $videoCache -PathType Container) {
+    $retainedFrames = @('frame-001.png', 'frame-033.png', 'frame-082.png', 'frame-136.png')
+    foreach ($item in Get-ChildItem -LiteralPath $videoCache -File) {
+        if ($item.Name -match '^(frame|matte|stabilized)-[0-9]+\.png$' -and $item.Name -notin $retainedFrames) {
+            $checked = Assert-WorkspacePath $item.FullName
+            $plan += [pscustomobject]@{relative=('local-media/stomp-video/' + $item.Name); path=$checked; bytes=$item.Length; mode='generated'}
+        }
+    }
+}
 if ($RecycleOlderBackups) {
     if (-not $KeepBackup) { throw 'Specify the most recent backup directory to preserve.' }
     $preserved = Assert-WorkspacePath (Join-Path $workspace $KeepBackup)
@@ -76,6 +89,12 @@ if ($RecycleOlderBackups) {
         if ($item.FullName -eq $preserved) { continue }
         $path = Assert-WorkspacePath $item.FullName
         $plan += [pscustomobject]@{relative=('backups/' + $item.Name); path=$path; bytes=(Get-Bytes $path); mode='recycle'}
+    }
+}
+
+if ($RecycleGenerated) {
+    foreach ($entry in $plan) {
+        if ($entry.mode -in @('generated', 'duplicate')) { $entry.mode = 'recycle' }
     }
 }
 
@@ -105,6 +124,11 @@ $report = [pscustomobject]@{
     preserved_backup=$KeepBackup
     recycled_bytes=[long](($plan | Where-Object mode -eq 'recycle' | Measure-Object bytes -Sum).Sum)
     generated_bytes_removed=[long](($plan | Where-Object mode -ne 'recycle' | Measure-Object bytes -Sum).Sum)
-    entries=@($plan | Select-Object relative, bytes, mode)
+    entries=@($plan | Group-Object { if ($_.relative -like 'local-media/stomp-video/*') {
+            'local-media/stomp-video (generated frames only)'
+        } else { $_.relative } } | ForEach-Object {
+            [pscustomobject]@{relative=$_.Name; bytes=[long](($_.Group | Measure-Object bytes -Sum).Sum);
+                paths=$_.Count; mode=$_.Group[0].mode}
+        })
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $workspace 'work/storage-cleanup.json') -Encoding UTF8

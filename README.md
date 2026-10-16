@@ -4,7 +4,7 @@
 
 从 [Releases](https://github.com/Light-w-m/desktop-pet/releases) 下载 **CitlaliDesktopPet.exe**，双击运行，无需安装 Python。默认站立，背景和窗口边框透明。EXE 内置全部播放素材。
 
-本地瘦身版使用无损动画差分压缩，EXE 从约 713 MiB 缩小到约 224 MiB。保留全部 2160 帧、原始分辨率、透明边缘与语音，逐帧像素对比无差异；日常运行只需要 EXE。此更新尚未发布到 GitHub。
+本地版本使用无损动画差分压缩，新跺脚加入后 EXE 约 235 MiB，五种动画共 2241 帧。主动作和拖动素材保持原像素，所有素材在压缩前后逐帧对比无差异；日常运行只需要 EXE。此更新尚未发布到 GitHub。
 
 源码仓库不包含大型 EXE、动画 WebP 和播放帧包。需要从源码运行或构建时，另下载同一版本的 **CitlaliDesktopPet-source-assets.zip**，解压到项目根目录。MP4 原始录屏不随仓库或 Release 分发。发布步骤见 [GitHub 发布说明](docs/PUBLISHING.md)。
 
@@ -37,11 +37,11 @@
 | 读书 | 816 | 13.6 秒 |
 | 喝饮料 | 945 | 15.75 秒 |
 | 拖动互动 | 186 | 3.10 秒 |
-| 晃动后跺脚 | 60 | 1.00 秒 |
+| 晃动后跺脚 | 141 | 2.35 秒 |
 
 拖动互动使用用户提供的 71 帧 GIF，保留原本的局部取景和人物画面，去掉房间背景。通过运动补偿补至 60 FPS，加入循环过渡，并柔化素材底部已有的裁切边缘。拖动时暂存当前主动作的播放位置，松手后平滑恢复；暂停主动画时仍可播放拖动互动。GIF 原件和处理缓存保留在本机。
 
-跺脚使用新提供 GIF 中的一次完整动作，排除重复动作和场景切换。人物颜色来自原 GIF，透明轮廓用两个姿势参考辅助跟踪，并补帧到 60 FPS；加入 0.20 秒入场和 0.24 秒退出渐变。拖动期间提前准备跺脚首帧，跺脚期间预读恢复所需的帧；缓存尚未就绪时保留原动作，准备时间不占用过渡时长。动作和专属表情只用于晃动彩蛋，不作为右键动作或表情的新选项。处理记录与提示词分别见 `assets/stomping/source.json` 和 `assets/easter-eggs/provenance.json`。
+跺脚改用新提供的 MP4，保留抬手、跺脚到收势的连续动作，约 2.35 秒，结束后渐变到正常站立。录屏中的重复姿势按原时间定位，用双向光流补至 60 FPS；原视频颜色经过适度提亮和受限锐化，清理背景光效，人物大小与脚底位置按站姿统一校准。四个姿势的透明轮廓参考先通过特征匹配对齐，再辅助跟踪抠图，生成图的 RGB 不进入动画。保留 0.20 秒入场和 0.24 秒退出渐变，首帧与站立恢复帧提前准备，避免冷读取吞掉过渡。动作和专属表情只用于晃动彩蛋。处理记录及抠图提示词见 `assets/stomping/source.json`，表情记录见 `assets/easter-eggs/provenance.json`。
 
 选择另一个动作时，当前动作先自然结束并回到站立，再进入所选动作。因此，切换可能需要等待当前动作的剩余时间；右键菜单会显示待切换动作。连续选择以最后一次为准，重新选择正在播放的动作会取消待切换请求并继续播放。暂停时保持当前帧，恢复后继续衔接。
 
@@ -55,7 +55,7 @@
 
 `drag_motion.py` 管理拖动的独立时钟和 0.16 秒渐变，拖动帧包保存在 `assets/dragging` 并与主动作共用一套受限缓存。Release 源码素材包含处理好的拖动帧包，直接构建不需要额外依赖；从原 GIF 重新处理时运行 `work/build_drag_assets.py`，需要 NumPy、OpenCV 和本地的原 GIF、透明轮廓参考。素材来源及校验值见 `assets/dragging/source.json`，拖动行为和打包帧率分别由 `work/test_dragging.py`、`work/analyze_dragging.py` 验证。
 
-`shake_motion.py` 识别拖动中的明显反向，管理停下后的单次跺脚与恢复。帧包在 `assets/stomping`，专属表情在 `assets/easter-eggs`；两者内置到 EXE，跺脚和主动作、拖动动画共用受限帧缓存。`work/build_stomp_assets.py` 用本地 GIF 和轮廓参考准备素材，`work/test_shaking.py` 覆盖误触、松手/停下、主动作续播、暂停、缩放、重新拖动和冷却；`work/verify_packaged_stomping.py` 验证实际 EXE 内的素材、单次播放和恢复。
+`shake_motion.py` 识别拖动中的明显反向，管理停下后的单次跺脚与站立恢复。帧包在 `assets/stomping`，专属表情在 `assets/easter-eggs`；两者内置到 EXE，跺脚和主动作、拖动动画共用受限帧缓存。`work/build_stomp_assets.py --extract` 用本地 MP4 和四个轮廓参考准备素材，需要 NumPy、OpenCV 和 ffmpeg。`work/test_shaking.py` 覆盖误触、松手/停下、站立恢复、暂停、缩放、重新拖动和冷却；`work/verify_packaged_stomping.py` 验证实际 EXE 内的素材、单次播放和恢复。
 
 `voices.py` 管理后台播放和语音面板，`voice_output.py` 通过 WinMM 的独立播放句柄调节音量，`voice_actions.py` 在实际动画循环边界配对语音并安排站立闲聊；`voice_library.py` 管理可用语音。内存中仅保留正在播放的一条 PCM WAV，结束或停止后释放。构建时仅内置仍保留的语音；如需从自己的 OGG 生成播放文件，需要 ffmpeg，`work/prepare_voices.py` 会保留原采样率，不重新下载已删除的文件。Release 源码素材包包含已准备好的 `assets/voices`，从该素材包构建不需要再次转换。缺少语音素材时，其他桌宠功能仍可使用。
 
@@ -69,7 +69,7 @@
 
 帧包内置在可独立运行的 EXE 中，不在旁边重复保存。源码运行时会读取 `work/repaired-assets` 中生成的帧包；如需外部覆盖，也可把完整的帧包索引和数据放入 `assets`。
 
-本次全部 2160 帧的原生像素、默认尺寸、透明度和时序均通过对比，并检查其他四种尺寸及随机跳帧。持续播放与内存测量见 `work/compact-runtime-validation.json`，完整素材比对见 `work/compact-quality-validation.json`。早期按需播放版本的内存记录保存在 `work/memory-*.json`；菜单连续开关后的 GDI 检查见 `work/menu-validation.json`。
+紧凑帧包的原生像素、默认尺寸、透明度和时序通过全部素材对比，并检查其他四种尺寸及随机跳帧；本次新跺脚加入后共 2241 帧。完整素材比对见 `work/compact-quality-validation.json`，新跺脚实机播放见 `work/stomp-package-validation.json`，前一版主动作播放与内存测量见 `work/compact-runtime-validation.json`。早期按需播放版本的内存记录保存在 `work/memory-*.json`；菜单连续开关后的 GDI 检查见 `work/menu-validation.json`。
 
 1. Windows x64 使用 Python 3.12，运行 `python -m pip install -r requirements-build.txt`。把 Release 源码素材包解压到根目录，再运行 `python work/prepare_assets.py`。也可用 `work/extract_obs.py` 从上述本地 OBS 文件重新提取素材，额外需要 NumPy、OpenCV 和 ffmpeg。
 2. 运行 `work/validate_assets.py` 检查所有帧的轮廓边距、完整性、时长和公共站姿接缝。

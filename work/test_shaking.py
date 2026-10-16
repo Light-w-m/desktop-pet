@@ -42,9 +42,13 @@ metadata = json.loads((folder/'source.json').read_text(encoding='utf-8'))
 for name, expected in metadata['files'].items():
     assert hashlib.sha256((folder/name).read_bytes()).hexdigest() == expected['sha256']
 archive = FrameArchive(folder/'pet-frames.json')
-assert len(archive.animations['stomping']['frames']) == 60
-assert abs(archive.animations['stomping']['duration']-1) < 1e-8
-for index in range(60):
+count = metadata['output_frames']
+duration = metadata['duration_ms']/1000
+assert count == round(duration*60) and count > 60
+assert len(archive.animations['stomping']['frames']) == count
+assert abs(archive.animations['stomping']['duration']-duration) < 1e-8
+assert metadata['sequence'] == ['hands_up','stomp','settle_to_standing']
+for index in range(count):
     frame = archive.read('stomping', index, (560, 480))
     assert all(frame['pixels'][i] <= frame['pixels'][i-i % 4+3]
                for i in range(len(frame['pixels'])) if i % 4 != 3)
@@ -139,15 +143,15 @@ try:
         pump(.1)
         assert pet.drag_motion.visible and pet.drag_motion.elapsed > drag_elapsed
         pump(.25)
-        assert pet.visual_pose == 'stomping' and pet.clock.position == held and pet.current == name
+        assert pet.visual_pose == 'stomping' and pet.clock.position == 0 and pet.current == 'standing'
         if name == 'standing':
             preview = Image.new('RGBA', (pet.width, pet.height), '#eadfe7')
             preview.alpha_composite(Image.frombytes('RGBA', (pet.width, pet.height),
                                     C.string_at(pet.bits, pet.width*pet.height*4), 'raw', 'BGRA'))
             preview.convert('RGB').save(ROOT/'work'/'stomping-native.jpg')
-        pump(.85)
-        assert not pet.stomp_motion.visible and pet.current == name
-        assert held < pet.clock.position < held+.65
+        pump(duration-.1)
+        assert not pet.stomp_motion.visible and pet.current == 'standing'
+        assert .2 < pet.clock.position < .65
         assert pet.stomp_motion.held_frame is None
 
     # A cold archive must keep the previous image on screen while preparing;
@@ -169,9 +173,9 @@ try:
         pump(.13)
         assert not pet.stomp_motion.preparing and 0 < pet.stomp_motion.elapsed < .13
         voice.assert_called_once()
-        pump(1.2)
+        pump(duration+.2)
         voice.assert_called_once()
-    assert not pet.stomp_motion.visible and pet.clock.position == .7
+    assert not pet.stomp_motion.visible and pet.clock.position == 0 and pet.current == 'standing'
 
     x,y=prepare('drinking')
     pet.reset_drag()
@@ -179,11 +183,20 @@ try:
     pet.clock.request('reading')
     pet.draw(len(pet.animations['drinking']['frames'])-5)
     assert pet.start_stomp(time.perf_counter())
-    pump(.94)
-    assert pet.stomp_motion.visible and pet.current == 'reading'
+    pump(duration-.12)
+    assert pet.stomp_motion.visible and pet.current == 'standing'
     pump(.35)
-    assert not pet.stomp_motion.visible and pet.current == 'reading'
+    assert not pet.stomp_motion.visible and pet.current == 'standing' and pet.clock.pending is None
     assert 0 < pet.clock.position < .6
+
+    # A new explicit menu selection made during the reaction is still queued
+    # against normal standing, rather than reviving the interrupted old pose.
+    x,y=prepare('reading')
+    pet.reset_drag()
+    assert pet.start_stomp(time.perf_counter())
+    pet.switch('drinking')
+    pump(duration+.15)
+    assert pet.current == 'standing' and pet.clock.pending == 'drinking'
 
     x, y = prepare(paused=True)
     shake(x, y)
@@ -199,7 +212,7 @@ try:
     mouse(0x0202, x+70, y, 0)
     pump(.3)
     assert not pet.drag_motion.visible and not pet.stomp_motion.visible
-    assert pet.paused and pet.clock.position == held
+    assert pet.paused and pet.clock.position == 0 and pet.current == 'standing'
 
     x, y = prepare(paused=True)
     shake(x, y)
@@ -207,8 +220,8 @@ try:
     pump(.3)
     pet.resize(1.0)
     assert pet.stomp_motion.visible and pet.visual_pose == 'stomping'
-    pump(.85)
-    assert pet.paused and pet.clock.position == .7 and not pet.stomp_motion.visible
+    pump(duration)
+    assert pet.paused and pet.clock.position == 0 and pet.current == 'standing' and not pet.stomp_motion.visible
 
     x, y = prepare()
     shake(x, y)
@@ -229,14 +242,14 @@ try:
     assert pet.expression is None and pet.expression_key is None
     assert pet.stream.peak_cache_frames <= 12 and pet.stream.peak_cache_bytes <= 24*1024**2
     report = {'horizontal_vertical_diagonal_shakes': True, 'ordinary_drag_jitter_slow_motion_rejected': True,
-              'one_shot_after_release_or_idle': True, 'all_three_main_actions_resume_their_phase': True,
+              'one_shot_after_release_or_idle': True, 'all_three_main_actions_recover_normal_standing': True,
               'stomp_and_secret_sticker_together': True, 'picker_remains_nine_stickers': True,
               'paused_playback_and_resize': True, 'regrab_smoothly_cancels_stomp': True,
               'capture_loss_cancels_pending_shake': True, 'cooldown_and_expression_timeout': True,
-              'all_60_frames_valid_premultiplied_with_margins': True, 'shared_bounded_cache': True}
+              'all_frames_valid_premultiplied_with_margins': count, 'shared_bounded_cache': True}
     report.update(live_outgoing_motion_during_fade=True,cold_start_is_nonblocking_and_preserves_intro=True,
                   main_action_resumes_during_exit_fade=True,one_voice_dispatch_after_frames_ready=True,
-                  queued_action_switch_during_exit_fade=True)
+                  old_pending_action_cancelled_new_menu_selection_preserved=True)
     (ROOT/'work'/'shaking-validation.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2), flush=True)
 finally:

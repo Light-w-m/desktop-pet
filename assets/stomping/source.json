@@ -1,20 +1,62 @@
 {
-  "version": 1,
-  "source_file": "8d8b557ec2dc9b49294c660c96fb38c2.gif",
-  "source_sha256": "3d13d958a84ff496ca0e116a90c02f0e0f8f332fa694c5425643d6b6201b1f1d",
-  "source_total_frames": 85,
-  "source_selected_frames": [
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18
+  "version": 2,
+  "source_file": "8790CBFF-D122-4739-9F87-A955A3C94149.mp4",
+  "source_sha256": "c7a79f721f656c5c8b5131132da8723cb66fe68163de479bd2f0270eff7e3498",
+  "source_video": {
+    "width": 3840,
+    "height": 2160,
+    "fps": 120,
+    "frames": 728
+  },
+  "source_range_seconds": [
+    0.08333333333333333,
+    2.4333333333333336
   ],
-  "output_frames": 60,
-  "duration_ms": 1000,
+  "decoded_crop": [
+    840,
+    0,
+    1840,
+    2160
+  ],
+  "processing_size": [
+    736,
+    864
+  ],
+  "distinct_pose_frames": [
+    0,
+    3,
+    6,
+    14,
+    17,
+    19,
+    24,
+    27,
+    34,
+    43,
+    46,
+    53,
+    56,
+    59,
+    62,
+    69,
+    70,
+    75,
+    79,
+    86,
+    93,
+    97,
+    103,
+    105,
+    109,
+    112,
+    114,
+    122,
+    128,
+    132,
+    135
+  ],
+  "output_frames": 141,
+  "duration_ms": 2350,
   "fps": 60,
   "canvas": [
     840,
@@ -24,31 +66,116 @@
     560,
     480
   ],
-  "layout_native_offset": [
-    239,
-    104
-  ],
   "one_shot": true,
-  "original_gif_colours": true,
-  "mask_reference": {
+  "return_pose": "standing",
+  "sequence": [
+    "hands_up",
+    "stomp",
+    "settle_to_standing"
+  ],
+  "processing": {
+    "colors": "original video; gamma .78, gain 1.08; bounded unsharp .6 at sigma 1",
+    "matting": "registered alpha guides, dense optical flow, seeded GrabCut",
+    "stabilization": "fixed similarity calibrated to upright body size and standing baseline; preserve crouch and jump",
+    "interpolation": "bidirectional optical flow on premultiplied RGBA at original timestamps",
+    "light_cleanup": "cyan effects below skirt only, local adjacent pixel reconstruction"
+  },
+  "alpha_references": {
     "tool": "image_gen__imagegen",
     "mode": "built-in",
-    "prompt": "Use case: background-extraction. Edit target: the provided Citlali animation frame. Isolate only the complete visible character, including hair strands, sleep mask, both arms and hands, dress, ribbons, legs and both boots. Remove the entire colorful game scenery and ground, retaining transparent gaps between limbs and hair. Preserve the exact original position, proportions, pose, colors and framing; do not redraw, extend or invent cropped parts. Output a genuinely transparent RGBA cutout on the exact same 390 by 596 canvas, character aligned to the original pixels. This output is only a foreground alpha reference for extracting the original animated GIF pixels.",
-    "use": "Alpha guidance only; animated RGB is sampled from the original GIF."
+    "prompt": "Background extraction for a video alpha-matte reference. Remove all scenery, ground, floating symbols, blue/purple glowing ribbons, sparkles and horizontal light streaks. Keep ONLY the entire visible Citlali character, including every hair tip, sleeping mask, all fingers, both arms, the complete skirt and its attached tails, both legs, both boots and their soles. Preserve EXACT original pose, position, proportions, canvas framing and pixel coordinates on the 736x864 canvas. Do not recenter, resize, redraw, sharpen, add, or invent any body parts. Preserve transparent holes between limbs and strands. The large floating purple symbol at the left is NOT part of her. The cyan star and light streaks are NOT part of her. Output a genuinely transparent PNG. This will be used ONLY as an alpha reference; animation colors will come from the original video.\n",
+    "use": "Only registered alpha guidance; generated RGB never enters the animation.",
+    "registrations": [
+      {
+        "source_frame": 1,
+        "inliers": 189,
+        "transform": [
+          [
+            0.5263860124043728,
+            -0.004241409499854484,
+            37.53515477924928
+          ],
+          [
+            0.004241409499854484,
+            0.5263860124043728,
+            152.7618899619462
+          ]
+        ],
+        "guide_sha256": "1d7c94d82c3832dc69d9d024ba59f894f366cee36f9f7dded85dfed22057d432"
+      },
+      {
+        "source_frame": 33,
+        "inliers": 106,
+        "transform": [
+          [
+            0.5725173547584582,
+            0.00026608481102292886,
+            12.599347034457486
+          ],
+          [
+            -0.00026608481102292886,
+            0.5725173547584582,
+            146.03928674707777
+          ]
+        ],
+        "guide_sha256": "df7c7a83de9ca98c4015d5e74bc8b8ba83f064c1eb216a8873c2523b309ea727"
+      },
+      {
+        "source_frame": 82,
+        "inliers": 216,
+        "transform": [
+          [
+            0.5685315882217576,
+            -0.00020392684961615003,
+            21.2610607884395
+          ],
+          [
+            0.00020392684961615003,
+            0.5685315882217576,
+            79.45533692230399
+          ]
+        ],
+        "guide_sha256": "ac083803e52bcd96dc86ce9e87c188ba142640a82ec5bf50a96ed850e93c9fea"
+      },
+      {
+        "source_frame": 136,
+        "inliers": 258,
+        "transform": [
+          [
+            0.6341487110755456,
+            -0.0008917602396714649,
+            0.28178536657284997
+          ],
+          [
+            0.0008917602396714649,
+            0.6341487110755456,
+            1.008228292582592
+          ]
+        ],
+        "guide_sha256": "765a4bc82d0942a6ac808c8b0a2d74047ad2d68e8789a33705a7e0dee75f1d5f"
+      }
+    ]
   },
-  "end_mask_reference": {
-    "tool": "image_gen__imagegen",
-    "mode": "built-in",
-    "prompt": "Use case: background-extraction. Edit target: the provided full-body Citlali animation frame after stomping. Remove only the game scenery, rainbow, stone, grass, decorations and ground. Preserve the complete visible character, entire sleep mask, hair tips, BOTH arms and hands, the dress and all ribbons, BOTH legs and BOTH complete boots including their soles. Keep the original exact pose, position, scale and framing on the same 390 by 596 image canvas, with transparent holes between limbs and hair. Do not crop, redraw, add or extend the character. Return one actual transparent RGBA cutout. It is an alpha guide for extracting the original animated pixels."
-  },
+  "layout_native_transform": [
+    [
+      0.7599999904632568,
+      0.0,
+      209.0
+    ],
+    [
+      0.0,
+      0.7599999904632568,
+      37.0
+    ]
+  ],
   "files": {
     "pet-frames.bin": {
-      "bytes": 14859403,
-      "sha256": "4db580d9a192624ae67137729ccd07f5077e8318df1202dbd61d4dbee886e30c"
+      "bytes": 44466465,
+      "sha256": "43876197730892ed37b731d9d50c7da3a9f06ba3dfcafe77a564cf7f02415028"
     },
     "pet-frames.json": {
-      "bytes": 5750,
-      "sha256": "b9da745ddebf4f05eb82fda50b5a3a119714a8236d55e5a907e38a0da0755b2c"
+      "bytes": 13566,
+      "sha256": "da25ae8755cf893970f5f29a9160d9e59b38a509f88cbd5a6cd8edaf3e9c1d8e"
     }
   }
 }

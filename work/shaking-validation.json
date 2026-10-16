@@ -2,18 +2,18 @@
   "horizontal_vertical_diagonal_shakes": true,
   "ordinary_drag_jitter_slow_motion_rejected": true,
   "one_shot_after_release_or_idle": true,
-  "all_three_main_actions_resume_their_phase": true,
+  "all_three_main_actions_recover_normal_standing": true,
   "stomp_and_secret_sticker_together": true,
   "picker_remains_nine_stickers": true,
   "paused_playback_and_resize": true,
   "regrab_smoothly_cancels_stomp": true,
   "capture_loss_cancels_pending_shake": true,
   "cooldown_and_expression_timeout": true,
-  "all_60_frames_valid_premultiplied_with_margins": true,
+  "all_frames_valid_premultiplied_with_margins": 141,
   "shared_bounded_cache": true,
   "live_outgoing_motion_during_fade": true,
   "cold_start_is_nonblocking_and_preserves_intro": true,
   "main_action_resumes_during_exit_fade": true,
   "one_voice_dispatch_after_frames_ready": true,
-  "queued_action_switch_during_exit_fade": true
+  "old_pending_action_cancelled_new_menu_selection_preserved": true
 }
