@@ -47,7 +47,8 @@ duration = metadata['duration_ms']/1000
 assert count == round(duration*60) and count > 60
 assert len(archive.animations['stomping']['frames']) == count
 assert abs(archive.animations['stomping']['duration']-duration) < 1e-8
-assert metadata['sequence'] == ['hands_up','stomp','settle_to_standing']
+assert metadata['sequence'] == ['stomp','settle_to_standing']
+assert metadata['discarded_intro_frames'] == 63 and metadata['source_range_seconds'][0] >= 1.1
 for index in range(count):
     frame = archive.read('stomping', index, (560, 480))
     assert all(frame['pixels'][i] <= frame['pixels'][i-i % 4+3]

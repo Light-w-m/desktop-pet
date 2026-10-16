@@ -41,6 +41,7 @@ for scale in (.6,1.0,1.3):
     assert all(a <= b for a,b in zip(indices,indices[1:])), 'Stomp unexpectedly looped'
     unique = [row for i,row in enumerate(stomps) if i == 0 or row[1] != stomps[i-1][1]]
     assert len(unique) >= expected_frames*.85, 'Too many dropped media frames'
+    assert (len(unique)-1)/duration > 57, 'Stomp decoding cannot sustain smooth playback'
     entry_gap=1000*(draws[positions[0]][2]-draws[positions[0]-1][2])
     exit_gap=1000*(draws[positions[-1]+1][2]-draws[positions[-1]][2])
     entry_ms=raw['render_ms'][positions[0]]

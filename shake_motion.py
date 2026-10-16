@@ -73,6 +73,7 @@ class ShakeDetector:
 class StompMotion(DragMotion):
     FADE_IN = .20
     FADE_OUT = .24
+    RETURN_PRELOAD = .35
 
     def __init__(self):
         super().__init__()

@@ -1,0 +1,156 @@
+{
+  "simulated_seconds": 300,
+  "native_standing_target_seconds": 30,
+  "packaged_player_and_scheduler_code": true,
+  "one_random_idle_line_per_automatic_standing_interval": true,
+  "idle_lines_finish_before_the_next_action": true,
+  "paired_drinking_voice_preserved": true,
+  "actual_desktop_voice_wiring_exercised": true,
+  "audio_not_sent_to_speakers": true,
+  "completed_segments": [
+    {
+      "pose": "standing",
+      "start": 0.1,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·小说",
+          "at": 9.5,
+          "stage_seconds": 9.5,
+          "duration": 6.202
+        }
+      ],
+      "duration": 30.5
+    },
+    {
+      "pose": "drinking",
+      "start": 30.6,
+      "events": [
+        {
+          "pose": "drinking",
+          "title": "闲聊·喝酒",
+          "at": 31.1,
+          "stage_seconds": 0.512,
+          "duration": 9.320666666666666
+        }
+      ],
+      "duration": 15.8
+    },
+    {
+      "pose": "standing",
+      "start": 46.400000000000006,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·出神",
+          "at": 56.2,
+          "stage_seconds": 9.863,
+          "duration": 6.831333333333333
+        }
+      ],
+      "duration": 30.6
+    },
+    {
+      "pose": "reading",
+      "start": 77.0,
+      "events": [],
+      "duration": 13.6
+    },
+    {
+      "pose": "standing",
+      "start": 90.60000000000001,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·小说",
+          "at": 101.0,
+          "stage_seconds": 10.476,
+          "duration": 6.202
+        }
+      ],
+      "duration": 30.6
+    },
+    {
+      "pose": "drinking",
+      "start": 121.2,
+      "events": [
+        {
+          "pose": "drinking",
+          "title": "闲聊·喝酒",
+          "at": 121.7,
+          "stage_seconds": 0.588,
+          "duration": 9.320666666666666
+        }
+      ],
+      "duration": 15.7
+    },
+    {
+      "pose": "standing",
+      "start": 136.9,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·出神",
+          "at": 148.6,
+          "stage_seconds": 11.739,
+          "duration": 6.831333333333333
+        }
+      ],
+      "duration": 30.6
+    },
+    {
+      "pose": "reading",
+      "start": 167.5,
+      "events": [],
+      "duration": 13.6
+    },
+    {
+      "pose": "standing",
+      "start": 181.10000000000002,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·小说",
+          "at": 190.0,
+          "stage_seconds": 8.952,
+          "duration": 6.202
+        }
+      ],
+      "duration": 30.6
+    },
+    {
+      "pose": "drinking",
+      "start": 211.70000000000002,
+      "events": [
+        {
+          "pose": "drinking",
+          "title": "闲聊·喝酒",
+          "at": 212.2,
+          "stage_seconds": 0.564,
+          "duration": 9.320666666666666
+        }
+      ],
+      "duration": 15.7
+    },
+    {
+      "pose": "standing",
+      "start": 227.4,
+      "events": [
+        {
+          "pose": "standing",
+          "title": "闲聊·出神",
+          "at": 236.9,
+          "stage_seconds": 9.515,
+          "duration": 6.831333333333333
+        }
+      ],
+      "duration": 30.6
+    },
+    {
+      "pose": "reading",
+      "start": 258.0,
+      "events": [],
+      "duration": 13.6
+    }
+  ]
+}

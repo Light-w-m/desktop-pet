@@ -13,13 +13,15 @@ class VoiceActions:
         self.rng = rng or random.Random()
         self.pose = None
         self.cycle = None
+        self.automatic = False
+        self.auto_idle_done = False
         self.remaining = self.delay()
         self.last_idle = None
         self.last_stomp = None
         self.drink_pending = False
 
     def delay(self):
-        return self.rng.uniform(45,90)
+        return self.rng.uniform(8,12) if self.automatic else self.rng.uniform(45,90)
 
     def stomp(self, available, *, enabled=True, busy=False):
         """One random line at visible reaction start; skip missing recordings."""
@@ -39,13 +41,16 @@ class VoiceActions:
         if cancel_drinking:
             self.drink_pending = False
 
-    def advance(self, seconds, pose, cycle, *, position, enabled=True, busy=False, paused=False):
+    def advance(self, seconds, pose, cycle, *, position, enabled=True, busy=False, paused=False, automatic=False):
         changed = pose != self.pose
         new_cycle = cycle != self.cycle
+        mode_changed = automatic != self.automatic
+        self.automatic = automatic
         self.pose, self.cycle = pose,cycle
         if changed or new_cycle:
             self.drink_pending = False
-        if changed:
+        if changed or mode_changed:
+            self.auto_idle_done = False
             self.defer()
         if not enabled or busy:
             self.drink_pending = False
@@ -62,10 +67,15 @@ class VoiceActions:
             return None
         if pose != 'standing':
             return None
+        # One chatter line per automatic standing interval, rather than one
+        # per short native idle loop. Manual standing keeps its longer delay.
+        if automatic and self.auto_idle_done:
+            return None
         self.remaining -= min(max(0,seconds),1.0)
         if self.remaining > 0:
             return None
         self.defer()
         choices = [title for title in self.IDLE_TITLES if title != self.last_idle]
         self.last_idle = self.rng.choice(choices)
+        self.auto_idle_done = automatic
         return self.last_idle

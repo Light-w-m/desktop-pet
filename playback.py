@@ -1,7 +1,8 @@
 """Media clock that switches only at a recorded standing boundary."""
 
 class Playback:
-    PLAYLIST = [('standing',8.0),('drinking',None),('standing',6.0),('reading',None)]
+    STANDING_HOLD = 30.0
+    PLAYLIST = [('standing',STANDING_HOLD),('drinking',None),('standing',STANDING_HOLD),('reading',None)]
 
     def __init__(self,durations):
         self.durations=dict(durations)

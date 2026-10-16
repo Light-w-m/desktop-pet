@@ -36,11 +36,11 @@ class PlaybackTests(unittest.TestCase):
 
     def test_automatic_mode_plays_whole_poses_and_standing_intervals(self):
         c=self.clock
-        c.request('standing',True);c.advance(10)
+        c.request('standing',True);c.advance(30)
         self.assertEqual(c.current,'drinking')
         c.advance(16)
         self.assertEqual(c.current,'standing')
-        c.advance(7.5)
+        c.advance(30)
         self.assertEqual(c.current,'reading')
         c.advance(14)
         self.assertEqual(c.current,'standing')
@@ -56,11 +56,25 @@ class PlaybackTests(unittest.TestCase):
 
     def test_reselecting_automatic_rotation_returns_to_its_standing_stage(self):
         c=self.clock
-        c.request('standing',True);c.advance(35)
+        c.request('standing',True);c.advance(80)
         self.assertEqual(c.current,'reading')
-        c.request('standing',True);c.advance(12.5)
+        c.request('standing',True);c.advance(10)
         self.assertEqual(c.current,'standing')
         c.advance(2.5)
         self.assertEqual(c.current,'standing')
+
+    def test_automatic_standing_outlasts_actions_and_waits_for_native_boundary(self):
+        c=Playback({'standing':2.549,'drinking':15.749,'reading':13.599})
+        self.assertGreater(c.STANDING_HOLD,max(c.durations['drinking'],c.durations['reading']))
+        c.request('standing',True)
+        c.advance(30)
+        self.assertEqual(c.current,'standing')
+        c.advance(.588)
+        self.assertEqual(c.current,'drinking')
+        self.assertAlmostEqual(c.position,0)
+        c.advance(15.749)
+        self.assertEqual(c.current,'standing')
+        c.advance(30.588)
+        self.assertEqual(c.current,'reading')
 
 if __name__=='__main__':unittest.main()

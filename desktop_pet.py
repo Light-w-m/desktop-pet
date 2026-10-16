@@ -361,6 +361,7 @@ class DesktopPet:
                 keys=self.warm_stomp()
                 if all(self.stream.peek(*key) is not None for key in keys):
                     self.stream.request('stomping',0,(self.width,self.height))
+                    stomp.held_frame=self.stream.peek('standing',0,(self.width,self.height))
                     stomp.preparing=False
                     # Start the media clock after decoding/preparation. A slow
                     # disk must not skip the first part of the crossfade.
@@ -371,12 +372,17 @@ class DesktopPet:
                 if stomp.elapsed < stomp.FADE_IN and self.drag_motion.visible:
                     self.drag_motion.active=True
                     self.stream.prefetch(self.drag_keys(self.drag_motion.elapsed+dt))
-                else:
+                elif stomp.elapsed >= stomp.duration-stomp.FADE_OUT-stomp.RETURN_PRELOAD:
                     keys=self.return_keys(dt)
                     self.stream.prefetch(keys)
                     base=self.stream.peek(*keys[0])
                     if base is not None:
                         self.stomp_motion.held_frame=base
+                else:
+                    # Let the short reaction's lookahead fill after its entry
+                    # fade before decoding the return animation. Its neutral
+                    # standing frame is already held from initial preparation.
+                    self.stream.prefetch()
         self.drag_motion.advance(dt)
         before_return=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT) if was_stomping else 0
         self.stomp_motion.advance(dt)
@@ -419,7 +425,8 @@ class DesktopPet:
     def warm_stomp(self):
         if 'stomping' not in self.animations:
             return []
-        keys=[('stomping',i,(self.width,self.height)) for i in range(3)]
+        keys=[('stomping',i,(self.width,self.height)) for i in range(2)]
+        keys.append(('standing',0,(self.width,self.height)))
         self.stream.prefetch(keys)
         return keys
 
@@ -545,7 +552,7 @@ class DesktopPet:
         self.last_stomp_frame = None
         self.last_frame = -1
         self.show_expression('shake_angry')
-        logging.info('Shake easter egg: raise hands, stomp, then normal standing')
+        logging.info('Shake easter egg: stomp, then normal standing')
         return True
 
     def play_stomp_voice(self):
@@ -589,7 +596,7 @@ class DesktopPet:
         title = self.voice_actions.advance(seconds,self.current,self.clock.cycle,
                                            position=self.clock.position,
                                            enabled=not player.muted and player.volume > 0,
-                                           busy=busy,paused=self.paused)
+                                           busy=busy,paused=self.paused,automatic=self.clock.automatic)
         if title:
             record = next((r for r in self.voices.records if r['title'] == title),None)
             if record:

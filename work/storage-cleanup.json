@@ -1,17 +1,35 @@
 {
-  "preserved_backup": "backups/before-stomp-video-20261016",
-  "recycled_bytes": 1452685589,
+  "preserved_backup": "backups/before-stomp-tone-20261016",
+  "recycled_bytes": 918824978,
   "generated_bytes_removed": 0,
   "entries": [
     {
-      "relative": "work/pyinstaller-build",
-      "bytes": 250320091,
+      "relative": "__pycache__",
+      "bytes": 184230,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "backups/before-stomp-video-20261016",
+      "bytes": 257887934,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "local-media/stomp-video (generated frames only)",
+      "bytes": 59117804,
+      "paths": 171,
+      "mode": "recycle"
+    },
+    {
+      "relative": "work/__pycache__",
+      "bytes": 27894,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 246158502,
+      "bytes": 239905964,
       "paths": 1,
       "mode": "recycle"
     },
@@ -22,32 +40,14 @@
       "mode": "recycle"
     },
     {
+      "relative": "work/pyinstaller-build",
+      "bytes": 244076369,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
       "relative": "work/sources/drag-deps",
       "bytes": 117624567,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "__pycache__",
-      "bytes": 183177,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "work/__pycache__",
-      "bytes": 79393,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "local-media/stomp-video (generated frames only)",
-      "bytes": 67327384,
-      "paths": 199,
-      "mode": "recycle"
-    },
-    {
-      "relative": "backups/before-compact-20261016-094204",
-      "bytes": 770992259,
       "paths": 1,
       "mode": "recycle"
     }

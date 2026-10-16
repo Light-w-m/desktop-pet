@@ -16,6 +16,7 @@ class VoiceActionTests(unittest.TestCase):
 
     def advance(self, seconds, **options):
         self.clock.advance(seconds)
+        options.setdefault('automatic',self.clock.automatic)
         return self.actions.advance(seconds,self.clock.current,self.clock.cycle,
                                     position=self.clock.position,**options)
 
@@ -99,6 +100,50 @@ class VoiceActionTests(unittest.TestCase):
         self.advance(.1)
         self.assertIsNone(self.advance(3600))
         self.assertGreater(self.actions.remaining,43)
+
+    def test_automatic_rotation_has_one_idle_line_in_each_long_standing_interval(self):
+        self.clock.request('standing',True)
+        segments=[]
+        segment=None
+        busy_until=0
+        for step in range(3000):
+            now=(step+1)*.1
+            title=self.advance(.1,busy=now < busy_until)
+            if segment is None or segment['pose'] != self.clock.current:
+                segment={'pose':self.clock.current,'start':now,'lines':[]}
+                segments.append(segment)
+            if title:
+                segment['lines'].append((now-segment['start'],title))
+                busy_until=now+(9.1 if title == VoiceActions.DRINK_TITLE else 6.6)
+        idle=[]
+        for segment in segments[:-1]:
+            lines=segment['lines']
+            if segment['pose'] == 'standing':
+                self.assertEqual(len(lines),1)
+                elapsed,title=lines[0]
+                self.assertTrue(7.9 <= elapsed <= 12.1,lines)
+                self.assertIn(title,VoiceActions.IDLE_TITLES)
+                idle.append(title)
+            elif segment['pose'] == 'drinking':
+                self.assertEqual(len(lines),1)
+                self.assertEqual(lines[0][1],VoiceActions.DRINK_TITLE)
+            else:
+                self.assertEqual(lines,[])
+        self.assertGreaterEqual(len(idle),6)
+        self.assertTrue(all(a != b for a,b in zip(idle,idle[1:])))
+
+    def test_automatic_idle_obeys_pause_mute_manual_priority_and_mode_change(self):
+        self.clock.request('standing',True)
+        self.advance(.1)
+        remaining=self.actions.remaining
+        self.assertTrue(7.9 <= remaining <= 12)
+        for options in ({'paused':True},{'enabled':False},{'busy':True}):
+            self.assertIsNone(self.actions.advance(1,'standing',self.clock.cycle,
+                position=self.clock.position,automatic=True,**options))
+            self.assertEqual(self.actions.remaining,remaining)
+        self.clock.request('standing',False)
+        self.advance(.1)
+        self.assertTrue(44.9 <= self.actions.remaining <= 90)
 
     def test_stomp_uses_all_five_lines_without_consecutive_repeats(self):
         available=set(VoiceActions.STOMP_TITLES)

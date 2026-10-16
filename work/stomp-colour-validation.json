@@ -1,0 +1,49 @@
+{
+  "standing": {
+    "rgb_mean": [
+      192.3244171142578,
+      173.3722381591797,
+      195.83834838867188
+    ],
+    "rgb_median": [
+      211.0,
+      196.0,
+      208.0
+    ],
+    "luminance_mean": 179.02352339323238,
+    "opaque_pixels": 55204
+  },
+  "old_stomp": {
+    "rgb_mean": [
+      144.78306579589844,
+      130.19921875,
+      173.6134796142578
+    ],
+    "rgb_median": [
+      152.0,
+      144.0,
+      174.0
+    ],
+    "luminance_mean": 136.43425163497298,
+    "opaque_pixels": 57004
+  },
+  "new_stomp": {
+    "rgb_mean": [
+      191.2245330810547,
+      171.37464904785156,
+      194.41876220703125
+    ],
+    "rgb_median": [
+      212.0,
+      197.0,
+      206.0
+    ],
+    "luminance_mean": 177.25851538515528,
+    "opaque_pixels": 56990
+  },
+  "old_luminance_error": 42.5892717582594,
+  "new_luminance_error": 1.7650080080771033,
+  "new_rgb_median_error": 1.3333333333333333,
+  "two_hand_intro_removed": true,
+  "one_fixed_colour_curve_avoids_exposure_pumping": true
+}

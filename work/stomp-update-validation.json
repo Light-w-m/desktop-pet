@@ -1,30 +1,28 @@
 {
-  "executable_bytes": 246101947,
-  "sha256": "0beb22c6bbda23065dc1e083ae63de497199c0374fdff90fd0fcdda5af9d89fc",
+  "executable_bytes": 239857961,
+  "sha256": "b132890ed66e809296c5dcfa4e10c38605ea5f8140288a4734590ce6669f415f",
   "interactive_window": {
-    "pid": 19864,
+    "pid": 26816,
     "visible": true,
     "layered": true
   },
   "preferences_preserved": true,
   "main_frames_unchanged": 1914,
   "drag_frames_unchanged": 186,
-  "new_stomp_frames": 141,
-  "duration_ms": 2350,
+  "new_stomp_frames": 78,
+  "duration_ms": 1300,
   "sequence": [
-    "hands_up",
     "stomp",
     "settle_to_standing"
   ],
   "reference_qa": "stomp-package-validation.json",
   "all_source_pixels_match_compact_pack": true,
-  "imagegen_mode": "built-in; alpha guides only",
-  "alpha_reference_paths": [
-    "D:/desktop pet/local-media/stomp-video/guide-001.png",
-    "D:/desktop pet/local-media/stomp-video/guide-033.png",
-    "D:/desktop pet/local-media/stomp-video/guide-082.png",
-    "D:/desktop pet/local-media/stomp-video/guide-136.png"
-  ],
-  "imagegen_prompt_path": "D:/desktop pet/local-media/stomp-video/mask-prompt.txt",
-  "processing_provenance": "D:/desktop pet/assets/stomping/source.json"
+  "independent_lossless_stomp_frames": true,
+  "colour_match": "stomp-colour-validation.json",
+  "automatic_rotation": "automatic-rotation-validation.json",
+  "automatic_standing_seconds": 30,
+  "automatic_idle_delay_seconds": [
+    8,
+    12
+  ]
 }

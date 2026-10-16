@@ -9,7 +9,7 @@
     "frames": 728
   },
   "source_range_seconds": [
-    0.08333333333333333,
+    1.1333333333333333,
     2.4333333333333336
   ],
   "decoded_crop": [
@@ -23,20 +23,6 @@
     864
   ],
   "distinct_pose_frames": [
-    0,
-    3,
-    6,
-    14,
-    17,
-    19,
-    24,
-    27,
-    34,
-    43,
-    46,
-    53,
-    56,
-    59,
     62,
     69,
     70,
@@ -55,8 +41,9 @@
     132,
     135
   ],
-  "output_frames": 141,
-  "duration_ms": 2350,
+  "discarded_intro_frames": 63,
+  "output_frames": 78,
+  "duration_ms": 1300,
   "fps": 60,
   "canvas": [
     840,
@@ -69,12 +56,100 @@
   "one_shot": true,
   "return_pose": "standing",
   "sequence": [
-    "hands_up",
     "stomp",
     "settle_to_standing"
   ],
+  "colour_match": {
+    "reference": "assets/standing-obs.webp",
+    "reference_sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977",
+    "source_frame": 136,
+    "percentiles": [
+      2,
+      10,
+      25,
+      50,
+      75,
+      90,
+      98
+    ],
+    "source_rgb": [
+      [
+        30.0,
+        19.0,
+        69.0
+      ],
+      [
+        55.0,
+        44.0,
+        91.0
+      ],
+      [
+        89.0,
+        73.0,
+        122.0
+      ],
+      [
+        118.0,
+        110.0,
+        143.0
+      ],
+      [
+        143.0,
+        129.0,
+        174.0
+      ],
+      [
+        165.0,
+        141.0,
+        183.0
+      ],
+      [
+        168.0,
+        158.0,
+        201.0
+      ]
+    ],
+    "standing_rgb": [
+      [
+        70.0,
+        34.0,
+        101.0
+      ],
+      [
+        110.0,
+        81.0,
+        141.0
+      ],
+      [
+        168.0,
+        141.0,
+        178.0
+      ],
+      [
+        211.0,
+        196.0,
+        208.0
+      ],
+      [
+        229.0,
+        216.0,
+        221.0
+      ],
+      [
+        236.0,
+        223.0,
+        229.0
+      ],
+      [
+        239.0,
+        233.0,
+        239.0
+      ]
+    ],
+    "fixed_across_all_frames": true
+  },
   "processing": {
-    "colors": "original video; gamma .78, gain 1.08; bounded unsharp .6 at sigma 1",
+    "colors": "original video; fixed monotone RGB curves matched to standing; bounded unsharp .6 at sigma 1",
     "matting": "registered alpha guides, dense optical flow, seeded GrabCut",
     "stabilization": "fixed similarity calibrated to upright body size and standing baseline; preserve crouch and jump",
     "interpolation": "bidirectional optical flow on premultiplied RGBA at original timestamps",
@@ -170,12 +245,12 @@
   ],
   "files": {
     "pet-frames.bin": {
-      "bytes": 44466465,
-      "sha256": "43876197730892ed37b731d9d50c7da3a9f06ba3dfcafe77a564cf7f02415028"
+      "bytes": 24044045,
+      "sha256": "ed107c3a82668eb4fec1cf3d7d6212aa42c14bea5dcac648d35c605ae1c44eec"
     },
     "pet-frames.json": {
-      "bytes": 13566,
-      "sha256": "da25ae8755cf893970f5f29a9160d9e59b38a509f88cbd5a6cd8edaf3e9c1d8e"
+      "bytes": 7476,
+      "sha256": "acfab6636124c205c78dbda4b3498bb893fdea12bc9396d5148c398ed055783d"
     }
   }
 }

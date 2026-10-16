@@ -101,7 +101,11 @@ def build(root=ROOT,output=None):
                 assert depth < GROUP
                 packed.write(encoded);frames.append(record)
             for number,(ms,raw,box) in enumerate(source_frames()):
-                jobs.append((number,ms,box,pool.submit(encode,number,raw,box,previous,previous_box)))
+                # A short reaction overlaps the outgoing drag and incoming
+                # idle. Independent lossless frames avoid rebuilding a delta
+                # chain when both motions compete for the bounded raw cache.
+                key_number=0 if name == 'stomping' else number
+                jobs.append((number,ms,box,pool.submit(encode,key_number,raw,box,previous,previous_box)))
                 previous,previous_box=raw,box
                 if len(jobs) >= 8:
                     write_one()

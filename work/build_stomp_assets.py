@@ -25,6 +25,7 @@ VIDEO = Path('E:/DJI_video/8790CBFF-D122-4739-9F87-A955A3C94149.mp4')
 SIZE = (736, 864)
 START = 10/120
 DURATION = 2.35
+CLIP_START = 63  # Skip the burst's two-hand reach; keep only the foot reaction.
 FPS = 60
 GUIDES = (1, 33, 82, 136)
 cv2.setNumThreads(3)
@@ -104,11 +105,35 @@ def matte(rgb, guide):
     return np.dstack((rgb,np.uint8(np.clip(alpha*255+.5,0,255))))
 
 
-def remove_light(rgba):
+def standing_colour_curve(guide):
+    """One fixed per-channel curve, calibrated against the normal idle.
+
+    Use opaque character pixels from a recovered video stance and the real
+    standing asset. Fixed quantiles avoid per-frame auto-exposure flicker.
+    """
+    reference=ROOT/'assets/standing-obs.webp'
+    target=np.asarray(Image.open(reference).convert('RGBA'))
+    original=np.asarray(Image.open(LOCAL/'frame-136.png').convert('RGB'))
+    target_core=cv2.erode((target[:,:,3] > 220).astype('uint8'),np.ones((5,5),'uint8')) > 0
+    source_core=cv2.erode((guide[1] > 220).astype('uint8'),np.ones((7,7),'uint8')) > 0
+    percentiles=(2,10,25,50,75,90,98)
+    source_values=np.percentile(original[source_core],percentiles,axis=0)
+    target_values=np.percentile(target[:,:,:3][target_core],percentiles,axis=0)
+    curves=[]
+    for channel in range(3):
+        x=np.r_[0,source_values[:,channel],255]
+        y=np.r_[0,target_values[:,channel],255]
+        unique=np.r_[True,np.diff(x) > 0]
+        curves.append(np.uint8(np.clip(np.interp(np.arange(256),x[unique],y[unique])+.5,0,255)))
+    return curves,{'reference':'assets/standing-obs.webp','reference_sha256':digest(reference),
+        'source_frame':136,'percentiles':list(percentiles),'source_rgb':source_values.tolist(),
+        'standing_rgb':target_values.tolist(),'fixed_across_all_frames':True}
+
+
+def remove_light(rgba, curves):
     rgb = rgba[:,:,:3].copy()
     # Cyan streaks are screen-space effects, not costume details. Reconstruct
     # the narrow occluded stripes from the adjacent original video pixels.
-    hsv = cv2.cvtColor(rgb,cv2.COLOR_RGB2HSV)
     red,green,blue=rgb.astype('float32').transpose(2,0,1)
     effect = ((((green > red*1.25+10) & (blue > red*1.25+10) & (green > 100)) |
                ((red > green*1.8+10) & (blue > green*1.8+10) & (blue > 100))) & (rgba[:,:,3] > 100))
@@ -117,9 +142,9 @@ def remove_light(rgba):
     if effect.any():
         mask = cv2.dilate(effect.astype('uint8'),np.ones((3,3),'uint8'))
         rgb = cv2.inpaint(rgb,mask,5,cv2.INPAINT_TELEA)
-    # Brighten a dark recording without blowing out the white costume.
-    values = rgb.astype('float32')/255
-    values = np.clip(np.power(values,.78)*1.08,0,1)
+    # Match the normal standing palette instead of merely brightening the
+    # night recording by a fixed gain. Keep alpha and outline shadows intact.
+    values=np.stack([curves[c][rgb[:,:,c]] for c in range(3)],axis=2).astype('float32')/255
     detail = values-cv2.GaussianBlur(values,(0,0),1.0)
     values = np.clip(values+.6*np.clip(detail,-.055,.055),0,1)
     rgba[:,:,:3] = np.uint8(values*255+.5)
@@ -160,11 +185,13 @@ def build(extract=False, reuse_mattes=False):
             '-t',str(DURATION),'-vf','fps=60,crop=1840:2160:840:0,scale=736:864:flags=lanczos',
             '-y',str(LOCAL/'frame-%03d.png')],check=True)
     guides={n:register_guide(n) for n in GUIDES}
+    curves,colour_metadata=standing_colour_curve(guides[136])
     raw=[np.asarray(Image.open(LOCAL/f'frame-{i+1:03}.png').convert('RGB')) for i in range(round(DURATION*FPS))]
     # Detect captured holds instead of treating 120 FPS screen capture as
     # 120 distinct animation poses. Ignore sub-pixel compression noise.
     starts=[0]+[i for i in range(1,len(raw)) if np.abs(raw[i].astype('int16')-raw[i-1]).mean() > 1.5]
     groups=[(i,(starts[k+1] if k+1 < len(starts) else len(raw))) for k,i in enumerate(starts)]
+    groups=[(start,end) for start,end in groups if end > CLIP_START]
     rgbs=[np.median(raw[start:end],axis=0).astype('uint8') for start,end in groups]
     mattes=[]
     for (start,end),rgb in zip(groups,rgbs):
@@ -182,20 +209,22 @@ def build(extract=False, reuse_mattes=False):
     # bounding-box normalization from making the body grow or feet swim.
     placement=np.array([[.76,0,209],[0,.76,37]],'float32')
     for i,rgba in enumerate(mattes):
-        adjusted=remove_light(rgba.copy())
+        adjusted=remove_light(rgba.copy(),curves)
         canvas=cv2.warpAffine(premultiply(adjusted),placement,(840,720),flags=cv2.INTER_LANCZOS4)
         frames.append(canvas)
         straight(canvas).save(LOCAL/f'stabilized-{i:03}.png')
-    times=np.array(starts,dtype='float64')/FPS
+    times=np.array([start for start,end in groups],dtype='float64')/FPS
     tracker=cv2.DISOpticalFlow_create(cv2.DISOPTICAL_FLOW_PRESET_MEDIUM)
     yy,xx=np.mgrid[:720,:840].astype('float32')
     index={'version':1,'canvas':[840,720],'display_canvas':[560,480],
            'data':'pet-frames.bin','animations':{'stomping':{'frames':[]}}}
     previews=[]
     previous=None
-    with (OUTPUT/'pet-frames.bin').open('wb') as packed:
-        for number in range(len(raw)):
-            t=number/FPS
+    count=len(raw)-CLIP_START
+    temporary=OUTPUT/'pet-frames.part.bin'
+    with temporary.open('wb') as packed:
+        for number in range(count):
+            t=(number+CLIP_START)/FPS
             pair=min(bisect_right(times,t)-1,len(frames)-1)
             following=min(pair+1,len(frames)-1)
             ratio=float((t-times[pair])/(times[following]-times[pair])) if following != pair else 0
@@ -211,19 +240,21 @@ def build(extract=False, reuse_mattes=False):
             display=canvas.resize((560,480),Image.Resampling.LANCZOS)
             index['animations']['stomping']['frames'].append({'ms':round((number+1)*1000/FPS)-round(number*1000/FPS),
                 'native':encode(packed,canvas),'display':encode(packed,display,True)})
-            if number in (0,18,36,54,80,len(raw)-1):
+            if number in (0,12,24,36,54,count-1):
                 previews.append(display)
             if number == 0:display.save(ROOT/'work/stomping-cutout.png')
+    temporary.replace(OUTPUT/'pet-frames.bin')
     index['data_bytes']=(OUTPUT/'pet-frames.bin').stat().st_size
     (OUTPUT/'pet-frames.json').write_text(json.dumps(index,separators=(',',':'))+'\n',encoding='utf-8')
     metadata={'version':2,'source_file':VIDEO.name,'source_sha256':digest(VIDEO),
         'source_video':{'width':3840,'height':2160,'fps':120,'frames':728},
-        'source_range_seconds':[START,START+DURATION],'decoded_crop':[840,0,1840,2160],
-        'processing_size':list(SIZE),'distinct_pose_frames':starts,'output_frames':len(raw),
-        'duration_ms':round(DURATION*1000),'fps':FPS,'canvas':index['canvas'],
+        'source_range_seconds':[START+CLIP_START/FPS,START+DURATION],'decoded_crop':[840,0,1840,2160],
+        'processing_size':list(SIZE),'distinct_pose_frames':[start for start,end in groups],
+        'discarded_intro_frames':CLIP_START,'output_frames':count,
+        'duration_ms':sum(f['ms'] for f in index['animations']['stomping']['frames']),'fps':FPS,'canvas':index['canvas'],
         'display_canvas':index['display_canvas'],'one_shot':True,'return_pose':'standing',
-        'sequence':['hands_up','stomp','settle_to_standing'],
-        'processing':{'colors':'original video; gamma .78, gain 1.08; bounded unsharp .6 at sigma 1',
+        'sequence':['stomp','settle_to_standing'],'colour_match':colour_metadata,
+        'processing':{'colors':'original video; fixed monotone RGB curves matched to standing; bounded unsharp .6 at sigma 1',
             'matting':'registered alpha guides, dense optical flow, seeded GrabCut',
             'stabilization':'fixed similarity calibrated to upright body size and standing baseline; preserve crouch and jump',
             'interpolation':'bidirectional optical flow on premultiplied RGBA at original timestamps',
@@ -241,7 +272,7 @@ def build(extract=False, reuse_mattes=False):
         bg=Image.new('RGBA',frame.size,'#eadfe7');bg.alpha_composite(frame)
         contact.paste(bg.convert('RGB').resize((280,240)),((i%3)*280,(i//3)*240))
     contact.save(ROOT/'work/stomping-contact.jpg')
-    print(json.dumps({'frames':len(raw),'poses':len(starts),'bytes':index['data_bytes']}),flush=True)
+    print(json.dumps({'frames':count,'poses':len(groups),'bytes':index['data_bytes']}),flush=True)
 
 
 if __name__ == '__main__':
