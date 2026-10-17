@@ -37,7 +37,12 @@ for name,animation in compact.animations.items():
             source.seek(offset)
             return (zlib.decompress(source.read(length)),tuple(box)),frame['ms']
         def reference(number,size):
-            return original.read(name,number,size)
+            if size == original.display_canvas:
+                return original.read(name,number,size)
+            (pixels,box),_=native(number)
+            rgba=Image.new('RGBA',original.canvas)
+            rgba.paste(Image.frombytes('RGBA',(box[2]-box[0],box[3]-box[1]),pixels),box[:2])
+            return pack_frame(rgba.resize(size,Image.Resampling.LANCZOS))
     assert count == len(animation['frames'])
     other_sizes=0
     with source:
@@ -56,8 +61,10 @@ for name,animation in compact.animations.items():
                   'additional_sizes_compared':other_sizes,'random_seeks_compared':4}
     print(name,json.dumps(report[name]),flush=True)
 assert compact.peak_raw_cache_bytes <= 16*1024**2
+assert compact.loop_cache.peak_bytes <= 8*1024**2
 result={'animations':report,'all_native_pixels_alpha_offsets_and_timings_identical':True,
         'native_cache_peak_bytes':compact.peak_raw_cache_bytes,
+        'standing_loop_cache_peak_bytes':compact.loop_cache.peak_bytes,
         'compact_pack_bytes':compact.path.stat().st_size}
 (ROOT/'work/compact-quality-validation.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
 print('Every compact frame is pixel-identical.',flush=True)

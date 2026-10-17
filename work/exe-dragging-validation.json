@@ -1,10 +1,10 @@
 {
-  "fps": 59.99672689377165,
-  "p95_frame_ms": 18.063299998175353,
-  "frames_drawn": 549,
+  "fps": 59.963629592148294,
+  "p95_frame_ms": 19.3963000056101,
+  "frames_drawn": 548,
   "complete_loops": 2,
   "returns_to_previous_action": true,
-  "render_mean_ms": 0.9983912516973861,
+  "render_mean_ms": 2.224309431257704,
   "peak_cache_frames": 12,
-  "peak_cache_mib": 4.948032379150391
+  "peak_cache_mib": 7.292942047119141
 }

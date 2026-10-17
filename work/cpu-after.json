@@ -1,0 +1,38 @@
+{
+  "scale": 1.3,
+  "logical_processors": 18,
+  "exe_bytes": 273540634,
+  "settings_sha256": "924862b86538ffb7e3c2acbe07871ff9b9476eb404d4fe1e7574e9a31366e9ba",
+  "automated_window_click_through": true,
+  "actions": {
+    "standing": {
+      "measured_seconds": 11.963376799991238,
+      "cpu_seconds": 7.890625,
+      "one_core_percent": 65.95650318399885,
+      "task_manager_percent": 3.664250176888825,
+      "rendered_fps": 60.02505012739296,
+      "cpu_reduction_percent": 73.32193854074553
+    },
+    "drinking": {
+      "measured_seconds": 14.675117399994633,
+      "cpu_seconds": 15.171875,
+      "one_core_percent": 103.38503322641596,
+      "task_manager_percent": 5.7436129570231085,
+      "rendered_fps": 60.00202170079414,
+      "cpu_reduction_percent": 58.60860911228125
+    },
+    "reading": {
+      "measured_seconds": 12.860217400011607,
+      "cpu_seconds": 11.15625,
+      "one_core_percent": 86.75008868815803,
+      "task_manager_percent": 4.819449371564335,
+      "rendered_fps": 60.003447217441185,
+      "cpu_reduction_percent": 62.04428713099948
+    }
+  },
+  "peak_working_mib": 76.1953125,
+  "peak_private_mib": 65.2109375,
+  "peak_cache_bytes": 8733980,
+  "peak_cache_frames": 12,
+  "loop_cache_peak_bytes": 8345985
+}

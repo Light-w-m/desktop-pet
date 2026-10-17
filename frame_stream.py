@@ -5,6 +5,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 import json
 import io
+import math
 from pathlib import Path
 import threading
 import zlib
@@ -23,6 +24,75 @@ def pack_frame(rgba):
     pixels = Image.merge('RGBA', (ImageChops.multiply(r, a), ImageChops.multiply(g, a),
                                   ImageChops.multiply(b, a), a)).tobytes('raw', 'BGRA')
     return {'pixels': pixels, 'offset': bbox[:2], 'size': tile.size}
+
+
+def resize_native(pixels, box, canvas, size):
+    """Resize only the visible tile, retaining the full canvas sampling phase.
+
+    Align output bounds to the rational scale grid so Pillow receives integer
+    source coordinates and exactly the same Lanczos coefficients. Zero padding
+    preserves edge taps; native-size playback needs no resampling at all.
+    """
+    x,y,right,bottom=box
+    tile=Image.frombytes('RGBA',(right-x,bottom-y),pixels)
+    if size == canvas:
+        result=pack_frame(tile)
+        result['offset']=(x+result['offset'][0],y+result['offset'][1])
+        return result
+    sx,sy=canvas[0]/size[0],canvas[1]/size[1]
+    dx,dy=(size[i]//math.gcd(canvas[i],size[i]) for i in (0,1))
+    left=max(0,math.floor((x/sx-3)/dx)*dx)
+    top=max(0,math.floor((y/sy-3)/dy)*dy)
+    end_x=min(size[0],math.ceil((right/sx+3)/dx)*dx)
+    end_y=min(size[1],math.ceil((bottom/sy+3)/dy)*dy)
+    pad=math.ceil(3*max(sx,sy)+max(dx*sx,dy*sy))+4
+    source=(max(0,x-pad),max(0,y-pad),min(canvas[0],right+pad),min(canvas[1],bottom+pad))
+    padded=Image.new('RGBA',(source[2]-source[0],source[3]-source[1]))
+    padded.paste(tile,(x-source[0],y-source[1]))
+    crop=(round(left*sx)-source[0],round(top*sy)-source[1],
+          round(end_x*sx)-source[0],round(end_y*sy)-source[1])
+    resized=padded.resize((end_x-left,end_y-top),Image.Resampling.LANCZOS,box=crop)
+    result=pack_frame(resized)
+    result['offset']=(left+result['offset'][0],top+result['offset'][1])
+    return result
+
+
+class PreparedLoopCache:
+    """A capped, lossless cache for already resized standing frames only."""
+    def __init__(self, limit=8*1024*1024):
+        self.limit=limit
+        self.lock=threading.Lock()
+        self.frames={}
+        self.bytes=self.peak_bytes=self.epoch=0
+        self.full=False
+
+    def lookup(self,key):
+        with self.lock:
+            cached=self.frames.get(key)
+            epoch=self.epoch
+            writable=not self.full
+        if cached is not None:
+            payload,offset,size=cached
+            return {'pixels':zlib.decompress(payload),'offset':offset,'size':size},epoch,False
+        return None,epoch,writable
+
+    def remember(self,key,frame,epoch):
+        payload=zlib.compress(frame['pixels'],1)
+        with self.lock:
+            if epoch != self.epoch or self.full or key in self.frames:return
+            if self.bytes+len(payload)>self.limit:
+                self.full=True
+                return
+            self.frames[key]=(payload,frame['offset'],frame['size'])
+            self.bytes+=len(payload)
+            self.peak_bytes=max(self.peak_bytes,self.bytes)
+
+    def clear(self):
+        with self.lock:
+            self.frames.clear()
+            self.bytes=0
+            self.epoch+=1
+            self.full=False
 
 
 class FrameArchive:
@@ -44,6 +114,7 @@ class FrameArchive:
         self.raw_cache = OrderedDict()
         self.raw_cache_bytes = self.peak_raw_cache_bytes = 0
         self.raw_lock = threading.RLock()
+        self.loop_cache = PreparedLoopCache()
         for name, spec in data['animations'].items():
             endpoints = []
             duration = 0.0
@@ -103,12 +174,18 @@ class FrameArchive:
             return result
 
     def read(self, name, number, size):
+        if name != 'standing':return self._read_frame(name,number,size)
+        key=number,size
+        cached,epoch,writable=self.loop_cache.lookup(key)
+        if cached is not None:return cached
+        frame=self._read_frame(name,number,size)
+        if writable:self.loop_cache.remember(key,frame,epoch)
+        return frame
+
+    def _read_frame(self, name, number, size):
         if self.formats[name] == 2:
             pixels,box = self._native(name,number)
-            tile = Image.frombytes('RGBA',(box[2]-box[0],box[3]-box[1]),pixels)
-            rgba = Image.new('RGBA',self.canvas)
-            rgba.paste(tile,box[:2])
-            return pack_frame(rgba.resize(size,Image.Resampling.LANCZOS))
+            return resize_native(pixels,box,self.canvas,size)
         display = size == self.display_canvas
         record = self.animations[name]['frames'][number]['display' if display else 'native']
         offset, length, x, y, right, bottom = record
@@ -121,11 +198,7 @@ class FrameArchive:
             raise ValueError('Invalid frame record')
         if display:
             return {'pixels': pixels, 'offset': (x, y), 'size': (width, height)}
-        tile = Image.frombytes('RGBA', (width, height), pixels)
-        rgba = Image.new('RGBA', self.canvas)
-        rgba.paste(tile, (x, y))
-        # Fixed-canvas Lanczos sampling preserves native detail and alignment.
-        return pack_frame(rgba.resize(size, Image.Resampling.LANCZOS))
+        return resize_native(pixels,(x,y,right,bottom),self.canvas,size)
 
 
 class FrameStream:
@@ -199,6 +272,8 @@ class FrameStream:
             self.generation += 1
             self.cache.clear()
             self.cache_bytes = 0
+            loop_cache=getattr(self.archive,'loop_cache',None)
+            if loop_cache is not None:loop_cache.clear()
             self.condition.notify_all()
 
     def close(self):

@@ -1,0 +1,16 @@
+{
+  "source_image_preserved": true,
+  "all_resolutions_match_source": true,
+  "embedded_runtime_ico_matches": true,
+  "windows_exe_resources_match": true,
+  "sizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ],
+  "icon_sha256": "e4da9d20fc6aeb92b738778c42d39198e2f7b27503807743ee472dd35d054a21"
+}

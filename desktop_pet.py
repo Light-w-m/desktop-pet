@@ -22,6 +22,7 @@ from voices import VoicePicker, VoicePlayer
 from voice_actions import VoiceActions
 from drag_motion import DragMotion
 from shake_motion import ShakeDetector, StompMotion
+from pixel_surface import PixelSurface
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -94,6 +95,7 @@ signature(user, 'SetForegroundWindow', W.BOOL, W.HWND)
 signature(user, 'PostQuitMessage', None, C.c_int)
 signature(user, 'MessageBoxW', C.c_int, W.HWND, W.LPCWSTR, W.LPCWSTR, W.UINT)
 signature(user, 'LoadCursorW', W.HANDLE, W.HINSTANCE, C.c_void_p)
+signature(user, 'LoadImageW', W.HANDLE, W.HINSTANCE, W.LPCWSTR, W.UINT, C.c_int, C.c_int, W.UINT)
 signature(user, 'UpdateLayeredWindow', W.BOOL, W.HWND, W.HDC, C.POINTER(POINT), C.POINTER(SIZE), W.HDC, C.POINTER(POINT), W.DWORD, C.POINTER(BLEND), W.DWORD)
 signature(gdi, 'CreateCompatibleDC', W.HDC, W.HDC)
 signature(gdi, 'CreateDIBSection', W.HANDLE, W.HDC, C.POINTER(BITMAPINFO), W.UINT, C.POINTER(C.c_void_p), W.HANDLE, W.DWORD)
@@ -158,6 +160,7 @@ class DesktopPet:
         self.displayed_frame = None
         self.hwnd = None
         self.dc = self.bitmap = self.old_bitmap = self.bits = None
+        self.surface = None
         self.blend = BLEND(0, 0, 255, 1)
         self.load_frames()
         self.clock=Playback({name:animation['duration'] for name,animation in self.animations.items()})
@@ -180,6 +183,10 @@ class DesktopPet:
         wc.style = 0x0008  # CS_DBLCLKS: let Windows recognize the user's double-click timing.
         wc.lpfnWndProc = self.callback
         wc.hInstance = self.instance
+        icon_file=APP_DIR/'assets/app.ico'
+        if not icon_file.is_file():icon_file=RESOURCE_DIR/'assets/app.ico'
+        if icon_file.is_file():
+            wc.hIcon=user.LoadImageW(None,str(icon_file),1,0,0,0x10 | 0x40)
         wc.hCursor = user.LoadCursorW(None, C.c_void_p(32512))
         wc.lpszClassName = classname
         if not user.RegisterClassW(C.byref(wc)):
@@ -243,8 +250,12 @@ class DesktopPet:
         if not self.dc or not self.bitmap or not self.bits:
             raise C.WinError(C.get_last_error())
         self.old_bitmap=gdi.SelectObject(self.dc,self.bitmap)
+        self.surface=PixelSurface(self.bits.value,(self.width,self.height))
 
     def free_surface(self):
+        if self.surface:
+            self.surface.close()
+            self.surface=None
         if self.dc:
             if self.old_bitmap:gdi.SelectObject(self.dc,self.old_bitmap)
             if self.bitmap:gdi.DeleteObject(self.bitmap)
@@ -288,12 +299,7 @@ class DesktopPet:
             self.stomp_motion.clear()
             frame=self.stream.get(self.current,index,size)
         self.displayed_frame=frame
-        C.memset(self.bits,0,self.width*self.height*4)
-        x,y=frame['offset']
-        w,h=frame['size']
-        data=C.cast(C.c_char_p(frame['pixels']),C.c_void_p).value
-        for row in range(min(h,self.height-y)):
-            C.memmove(self.bits.value+((y+row)*self.width+x)*4,data+row*w*4,min(w,self.width-x)*4)
+        self.surface.paint(frame)
         pt=POINT(self.x,self.y)
         src=POINT(0,0)
         size=SIZE(self.width,self.height)
@@ -744,6 +750,7 @@ class DesktopPet:
                     qa={'draws':self.draw_times,'render_ms':[x*1000 for x in self.render_times],
                         'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames,
                         'native_cache_peak_bytes':self.stream.archive.peak_raw_cache_bytes,
+                        'loop_cache_peak_bytes':self.stream.archive.loop_cache.peak_bytes,
                         'reaction_states':self.reaction_states}
                     self.qa_report.parent.mkdir(exist_ok=True)
                     self.qa_report.write_text(json.dumps(qa),encoding='utf-8')

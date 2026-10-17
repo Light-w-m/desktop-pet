@@ -33,5 +33,6 @@
   },
   "all_native_pixels_alpha_offsets_and_timings_identical": true,
   "native_cache_peak_bytes": 11488480,
+  "standing_loop_cache_peak_bytes": 8350840,
   "compact_pack_bytes": 213676908
 }
