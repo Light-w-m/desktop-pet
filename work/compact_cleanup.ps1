@@ -49,6 +49,7 @@ function Get-Bytes([string]$path) {
 $plan = @()
 foreach ($relative in @('work/pyinstaller-build', 'work/dist', 'work/github-publish-check',
     'work/git-publish-tmp', 'work/sources/compact-candidate', 'work/sources/drag-deps',
+    'work/sources/flow-deps', 'work/sources/rife',
     '__pycache__', 'work/__pycache__')) {
     $path = Assert-WorkspacePath (Join-Path $workspace $relative)
     if (Test-Path -LiteralPath $path) {
@@ -76,6 +77,14 @@ if (Test-Path -LiteralPath $videoCache -PathType Container) {
             $checked = Assert-WorkspacePath $item.FullName
             $plan += [pscustomobject]@{relative=('local-media/stomp-video/' + $item.Name); path=$checked; bytes=$item.Length; mode='generated'}
         }
+    }
+}
+# Cross-step guide inputs were copied to the root of walking-video. Retain
+# those four original images and their generated alpha guides/prompts.
+foreach ($direction in @('left', 'right')) {
+    $path = Assert-WorkspacePath (Join-Path $workspace ('local-media/walking-video/' + $direction))
+    if (Test-Path -LiteralPath $path -PathType Container) {
+        $plan += [pscustomobject]@{relative=('local-media/walking-video/' + $direction); path=$path; bytes=(Get-Bytes $path); mode='generated'}
     }
 }
 if ($RecycleOlderBackups) {

@@ -14,6 +14,9 @@ datas += [(str(drag/'source.json'),'assets/dragging')]
 stomp=root/'assets'/'stomping'
 assert (stomp/'pet-frames.json').is_file(),'Missing prepared stomp animation; extract the matching source-assets package'
 datas += [(str(stomp/'source.json'),'assets/stomping')]
+walk=root/'assets/walking'
+assert (walk/'pet-frames.json').is_file(),'Missing prepared walking animations'
+datas += [(str(walk/'source.json'),'assets/walking')]
 secret=root/'assets'/'easter-eggs'
 assert (secret/'shake-angry.png').is_file(),'Missing hidden shake sticker'
 datas += [(str(path),'assets/easter-eggs') for path in secret.iterdir() if path.suffix in ('.png','.json')]

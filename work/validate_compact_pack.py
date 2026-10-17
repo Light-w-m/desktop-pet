@@ -28,7 +28,8 @@ for name,animation in compact.animations.items():
             source.seek(number)
             return pack_frame(source.convert('RGBA').resize(size,Image.Resampling.LANCZOS))
     else:
-        original=FrameArchive(ROOT/'assets'/name/'pet-frames.json')
+        folder='walking' if name.startswith('walking_') else name
+        original=FrameArchive(ROOT/'assets'/folder/'pet-frames.json')
         count=len(original.animations[name]['frames'])
         source=original.sources[name].open('rb')
         def native(number):

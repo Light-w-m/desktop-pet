@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "source_file": "10月17日.mp4",
+  "source_sha256": "88cdc7330c1326739f0fabf689b89e15f2ccfcb81f16196eeee71796d0c65e61",
+  "source_fps": 60,
+  "crop": [
+    840,
+    0,
+    1840,
+    2160
+  ],
+  "processing_size": [
+    736,
+    864
+  ],
+  "output_fps": 60,
+  "directions": {
+    "left": {
+      "source_range_seconds": [
+        2.4333333333333336,
+        3.8166666666666664
+      ],
+      "distinct_source_frames": [
+        74,
+        79,
+        94,
+        97,
+        115,
+        124,
+        139
+      ],
+      "loop_score": 3.7979233264923096,
+      "alpha_registration": {
+        "inliers": 199,
+        "transform": [
+          [
+            0.5896861802574841,
+            -0.0007252307928672751,
+            28.19636198645028
+          ],
+          [
+            0.0007252307928672751,
+            0.5896861802574841,
+            55.202541584482795
+          ]
+        ],
+        "guide_name": "left",
+        "guide_sha256": "8a8042c574e08984ca9d2898a141940d6792a3b234f0051f59487eaf1f2d2cdc"
+      },
+      "output_frames": 83,
+      "duration_ms": 1383
+    },
+    "right": {
+      "source_range_seconds": [
+        10.833333333333332,
+        11.966666666666665
+      ],
+      "distinct_source_frames": [
+        8,
+        16,
+        25,
+        32,
+        39,
+        54,
+        71
+      ],
+      "loop_score": 2.6904146671295166,
+      "alpha_registration": {
+        "inliers": 188,
+        "transform": [
+          [
+            0.5136539196354878,
+            -0.0026905463194471188,
+            99.14550731393496
+          ],
+          [
+            0.0026905463194471188,
+            0.5136539196354878,
+            82.41385643047931
+          ]
+        ],
+        "guide_name": "right",
+        "guide_sha256": "8cea2d0b1b79c0e6b2c357d0d6806517f32ec35e0079e15f8cdf98eae1bfe3fb"
+      },
+      "output_frames": 68,
+      "duration_ms": 1133
+    }
+  },
+  "colour_match": {
+    "percentiles": [
+      2,
+      10,
+      25,
+      50,
+      75,
+      90,
+      98
+    ],
+    "source_rgb": [
+      [
+        60.0,
+        40.0,
+        96.0
+      ],
+      [
+        101.0,
+        81.0,
+        129.0
+      ],
+      [
+        130.0,
+        112.0,
+        153.0
+      ],
+      [
+        158.0,
+        148.0,
+        186.0
+      ],
+      [
+        190.0,
+        174.0,
+        210.0
+      ],
+      [
+        223.0,
+        195.0,
+        223.0
+      ],
+      [
+        226.0,
+        219.0,
+        247.0
+      ]
+    ],
+    "standing_rgb": [
+      [
+        70.0,
+        34.0,
+        101.0
+      ],
+      [
+        110.0,
+        81.0,
+        141.0
+      ],
+      [
+        168.0,
+        141.0,
+        178.0
+      ],
+      [
+        211.0,
+        196.0,
+        208.0
+      ],
+      [
+        229.0,
+        216.0,
+        221.0
+      ],
+      [
+        236.0,
+        223.0,
+        229.0
+      ],
+      [
+        239.0,
+        233.0,
+        239.0
+      ]
+    ],
+    "standing_sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977"
+  },
+  "interpolation": "bidirectional DeepFlow on premultiplied RGBA; occlusion-aware alpha coverage; periodic stride closure",
+  "fixed_placement": {
+    "left": [
+      [
+        0.78,
+        0,
+        135
+      ],
+      [
+        0,
+        0.78,
+        30
+      ]
+    ],
+    "right": [
+      [
+        0.83,
+        0,
+        90
+      ],
+      [
+        0,
+        0.83,
+        25
+      ]
+    ]
+  },
+  "alpha_references": {
+    "tool": "image_gen__imagegen",
+    "mode": "built-in",
+    "prompt": "Use case: background-extraction. Asset type: alpha guide for video matting. Remove only the blue room, floor, all ground shadow/reflection, and glowing background objects. Keep the entire original walking female character exactly as in the input: head, hair, fine trailing ribbons, dress, both arms and hands, legs and complete boots including soles. Preserve pose, anatomy, costume, scale, position, RGB appearance and 736x864 canvas. Do not redraw, relight, sharpen, add or reposition anything. Actual transparent background. Include every strand and thin ribbon that belongs to the character. No residual blue floor between or underneath legs. Output a precise clean transparent cutout.\n",
+    "registrations": {
+      "left": {
+        "inliers": 199,
+        "transform": [
+          [
+            0.5896861802574841,
+            -0.0007252307928672751,
+            28.19636198645028
+          ],
+          [
+            0.0007252307928672751,
+            0.5896861802574841,
+            55.202541584482795
+          ]
+        ],
+        "guide_name": "left",
+        "guide_sha256": "8a8042c574e08984ca9d2898a141940d6792a3b234f0051f59487eaf1f2d2cdc"
+      },
+      "right": {
+        "inliers": 188,
+        "transform": [
+          [
+            0.5136539196354878,
+            -0.0026905463194471188,
+            99.14550731393496
+          ],
+          [
+            0.0026905463194471188,
+            0.5136539196354878,
+            82.41385643047931
+          ]
+        ],
+        "guide_name": "right",
+        "guide_sha256": "8cea2d0b1b79c0e6b2c357d0d6806517f32ec35e0079e15f8cdf98eae1bfe3fb"
+      },
+      "left-cross": {
+        "inliers": 141,
+        "transform": [
+          [
+            0.6161530181059668,
+            -0.0021802802158704454,
+            25.171908957762284
+          ],
+          [
+            0.0021802802158704454,
+            0.6161530181059668,
+            15.242976249218769
+          ]
+        ],
+        "guide_name": "left-cross",
+        "guide_sha256": "11b26425f65e62796248b3aa92e85a37d72bbd2e608add5ed01cc108f21a1dfe"
+      },
+      "right-cross": {
+        "inliers": 169,
+        "transform": [
+          [
+            0.5679775347298611,
+            -0.0037098286129935145,
+            46.17586552778285
+          ],
+          [
+            0.0037098286129935145,
+            0.5679775347298611,
+            37.30928025533309
+          ]
+        ],
+        "guide_name": "right-cross",
+        "guide_sha256": "da9f4d7f114f9dbd0a5bf12f23a0d99f6974ce4ca526e42cf793840d65453ed2"
+      }
+    },
+    "use": "registered alpha only; all animated RGB from original video"
+  },
+  "files": {
+    "pet-frames.bin": {
+      "bytes": 51888182,
+      "sha256": "dd318e7b54313a47ad2b34e41117767b22aa149ced73f611084d998a985da822"
+    },
+    "pet-frames.json": {
+      "bytes": 14469,
+      "sha256": "ab3f5ff198507baeffe817ed027430311070e2540f09ccd643114d17bfc70865"
+    }
+  }
+}
