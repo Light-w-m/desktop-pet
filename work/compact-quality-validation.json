@@ -29,22 +29,10 @@
       "pixel_differences": 0,
       "additional_sizes_compared": 20,
       "random_seeks_compared": 4
-    },
-    "walking_left": {
-      "native_and_default_frames_compared": 83,
-      "pixel_differences": 0,
-      "additional_sizes_compared": 8,
-      "random_seeks_compared": 4
-    },
-    "walking_right": {
-      "native_and_default_frames_compared": 68,
-      "pixel_differences": 0,
-      "additional_sizes_compared": 8,
-      "random_seeks_compared": 4
     }
   },
   "all_native_pixels_alpha_offsets_and_timings_identical": true,
   "native_cache_peak_bytes": 11488480,
   "standing_loop_cache_peak_bytes": 8350840,
-  "compact_pack_bytes": 236672572
+  "compact_pack_bytes": 213676908
 }

@@ -1,0 +1,27 @@
+{
+  "walk_menu_and_runtime_removed": true,
+  "walk_module_and_frames_not_bundled": true,
+  "release_assets_exclude_walking": true,
+  "runtime_animations": [
+    "dragging",
+    "drinking",
+    "reading",
+    "standing",
+    "stomping"
+  ],
+  "runtime_frames": 2396,
+  "previous_executable_bytes": 296556410,
+  "executable_bytes": 273538785,
+  "bytes_saved": 23017625,
+  "sha256": "f26568752168fcc3fa180baf424287ffebd19844b022e44ea58e08d93428953c",
+  "interactive_window": {
+    "pid": 49404,
+    "visible": true,
+    "layered": true,
+    "app_icon_loaded": true
+  },
+  "preferences_preserved": true,
+  "release_exe_identical": true,
+  "walking_assets_archived_locally": true,
+  "source_video_preserved": true
+}

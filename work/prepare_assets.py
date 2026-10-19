@@ -31,7 +31,7 @@ def prepare(check_only=False):
         expected = checksums[name]
         if path.stat().st_size != expected['bytes'] or digest(path) != expected['sha256']:
             raise ValueError('Source asset does not match its checksum: '+name)
-    for motion in ('dragging', 'stomping', 'walking'):
+    for motion in ('dragging', 'stomping'):
         folder = assets/motion
         if (folder/'source.json').is_file():
             metadata = json.loads((folder/'source.json').read_text(encoding='utf-8'))

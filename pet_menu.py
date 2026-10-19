@@ -66,8 +66,7 @@ class PinkMenu:
 
     def state(self):
         return {'auto': self.owner.auto, 'requested': self.owner.clock.requested,
-                'pending': self.owner.clock.pending, 'paused': self.owner.paused, 'scale': self.owner.scale,
-                'walking': self.owner.walking.active}
+                'pending': self.owner.clock.pending, 'paused': self.owner.paused, 'scale': self.owner.scale}
 
     def dimensions(self):
         return round(self.logical_width*self.dpi), round(self.logical_height*self.dpi)
@@ -91,7 +90,7 @@ class PinkMenu:
         return place_beside(bounds, (self.width, self.height), work, self.gap)
 
     def follow(self):
-        placement = (self.owner.x, self.owner.y, self.owner.scale, self.owner.visual_pose)
+        placement = (self.owner.x, self.owner.y, self.owner.scale, self.owner.current)
         if not self.hwnd or getattr(self, 'placement', None) == placement:
             return
         self.placement = placement

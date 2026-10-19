@@ -44,7 +44,7 @@ def prepare(executable):
     extra = ({'assets/voices/'+name:voices/name for name in
               ['catalog.json']+[r['file'] for r in voice_catalog['records']]} if voice_catalog else {})
     motion_metadata = {}
-    for motion in ('dragging', 'stomping', 'walking'):
+    for motion in ('dragging', 'stomping'):
         folder = assets/motion
         if (folder/'source.json').is_file():
             motion_metadata[motion] = json.loads((folder/'source.json').read_text(encoding='utf-8'))

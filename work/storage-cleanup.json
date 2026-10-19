@@ -1,65 +1,35 @@
 {
-  "preserved_backup": "backups/before-walking-20261017",
-  "recycled_bytes": 2310508199,
+  "preserved_backup": "backups/before-remove-walking-20261019",
+  "recycled_bytes": 849327805,
   "generated_bytes_removed": 0,
   "entries": [
     {
       "relative": "__pycache__",
-      "bytes": 213671,
+      "bytes": 191908,
       "paths": 1,
       "mode": "recycle"
     },
     {
-      "relative": "backups/before-cpu-icon-20261017",
-      "bytes": 297311345,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "local-media/walking-video/left",
-      "bytes": 124968149,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "local-media/walking-video/right",
-      "bytes": 127102660,
+      "relative": "backups/before-walking-20261017",
+      "bytes": 297810010,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/__pycache__",
-      "bytes": 38255,
+      "bytes": 13912,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 296717043,
+      "bytes": 273626871,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/pyinstaller-build",
-      "bytes": 300707660,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "work/sources/drag-deps",
-      "bytes": 117624567,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "work/sources/flow-deps",
-      "bytes": 144519483,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "work/sources/rife",
-      "bytes": 901305366,
+      "bytes": 277685104,
       "paths": 1,
       "mode": "recycle"
     }
