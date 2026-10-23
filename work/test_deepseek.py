@@ -71,7 +71,7 @@ class TextOnlyChatTests(unittest.TestCase):
 
     def test_chat_path_imports_no_shell_agent_or_browser(self):
         forbidden={'subprocess','webbrowser','runpy','importlib'}
-        for name in ('deepseek.py','chat_window.py'):
+        for name in ('deepseek.py','chat_window.py','chat_transcript.py'):
             tree=ast.parse((ROOT/'src/citlali_pet/ui'/name).read_text(encoding='utf-8'))
             for node in ast.walk(tree):
                 if isinstance(node,ast.Import):

@@ -5,6 +5,7 @@ import queue
 import threading
 
 from . import deepseek
+from .chat_transcript import BubbleTranscript
 from .pet_menu import monitor_work_area, place_beside
 
 
@@ -29,6 +30,7 @@ class ChatWindow:
         self.owner, self.api = owner, api
         self.hwnd = None
         self.controls = {}
+        self.transcript = None
         self.history = []
         self.records = []
         self.results = queue.SimpleQueue()
@@ -117,10 +119,9 @@ class ChatWindow:
         self.add_control('settings','BUTTON','设置',(236,11,52,27),0x0001000b,self.SETTINGS)
         self.add_control('close','BUTTON','×',(296,11,28,27),0x0001000b,self.CLOSE)
         self.add_control('subtitle','STATIC','DeepSeek · 仅文字问答',(16,43,300,20))
-        # Standard read-only EDIT has no HTML, Markdown link or command handling.
-        transcript = self.add_control('transcript','EDIT','',(16,70,308,224),
-            0x00200000 | 0x00000004 | 0x00000040 | 0x00000800,self.TRANSCRIPT)
-        a.user.SendMessageW(transcript,0x00C5,0,0)
+        transcript = self.add_control('transcript','STATIC','',(16,70,308,224),
+            0x02000000 | 0x00200000,self.TRANSCRIPT)
+        self.transcript = BubbleTranscript(self,transcript)
         input_hwnd = self.add_control('input','EDIT','',(16,306,308,58),
             0x00010000 | 0x00000004 | 0x00000040 | 0x00001000,self.INPUT)
         a.user.SendMessageW(input_hwnd,0x00C5,deepseek.MAX_INPUT,0)
@@ -161,12 +162,7 @@ class ChatWindow:
 
     def render_transcript(self):
         if not self.hwnd:return
-        content = '\r\n\r\n'.join(f'{who}\r\n{text}' for who,text in self.records[-20:])
-        if not content:content = '茜特菈莉\r\n我在这里。想聊点什么？'
-        self.set_text('transcript',content[-24000:])
-        hwnd = self.controls['transcript']
-        self.api.user.SendMessageW(hwnd,0x00B1,-1,-1)
-        self.api.user.SendMessageW(hwnd,0x00B7,0,0)
+        self.transcript.set_records(self.records)
 
     def show_settings(self, visible):
         self.settings_visible = visible
@@ -199,7 +195,7 @@ class ChatWindow:
             deepseek.build_request(question,self.history)
             deepseek.load_api_key()
         except deepseek.ChatError as error:
-            self.records.append(('提示',str(error)))
+            self.records.append(('notice',str(error)))
             self.records = self.records[-20:]
             self.render_transcript()
             self.status = '请检查输入或 API Key 设置。'
@@ -207,7 +203,7 @@ class ChatWindow:
             return
         self.busy = True
         self.status = '正在听你说话…'
-        self.records.append(('你',question))
+        self.records.append(('user',question))
         self.set_text('input','')
         self.render_transcript()
         self.refresh_busy()
@@ -229,13 +225,13 @@ class ChatWindow:
             return
         self.busy = False
         if error:
-            self.records.append(('提示',error))
+            self.records.append(('notice',error))
             self.status = '发送失败，可以重试。'
             self.set_text('input',question)
         else:
             self.history.append((question,answer))
             self.history = self.history[-8:]
-            self.records.append(('茜特菈莉',answer))
+            self.records.append(('assistant',answer))
             self.status = 'Enter 发送 · Shift+Enter 换行'
         self.records = self.records[-20:]
         self.render_transcript()
@@ -283,7 +279,8 @@ class ChatWindow:
         return a.user.CallWindowProcW(self.input_original,hwnd,message,wparam,lparam)
 
     def dialog_key(self, message):
-        if not self.hwnd or (message.hWnd != self.hwnd and message.hWnd not in self.controls.values()):return False
+        if not self.hwnd or (message.hWnd != self.hwnd and message.hWnd not in self.controls.values()
+                             and not self.transcript.contains(message.hWnd)):return False
         if message.message == 0x0100 and message.wParam == 9:
             names = ('key','save','back','settings','close') if self.settings_visible else ('input','send','clear','settings','close')
             controls = [self.controls[name] for name in names if not self.busy or name not in ('input','send','clear')]
@@ -338,6 +335,8 @@ class ChatWindow:
     def close(self):
         if not self.hwnd:return
         self.api.user.DestroyWindow(self.hwnd)
+        if self.transcript:self.transcript.dispose()
+        self.transcript = None
         self.hwnd = None
         self.controls.clear()
         self.composing = self.suppress_enter = False

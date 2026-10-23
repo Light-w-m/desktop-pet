@@ -15,7 +15,10 @@ callback=C.WINFUNCTYPE(W.BOOL,W.HWND,W.LPARAM)
 long=C.c_ssize_t
 for name,result,args in (
     ('EnumWindows',W.BOOL,(callback,W.LPARAM)),
+    ('EnumChildWindows',W.BOOL,(W.HWND,callback,W.LPARAM)),
     ('GetWindowTextW',C.c_int,(W.HWND,W.LPWSTR,C.c_int)),
+    ('GetClassNameW',C.c_int,(W.HWND,W.LPWSTR,C.c_int)),
+    ('GetWindowRect',W.BOOL,(W.HWND,C.POINTER(W.RECT))),
     ('GetWindowThreadProcessId',W.DWORD,(W.HWND,C.POINTER(W.DWORD))),
     ('GetDlgItem',W.HWND,(W.HWND,C.c_int)),
     ('SetWindowTextW',W.BOOL,(W.HWND,W.LPCWSTR)),
@@ -75,13 +78,36 @@ try:
         buffer=C.create_unicode_buffer(length+1)
         user.SendMessageW(transcript,0x000D,len(buffer),C.cast(buffer,C.c_void_p).value)
         text=buffer.value.replace('\r','')
-        if '茜特菈莉\n2' in text:break
-        if '提示\n' in text:raise RuntimeError(text)
+        if text.strip().split('\n\n')[-1].strip()=='2':break
         time.sleep(.1)
-    assert '茜特菈莉\n2' in text,text
+    assert text.strip().split('\n\n')[-1].strip()=='2',text
+    assert text==question.value+'\n\n2',text
+    bubble_rects={}
+    @callback
+    def inspect_bubble(hwnd,_):
+        kind=C.create_unicode_buffer(32)
+        user.GetClassNameW(hwnd,kind,len(kind))
+        if kind.value.upper()!='EDIT':return True
+        length=user.SendMessageW(hwnd,0x000E,0,0)
+        body=C.create_unicode_buffer(length+1)
+        user.SendMessageW(hwnd,0x000D,len(body),C.cast(body,C.c_void_p).value)
+        rect=W.RECT()
+        assert user.GetWindowRect(hwnd,C.byref(rect))
+        bubble_rects[body.value]=rect
+        return True
+    deadline=time.monotonic()+3
+    while time.monotonic()<deadline:
+        bubble_rects.clear()
+        user.EnumChildWindows(transcript,inspect_bubble,0)
+        if set(bubble_rects)=={question.value,'2'}:break
+        time.sleep(.03)
+    assert set(bubble_rects)=={question.value,'2'},set(bubble_rects)
+    assert bubble_rects[question.value].left>bubble_rects['2'].left
+    assert bubble_rects[question.value].bottom<bubble_rects['2'].top
     result={'frozen_native_chat_opened':True,'real_api_reply':'2',
             'key_decryption_and_windows_https_in_exe':True,'tools':[],
-            'local_agent_server_required':False}
+            'local_agent_server_required':False,'sender_names_in_transcript':False,
+            'conversation_view':'native_left_right_bubbles','frozen_bubble_alignment_verified':True}
     (ROOT/'work/chat-package-validation.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 finally:

@@ -27,7 +27,7 @@
 
 程序置顶，透明区域可以点击到下面的窗口。位置、大小与语音偏好保存在本机的 `pet-settings.json`。
 
-右键 → **和她聊天**（或人物获得焦点后按 Enter），在人物右侧打开原生聊天面板，直接调用 DeepSeek 回答文字问题。Enter 发送、Shift+Enter 换行，设置中填写 API Key。固定使用 `deepseek-flash`，所有电脑操作工具均不接入；代码和链接只显示为文字。加密设置保存在 D 盘，聊天记录仅保存在内存，不需要 CLI 或浏览器。详见 [文字聊天说明](docs/DEEPSEEK.md)。
+右键 → **和她聊天**（或人物获得焦点后按 Enter），在人物右侧打开原生聊天面板，直接调用 DeepSeek 回答文字问题。你的消息显示为右侧浅粉色气泡，桌宠回复显示为左侧白色气泡，不再添加发送者名字；长消息自动换行，支持滚动和选中文字复制。Enter 发送、Shift+Enter 换行，设置中填写 API Key。固定使用 `deepseek-flash`，所有电脑操作工具均不接入；代码和链接只显示为文字。加密设置保存在 D 盘，聊天记录仅保存在内存，不需要 CLI 或浏览器。详见 [文字聊天说明](docs/DEEPSEEK.md)。
 
 EXE 和窗口图标使用用户提供的抱枕图片，内置 16、24、32、48、64、128、256 像素七档图标。原图在 `assets/app-icon-source.jpg`，运行 `python work/prepare_app_icon.py` 可重新生成 `assets/app.ico`。
 

@@ -7,5 +7,12 @@
   "key_input_never_prefilled": true,
   "close_does_not_exit_pet": true,
   "computer_tools": false,
-  "native_message_loop_and_tab_navigation": true
+  "native_message_loop_and_tab_navigation": true,
+  "user_bubbles_right_pet_bubbles_left": true,
+  "distinct_bubble_colours": true,
+  "no_sender_name_prefixes": true,
+  "long_multiline_and_unbroken_text_wraps": true,
+  "scroll_wheel_over_bubbles_and_scrollbar": true,
+  "preserve_history_reading_position": true,
+  "plain_text_selectable_for_copy": true
 }

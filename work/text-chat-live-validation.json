@@ -2,7 +2,7 @@
   "direct_https_api": true,
   "native_chat_question_and_reply": true,
   "arithmetic_reply": "2",
-  "computer_operation_request_refused_as_text": "抱歉，我做不到。我只是文字聊天桌宠，没有操作电脑的能力，不能打开计算器、读取文件、执行命令或控制鼠标键盘。",
+  "computer_operation_request_refused_as_text": "抱歉，我没有操作电脑的能力，无法打开计算器，也不能读取或修改桌面文件。",
   "requests": [
     {
       "model": "deepseek-flash",

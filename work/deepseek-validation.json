@@ -1,6 +1,8 @@
 {
   "mode": "native_text_only_chat",
   "installation_root": "D:\\AI\\DeepSeek",
+  "conversation_view": "native_left_right_bubbles",
+  "sender_name_prefixes": false,
   "fixed_model": "deepseek-flash",
   "max_output_tokens": 1024,
   "tools": [],
@@ -10,10 +12,10 @@
   "legacy_agent_server_stopped": true,
   "key_storage": "Windows DPAPI, D:/AI/DeepSeek/data/pet-chat.json",
   "history_on_disk": false,
-  "executable_sha256": "aaafb786ce628ac1577d9f3aa33a200ff3870c3446a9b469ca82a464621ce1c9",
-  "executable_bytes": 296826850,
+  "executable_sha256": "8b5ec99b721585626de650a08b321f8056333ee136e4cbcf701af22706eaf257",
+  "executable_bytes": 296835430,
   "installed_executable": {
-    "pid": 24080,
+    "pid": 9372,
     "visible": true,
     "layered": true,
     "chat_visible_and_responsive": true
@@ -28,16 +30,13 @@
   "tests": [
     "test_deepseek.py: 10 passed",
     "test_project_layout.py: 3 passed",
-    "test_pink_menu.py: passed",
-    "test_chat_ui.py: passed",
+    "test_chat_ui.py: native bubbles, long text, scroll, selection and asynchronous animation passed",
     "verify_text_chat.py: real API chat and computer-operation refusal passed",
-    "verify_packaged_chat.py: real API reply from frozen EXE passed",
-    "verify_packaged_standing.py: 2 scales, 60 FPS and smooth loops"
+    "verify_packaged_chat.py: real API reply and left/right bubble alignment in frozen EXE passed"
   ],
   "validation_reports": [
     "chat-ui-validation.json",
     "text-chat-live-validation.json",
-    "chat-package-validation.json",
-    "standing-package-validation.json"
+    "chat-package-validation.json"
   ]
 }
