@@ -16,6 +16,7 @@ import time
 from .animation.frame_stream import FrameArchive, FrameStream
 from .ui.expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
 from .ui.pet_menu import PinkMenu, monitor_work_area
+from .ui.deepseek import open_assistant
 from .animation.playback import Playback
 from .audio.voice_library import VoiceLibrary
 from .audio.voices import VoicePicker, VoicePlayer
@@ -786,6 +787,8 @@ class DesktopPet:
         elif command==40:user.DestroyWindow(self.hwnd)
         elif command==50:self.menu(position=position,picker=True)
         elif command==60:self.menu(position=position,voices=True)
+        elif command==70:
+            open_assistant(lambda error: user.MessageBoxW(self.hwnd,error,'DeepSeek 助手',0x10))
 
     def window_proc(self,hwnd,msg,wparam,lparam):
         try:
@@ -945,6 +948,12 @@ class DesktopPet:
 
 def main():
     try:
+        if '--deepseek' in sys.argv:
+            import webbrowser
+            from .ui.deepseek import ensure_service
+            if not webbrowser.open(ensure_service()):
+                raise RuntimeError('无法打开默认浏览器。请查看 DeepSeek 安装目录的 logs/web.log。')
+            return
         try:user.SetProcessDPIAware()
         except AttributeError:pass
         mutex_name='Local\\CitlaliDesktopPet_20261014'

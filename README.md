@@ -27,6 +27,8 @@
 
 程序置顶，透明区域可以点击到下面的窗口。位置、大小与语音偏好保存在本机的 `pet-settings.json`。
 
+右键 → **DeepSeek 助手** 可打开本机官方 DeepSeek Harness，进行 API 对话和文件/命令操作。CLI、配置及缓存默认安装在 D 盘，API Key 在官方网页的“设置 → 模型”中填写。默认只配置 `deepseek-flash`，保留操作审批。安装、模型限制和当前能力见 [DeepSeek 接入说明](docs/DEEPSEEK.md)。
+
 EXE 和窗口图标使用用户提供的抱枕图片，内置 16、24、32、48、64、128、256 像素七档图标。原图在 `assets/app-icon-source.jpg`，运行 `python work/prepare_app_icon.py` 可重新生成 `assets/app.ico`。
 
 ## 当前素材
