@@ -15,7 +15,7 @@ import sys
 import time
 from frame_stream import FrameArchive, FrameStream
 from expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
-from pet_menu import PinkMenu
+from pet_menu import PinkMenu, monitor_work_area
 from playback import Playback
 from voice_library import VoiceLibrary
 from voices import VoicePicker, VoicePlayer
@@ -23,6 +23,7 @@ from voice_actions import VoiceActions
 from drag_motion import DragMotion
 from shake_motion import ShakeDetector, StompMotion
 from pixel_surface import PixelSurface
+from walking import WalkingMotion, WalkingSpeech
 
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
 RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
@@ -121,6 +122,9 @@ class DesktopPet:
         self.paused = False
         self.drag_motion = DragMotion()
         self.stomp_motion = StompMotion()
+        self.walking = WalkingMotion()
+        self.walking_speech = WalkingSpeech()
+        self.walking_states = []
         self.shake = ShakeDetector()
         self.last_stomp_time = float('-inf')
         self.reset_drag()
@@ -129,6 +133,7 @@ class DesktopPet:
         self.last_frame = -1
         self.last_drag_frame = None
         self.last_stomp_frame = None
+        self.last_walk_frame = None
         self.draw_times = []
         self.render_times = []
         self.reaction_states = []
@@ -140,7 +145,8 @@ class DesktopPet:
         self.qa_mode = '--qa-seconds' in sys.argv
         self.qa_drag = '--qa-drag' in sys.argv
         self.qa_stomp = '--qa-stomp' in sys.argv
-        self.qa_report = APP_DIR/'work'/('stomp-playback-qa.json' if self.qa_stomp else
+        self.qa_walk = '--qa-walk' in sys.argv
+        self.qa_report = APP_DIR/'work'/('walk-playback-qa.json' if self.qa_walk else 'stomp-playback-qa.json' if self.qa_stomp else
                                        'drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
         self.animations = {}
         self.popup = None
@@ -214,8 +220,8 @@ class DesktopPet:
                 folder=RESOURCE_DIR/'assets' if getattr(sys,'frozen',False) else APP_DIR/'work'/'repaired-assets'
                 archive_path=folder/manifest['playback_pack']
             archive = FrameArchive(archive_path)
-            for name in ('dragging', 'stomping'):
-                if name in archive.animations:
+            for name in ('dragging', 'stomping', 'walking'):
+                if name in archive.animations or (name == 'walking' and 'walking_left' in archive.animations):
                     continue
                 for folder in (APP_DIR/'assets',RESOURCE_DIR/'assets',ASSETS):
                     optional = folder/name/'pet-frames.json'
@@ -267,7 +273,18 @@ class DesktopPet:
         self.frame_index=index
         size=self.width,self.height
         render_name,render_index=self.current,index
-        if self.stomp_motion.visible and not self.stomp_motion.preparing:
+        if self.walking.visible:
+            walk = self.walking
+            if walk.preparing:
+                frame = self.displayed_frame
+            else:
+                animation = self.animations[walk.name]
+                phase=min(walk.elapsed,animation['duration']) if walk.turning else walk.elapsed % animation['duration']
+                render_index = min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+                render_name = walk.name
+                base = self.stream.get(self.current,index,size) if not walk.active else walk.entry_frame
+                frame = walk.blend(self.stream.get(walk.name,render_index,size),size,base)
+        elif self.stomp_motion.visible and not self.stomp_motion.preparing:
             base = self.stream.get(self.current,index,size) if self.stomp_motion.held_frame is None else None
             if base is not None:
                 self.stomp_motion.held_frame = self.stomp_motion.entry_frame = base
@@ -308,6 +325,7 @@ class DesktopPet:
         self.last_frame=index
         self.last_drag_frame=render_index if render_name == 'dragging' else None
         self.last_stomp_frame=render_index if render_name == 'stomping' else None
+        self.last_walk_frame=(render_name,render_index) if render_name.startswith('walking_') else None
         if self.expression:self.expression.follow()
         if self.popup:self.popup.follow()
         if self.qa_mode:
@@ -320,6 +338,10 @@ class DesktopPet:
                     'main_pose':self.current,'main_position':self.clock.position})
 
     def switch(self,name,automatic=False):
+        if self.walking.visible:
+            self.stop_walking()
+            self.clock.current = self.current = name
+            self.clock.position = self.elapsed = 0.0
         self.clock.request(name,automatic)
         self.auto=automatic
         self.last_tick=time.perf_counter()
@@ -332,7 +354,16 @@ class DesktopPet:
         if self.qa_seconds and now-self.started>=self.qa_seconds:
             user.DestroyWindow(self.hwnd)
             return
-        if self.qa_stomp:
+        if self.qa_walk:
+            age = now-self.started
+            if age >= .5 and self.qa_target is None:
+                self.qa_target = 'walking'
+                self.start_walking()
+                self.walking.left,self.walking.right = self.x-80,self.x+80
+            if age >= self.qa_seconds-1 and self.qa_target == 'walking':
+                self.qa_target = 'stopped'
+                self.stop_walking()
+        elif self.qa_stomp:
             if now-self.started >= .6 and self.qa_target is None:
                 self.qa_target = 'dragging'
                 self.start_drag_animation()
@@ -354,6 +385,9 @@ class DesktopPet:
             self.show_expression(None)
         self.voice_player.poll()
         if self.popup:self.popup.refresh()
+        if self.walking.visible:
+            self.tick_walking(dt)
+            return
         if self.dragging and self.shake.idle(now):
             self.try_stomp(now)
         was_dragging=self.drag_motion.visible
@@ -428,6 +462,100 @@ class DesktopPet:
         if was_stomping and not interacting:
             self.stream.prefetch()
 
+    def start_walking(self):
+        if not all(name in self.animations for name in ('walking_left','walking_right')):
+            return False
+        self.reset_drag()
+        self.drag_motion.clear()
+        self.stomp_motion.clear()
+        self.clock.current = self.current = 'standing'
+        self.clock.position = self.elapsed = self.clock.stage_elapsed = 0.0
+        self.clock.pending = None
+        self.clock.playlist_index = 0
+        self.clock.cycle += 1
+        self.clock.automatic = self.auto = self.paused = False
+        self.voice_actions.defer(cancel_drinking=True)
+        self.walking_speech.restart()
+        bounds = [bounds for name,bounds in self.pose_bounds.items() if name.startswith('walking_')]
+        left = min(b[0] for b in bounds)*self.scale
+        right = max(b[2] for b in bounds)*self.scale
+        area = monitor_work_area(sys.modules[__name__],round(self.x+(left+right)/2),self.y+self.height//2)
+        limits = area.left-left+2,area.right-right-2
+        if limits[1] < limits[0]:
+            return False
+        self.walking.start(self.x,self.y,limits,self.scale,self.displayed_frame)
+        self.walking.turn_duration=self.animations.get('walking_turn',{}).get('duration',0)
+        self.stream.prefetch([(self.walking.name,i,(self.width,self.height)) for i in range(3)])
+        self.last_tick = time.perf_counter()
+        return True
+
+    def stop_walking(self):
+        if not self.walking.visible:return
+        self.walking.stop()
+        if self.walking_speech.owns(self.voice_player.current_id):
+            self.voice_player.stop()
+        self.walking_speech.restart()
+        self.voice_actions.defer(cancel_drinking=True)
+        self.stream.prefetch([('standing',i,(self.width,self.height)) for i in range(3)])
+
+    def tick_walking(self, dt):
+        walk = self.walking
+        old_position = self.x,self.y
+        size = self.width,self.height
+        if walk.preparing:
+            keys = [(walk.name,i,size) for i in range(3)]
+            self.stream.prefetch(keys)
+            if not all(self.stream.peek(*key) is not None for key in keys):return
+            self.stream.request(walk.name,0,size)
+            walk.preparing = False
+            self.last_tick = time.perf_counter()
+            dt = 0
+        if walk.active:
+            other = 'walking_right' if walk.direction < 0 else 'walking_left'
+            edge_distance = walk.x-walk.left if walk.direction < 0 else walk.right-walk.x
+            if walk.turning:
+                other='walking_right' if walk.direction>0 else 'walking_left'
+                self.stream.prefetch([(other,i,size) for i in range(3)])
+            elif edge_distance < walk.speed*.5:
+                if walk.turn_duration>0:other='walking_turn' if walk.direction<0 else 'walking_turn_back'
+                self.stream.prefetch([(other,i,size) for i in range(3)])
+            else:
+                self.stream.prefetch()
+        walk.advance(dt)
+        if walk.active:
+            self.x,self.y = round(walk.x),walk.y
+            if not self.qa_mode:
+                player = self.voice_player
+                title = self.walking_speech.advance(dt,player.current_id,{r['title'] for r in self.voices.records},
+                    enabled=not player.muted and player.volume > 0,busy=isinstance(self.popup,VoicePicker))
+                if title:
+                    record = next(r for r in self.voices.records if r['title'] == title)
+                    if self.play_voice(record['id'],automatic=True):self.walking_speech.started(record['id'])
+                    else:self.walking_speech.defer()
+        elif not self.paused:
+            self.clock.advance(dt)
+            self.elapsed = self.clock.position
+        animation = self.animations[self.current]
+        index = min(bisect_right(animation['endpoints'],self.clock.position),len(animation['frames'])-1)
+        animation = self.animations[walk.name]
+        phase=min(walk.elapsed,animation['duration']) if walk.turning else walk.elapsed % animation['duration']
+        walking_index = min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+        changing_blend = 0 < walk.weight < 1 or walk.turn_elapsed < walk.TURN
+        if not walk.visible or changing_blend or self.last_walk_frame != (walk.name,walking_index):
+            self.draw(index)
+        elif old_position != (self.x,self.y):
+            # An input/message can wake us before the next media deadline.
+            # Move the existing surface without decoding or repainting it.
+            user.SetWindowPos(self.hwnd,None,self.x,self.y,0,0,0x0001|0x0004|0x0010)
+            if self.expression:self.expression.follow()
+        if self.qa_mode:
+            self.walking_states.append({'x':self.x,'y':self.y,'direction':walk.direction,'active':walk.active,
+                'left':walk.left,'right':walk.right,'time':time.perf_counter()})
+        if not walk.visible:
+            walk.clear()
+            self.last_frame = -1
+            self.stream.prefetch()
+
     def warm_stomp(self):
         if 'stomping' not in self.animations:
             return []
@@ -471,6 +599,8 @@ class DesktopPet:
         self.y=max(top,min(self.y,bottom-self.height))
 
     def resize(self,scale):
+        self.stop_walking()
+        self.walking.clear()
         oldwidth,oldheight=self.width,self.height
         self.scale=max(.6,min(1.5,scale))
         self.load_frames()
@@ -496,6 +626,7 @@ class DesktopPet:
                 self.x+math.ceil(right*self.scale),self.y+math.ceil(bottom*self.scale))
 
     def menu(self, position=None, picker=False, voices=False):
+        self.stop_walking()
         self.reset_drag()
         user.ReleaseCapture()
         p=POINT()
@@ -514,11 +645,16 @@ class DesktopPet:
 
     @property
     def visual_pose(self):
+        if self.walking.visible and not self.walking.preparing:
+            return self.walking.name
         if self.stomp_motion.visible:
             return 'stomping'
         return 'dragging' if self.drag_motion.visible and 'dragging' in self.animations else self.current
 
     def start_drag_animation(self):
+        if self.walking.visible:
+            self.stop_walking()
+            self.walking.clear()
         if 'dragging' in self.animations:
             if self.stomp_motion.visible:
                 base = self.stomp_motion.held_frame
@@ -536,6 +672,7 @@ class DesktopPet:
         return self.start_stomp(now)
 
     def start_stomp(self, now):
+        self.stop_walking()
         if 'stomping' not in self.animations:
             return False
         try:
@@ -609,6 +746,7 @@ class DesktopPet:
                 self.play_voice(record['id'],automatic=True)
 
     def play_voice(self,identifier,*,automatic=False):
+        if not automatic:self.walking_speech.defer()
         try:
             played=self.voice_player.play(self.voices.get(identifier))
             if played:
@@ -626,11 +764,13 @@ class DesktopPet:
 
     def stop_voice(self):
         self.voice_player.stop()
+        self.walking_speech.defer()
         self.voice_actions.defer(cancel_drinking=True)
 
     def configure_voice(self,*,volume=None,muted=None):
         self.voice_player.configure(volume=volume,muted=muted)
         self.voice_actions.defer(cancel_drinking=self.voice_player.muted or self.voice_player.volume == 0)
+        if self.voice_player.muted or self.voice_player.volume == 0:self.walking_speech.defer()
         self.save_settings()
 
     def save_settings(self):
@@ -648,7 +788,10 @@ class DesktopPet:
             self.switch('standing',True)
         elif command in (11,12,13):
             self.switch({11:'standing',12:'drinking',13:'reading'}[command])
-        elif command==20:self.paused=not self.paused
+        elif command==14:self.start_walking()
+        elif command==20:
+            self.stop_walking()
+            self.paused=not self.paused
         elif command in (31,32,33):self.resize({31:.7,32:1,33:1.3}[command])
         elif command==40:user.DestroyWindow(self.hwnd)
         elif command==50:self.menu(position=position,picker=True)
@@ -666,6 +809,7 @@ class DesktopPet:
                 self.tick()
                 return 0
             if msg in (0x0201,0x0203):
+                self.stop_walking()
                 p=POINT()
                 user.GetCursorPos(C.byref(p))
                 self.drag_offset=(p.x-self.x,p.y-self.y)
@@ -721,7 +865,12 @@ class DesktopPet:
                 return 0
             if msg==0x0100:
                 if wparam==27:user.DestroyWindow(hwnd)
-                elif wparam==32:self.paused=not self.paused
+                elif wparam==32:
+                    self.stop_walking()
+                    self.paused=not self.paused
+                return 0
+            if msg==0x007E:  # Display topology changed: stop before using old bounds.
+                self.stop_walking()
                 return 0
             if msg==0x0084 and self.hwnd:
                 x=C.c_short(lparam&0xffff).value-self.x
@@ -751,6 +900,7 @@ class DesktopPet:
                         'peak_cache_bytes':self.stream.peak_cache_bytes,'peak_cache_frames':self.stream.peak_cache_frames,
                         'native_cache_peak_bytes':self.stream.archive.peak_raw_cache_bytes,
                         'loop_cache_peak_bytes':self.stream.archive.loop_cache.peak_bytes,
+                        'walking_states':self.walking_states,
                         'reaction_states':self.reaction_states}
                     self.qa_report.parent.mkdir(exist_ok=True)
                     self.qa_report.write_text(json.dumps(qa),encoding='utf-8')
@@ -771,7 +921,14 @@ class DesktopPet:
                 user.DispatchMessageW(C.byref(message))
             self.tick()
             if not self.bits:continue
-            if self.stomp_motion.visible:
+            if self.walking.visible:
+                animation=self.animations[self.walking.name]
+                phase=min(self.walking.elapsed,animation['duration']) if self.walking.turning else self.walking.elapsed % animation['duration']
+                index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
+                remaining=animation['endpoints'][index]-phase
+                if not self.walking.active:remaining=1/60
+                timeout=5 if self.walking.preparing else max(1,math.ceil(remaining*1000-(time.perf_counter()-self.last_tick)*1000))
+            elif self.stomp_motion.visible:
                 animation=self.animations['stomping']
                 phase=self.stomp_motion.elapsed
                 index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)

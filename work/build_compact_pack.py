@@ -30,7 +30,7 @@ def inputs(root):
     manifest=json.loads((root/'assets/manifest.json').read_text(encoding='utf-8'))
     paths=[root/'assets/manifest.json',Path(__file__)]
     paths += [root/'assets'/spec['file'] for spec in manifest['animations'].values()]
-    for name in ('dragging','stomping'):
+    for name in ('dragging','stomping','walking'):
         paths += [root/'assets'/name/file for file in ('pet-frames.json','pet-frames.bin','source.json')]
     return {str(path.relative_to(root)).replace('\\','/'):{'bytes':path.stat().st_size,'sha256':digest(path)}
             for path in paths}
@@ -74,7 +74,7 @@ def build(root=ROOT,output=None):
            'source_files':signature,'max_dependency_depth':GROUP-1}
     temporary=output/'pet-frames.part.bin'
     with temporary.open('wb') as packed,ThreadPoolExecutor(max_workers=4) as pool:
-        for name in (*manifest['animations'],'dragging','stomping'):
+        for name in (*manifest['animations'],'dragging','stomping','walking_left','walking_right','walking_turn'):
             frames=[]
             def source_frames():
                 if name in manifest['animations']:
@@ -85,7 +85,8 @@ def build(root=ROOT,output=None):
                             rgba=animation.convert('RGBA');box=rgba.getbbox()
                             yield int(animation.info['duration']),rgba.crop(box).tobytes(),box
                 else:
-                    archive=FrameArchive(root/'assets'/name/'pet-frames.json')
+                    folder='walking' if name.startswith('walking_') else name
+                    archive=FrameArchive(root/'assets'/folder/'pet-frames.json')
                     with archive.sources[name].open('rb') as source:
                         for frame in archive.animations[name]['frames']:
                             offset,length,*box=frame['native']
@@ -105,7 +106,7 @@ def build(root=ROOT,output=None):
                 # The reaction and first idle frames overlap during recovery.
                 # Keep both sides independent: rebuilding an evicted idle
                 # dependency chain otherwise stalls the last reaction frames.
-                independent=name == 'stomping' or (name == 'standing' and number < STANDING_ENTRY_KEYS)
+                independent=name == 'stomping' or name.startswith('walking_') or (name == 'standing' and number < STANDING_ENTRY_KEYS)
                 key_number=0 if independent else number
                 jobs.append((number,ms,box,pool.submit(encode,key_number,raw,box,previous,previous_box)))
                 previous,previous_box=raw,box
@@ -115,6 +116,7 @@ def build(root=ROOT,output=None):
                 write_one()
             index['animations'][name]={'frames':frames}
             print(f'{name}: {len(frames)} frames, cumulative {packed.tell()/1024**2:.1f} MiB',flush=True)
+        index['animations']['walking_turn_back']={'frames':list(reversed(index['animations']['walking_turn']['frames']))}
     index['data_bytes']=temporary.stat().st_size
     temporary.replace(output/'pet-frames.bin')
     (output/'pet-frames.json').write_text(json.dumps(index,separators=(',',':'))+'\n',encoding='utf-8')

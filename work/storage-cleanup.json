@@ -1,35 +1,47 @@
 {
-  "preserved_backup": "backups/before-remove-walking-20261019",
-  "recycled_bytes": 849327805,
+  "preserved_backup": "backups/before-new-walking-20261023",
+  "recycled_bytes": 1430395289,
   "generated_bytes_removed": 0,
   "entries": [
     {
       "relative": "__pycache__",
-      "bytes": 191908,
+      "bytes": 216201,
       "paths": 1,
       "mode": "recycle"
     },
     {
-      "relative": "backups/before-walking-20261017",
-      "bytes": 297810010,
+      "relative": "backups/before-remove-walking-20261019",
+      "bytes": 321190752,
       "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "local-media/walking-video-20261023 (generated frames only)",
+      "bytes": 385544414,
+      "paths": 654,
       "mode": "recycle"
     },
     {
       "relative": "work/__pycache__",
-      "bytes": 13912,
+      "bytes": 41366,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 273626871,
+      "bytes": 300891599,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/pyinstaller-build",
-      "bytes": 277685104,
+      "bytes": 304886390,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "work/sources/drag-deps",
+      "bytes": 117624567,
       "paths": 1,
       "mode": "recycle"
     }

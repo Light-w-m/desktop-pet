@@ -1,0 +1,485 @@
+{
+  "version": 2,
+  "source_file": "10月23日.mp4",
+  "source_sha256": "8f268202dc5ee1784fa52a49a84a7c93f74daf2b7cf1d885755cc7fbd7a2f9a6",
+  "source_fps": 120,
+  "output_fps": 60,
+  "crop": [
+    840,
+    0,
+    1840,
+    2160
+  ],
+  "processing_size": [
+    736,
+    864
+  ],
+  "directions": {
+    "left": {
+      "source_range_seconds": [
+        1.3333333333333335,
+        2.666666666666667
+      ],
+      "source_frame_indices": [
+        160,
+        162,
+        164,
+        166,
+        168,
+        170,
+        172,
+        174,
+        176,
+        178,
+        180,
+        182,
+        184,
+        186,
+        188,
+        190,
+        192,
+        194,
+        196,
+        198,
+        200,
+        202,
+        204,
+        206,
+        208,
+        210,
+        212,
+        214,
+        216,
+        218,
+        220,
+        222,
+        224,
+        226,
+        228,
+        230,
+        232,
+        234,
+        236,
+        238,
+        240,
+        242,
+        244,
+        246,
+        248,
+        250,
+        252,
+        254,
+        256,
+        258,
+        260,
+        262,
+        264,
+        266,
+        268,
+        270,
+        272,
+        274,
+        276,
+        278,
+        280,
+        282,
+        284,
+        286,
+        288,
+        290,
+        292,
+        294,
+        296,
+        298,
+        300,
+        302,
+        304,
+        306,
+        308,
+        310,
+        312,
+        314,
+        316,
+        318
+      ],
+      "loop_score": 4.317741870880127,
+      "output_frames": 80,
+      "duration_ms": 1333
+    },
+    "right": {
+      "source_range_seconds": [
+        10.05,
+        11.383333333333335
+      ],
+      "source_frame_indices": [
+        1206,
+        1208,
+        1210,
+        1212,
+        1214,
+        1216,
+        1218,
+        1220,
+        1222,
+        1224,
+        1226,
+        1228,
+        1230,
+        1232,
+        1234,
+        1236,
+        1238,
+        1240,
+        1242,
+        1244,
+        1246,
+        1248,
+        1250,
+        1252,
+        1254,
+        1256,
+        1258,
+        1260,
+        1262,
+        1264,
+        1266,
+        1268,
+        1270,
+        1272,
+        1274,
+        1276,
+        1278,
+        1280,
+        1282,
+        1284,
+        1286,
+        1288,
+        1290,
+        1292,
+        1294,
+        1296,
+        1298,
+        1300,
+        1302,
+        1304,
+        1306,
+        1308,
+        1310,
+        1312,
+        1314,
+        1316,
+        1318,
+        1320,
+        1322,
+        1324,
+        1326,
+        1328,
+        1330,
+        1332,
+        1334,
+        1336,
+        1338,
+        1340,
+        1342,
+        1344,
+        1346,
+        1348,
+        1350,
+        1352,
+        1354,
+        1356,
+        1358,
+        1360,
+        1362,
+        1364
+      ],
+      "loop_score": 2.4509572982788086,
+      "output_frames": 80,
+      "duration_ms": 1333
+    },
+    "turn": {
+      "source_range_seconds": [
+        7.35,
+        7.7
+      ],
+      "source_frame_indices": [
+        882,
+        884,
+        886,
+        888,
+        890,
+        892,
+        894,
+        896,
+        898,
+        900,
+        902,
+        904,
+        906,
+        908,
+        910,
+        912,
+        914,
+        916,
+        918,
+        920,
+        922
+      ],
+      "output_frames": 21,
+      "duration_ms": 350,
+      "reverse_for_right_to_left": true
+    },
+    "turn_back": {
+      "source_range_seconds": [
+        7.35,
+        7.7
+      ],
+      "source_frame_indices": [
+        922,
+        920,
+        918,
+        916,
+        914,
+        912,
+        910,
+        908,
+        906,
+        904,
+        902,
+        900,
+        898,
+        896,
+        894,
+        892,
+        890,
+        888,
+        886,
+        884,
+        882
+      ],
+      "output_frames": 21,
+      "duration_ms": 350,
+      "reverse_for_right_to_left": true
+    }
+  },
+  "one_original_frame_per_output": true,
+  "rgb_temporal_blending": false,
+  "synthetic_interpolation": false,
+  "turn": "recorded turn, reversed for opposite direction",
+  "colour_match": {
+    "source_rgb": [
+      [
+        104.0,
+        79.0,
+        131.0
+      ],
+      [
+        138.0,
+        116.0,
+        159.0
+      ],
+      [
+        166.0,
+        145.0,
+        181.0
+      ],
+      [
+        190.0,
+        179.0,
+        203.0
+      ],
+      [
+        212.0,
+        198.0,
+        221.0
+      ],
+      [
+        228.0,
+        208.0,
+        231.0
+      ],
+      [
+        232.0,
+        224.0,
+        245.0
+      ]
+    ],
+    "target_rgb": [
+      [
+        70.0,
+        34.0,
+        101.0
+      ],
+      [
+        110.0,
+        81.0,
+        141.0
+      ],
+      [
+        168.0,
+        141.0,
+        178.0
+      ],
+      [
+        211.0,
+        196.0,
+        208.0
+      ],
+      [
+        229.0,
+        216.0,
+        221.0
+      ],
+      [
+        236.0,
+        223.0,
+        229.0
+      ],
+      [
+        239.0,
+        233.0,
+        239.0
+      ]
+    ],
+    "strength": 0.8,
+    "fixed_for_all_clips": true
+  },
+  "fixed_placement": {
+    "left": [
+      [
+        0.9265905618667603,
+        0.0,
+        66.02446746826172
+      ],
+      [
+        0.0,
+        0.9265905618667603,
+        -94.7308349609375
+      ]
+    ],
+    "right": [
+      [
+        0.9643463492393494,
+        0.0,
+        -64.17487335205078
+      ],
+      [
+        0.0,
+        0.9643463492393494,
+        -109.33446502685547
+      ]
+    ],
+    "pivot": [
+      [
+        0.9419568777084351,
+        0.0,
+        -11.849087715148926
+      ],
+      [
+        0.0,
+        0.9419568777084351,
+        -90.39137268066406
+      ]
+    ]
+  },
+  "alpha_references": {
+    "tool": "image_gen__imagegen",
+    "mode": "built-in",
+    "use": "registered alpha only; no generated RGB",
+    "reused_guide_folder": "local-media/walking-video",
+    "new_guide_folder": "local-media/walking-video-20261023",
+    "prompt": "Use case: background-extraction. Asset type: precise alpha guide for original-video desktop-pet matting. Edit this reference image by removing only the entire blue room, background people/lamps and all floor shadows/reflections. Keep ONLY the full original main female character, facing mostly away: entire head and hair, both hands and arms, all costume pieces, thin ribbons, both complete legs, both complete boots and soles. Preserve the exact original pose, anatomy, clothing detail, colours, scale, position and canvas framing; do not redraw or beautify. Clean truly transparent background, including the gap between the legs and spaces in the trailing costume. No remaining floor or background glow. It is a mask reference, so exact original silhouette and original pixels are essential.\n",
+    "registrations": {
+      "left": {
+        "transform": [
+          [
+            0.8510064480648053,
+            -0.02903145769274916,
+            79.13078064914
+          ],
+          [
+            0.02903145769274916,
+            0.8510064480648053,
+            102.76256362005205
+          ]
+        ],
+        "inliers": 26,
+        "alpha_sha256": "8cdda8bc7a4499080196a308ed03f74d53a41c3d4b9da919030e5a90dd322c3d"
+      },
+      "left-cross": {
+        "transform": [
+          [
+            0.8677099368482345,
+            0.002851504953962584,
+            68.29892143993499
+          ],
+          [
+            -0.002851504953962584,
+            0.8677099368482345,
+            120.92257003457473
+          ]
+        ],
+        "inliers": 30,
+        "alpha_sha256": "7186bd5659c5145ae17dd47d4ab3b3f23674a4427d4710704cc523d8c7145111"
+      },
+      "right": {
+        "transform": [
+          [
+            0.8749759433694263,
+            0.01383830473403238,
+            138.58411653163802
+          ],
+          [
+            -0.01383830473403238,
+            0.8749759433694263,
+            130.2944347700128
+          ]
+        ],
+        "inliers": 185,
+        "alpha_sha256": "af6796f3bf36f858d5ac71a2312c39aabaeecb2d350b04c7229606360fc12efc"
+      },
+      "right-cross": {
+        "transform": [
+          [
+            0.8612886746410717,
+            0.005382494467984147,
+            141.33267918062242
+          ],
+          [
+            -0.005382494467984147,
+            0.8612886746410717,
+            151.65155730050165
+          ]
+        ],
+        "inliers": 22,
+        "alpha_sha256": "d88479cf6f07d32f1a62ef1cb9ef5a26780296d5a5ca0059c549a3ec8964a15c"
+      },
+      "back": {
+        "transform": [
+          [
+            0.4952492807153419,
+            -0.005889015913036215,
+            111.34870851415221
+          ],
+          [
+            0.005889015913036215,
+            0.4952492807153419,
+            167.69705297964907
+          ]
+        ],
+        "inliers": 105,
+        "alpha_sha256": "c605647948cfe5b1989dc4902c7e4bdb0ed43ee3630d3cb3bb498a47e91187e9"
+      }
+    }
+  },
+  "files": {
+    "pet-frames.bin": {
+      "bytes": 61133139,
+      "sha256": "c37d410284393f723a42fdb55e5f3fd11a2131e6eba3cd8f874ff28349bda5b5"
+    },
+    "pet-frames.json": {
+      "bytes": 19342,
+      "sha256": "e5ce6eafc43b2168709725b57c39fa6c4fb694bcf56f4cbd64287d126cd24f45"
+    }
+  }
+}

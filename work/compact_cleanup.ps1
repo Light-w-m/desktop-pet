@@ -87,6 +87,15 @@ foreach ($direction in @('left', 'right')) {
         $plan += [pscustomobject]@{relative=('local-media/walking-video/' + $direction); path=$path; bytes=(Get-Bytes $path); mode='generated'}
     }
 }
+$newWalkCache = Assert-WorkspacePath (Join-Path $workspace 'local-media/walking-video-20261023')
+if (Test-Path -LiteralPath $newWalkCache -PathType Container) {
+    foreach ($item in Get-ChildItem -LiteralPath $newWalkCache -File) {
+        if ($item.Name -match '^(left|right|pivot)-(matte-)?[0-9]+\.png$|^turn-[0-9]+\.png$') {
+            $path = Assert-WorkspacePath $item.FullName
+            $plan += [pscustomobject]@{relative=('local-media/walking-video-20261023/' + $item.Name); path=$path; bytes=$item.Length; mode='generated'}
+        }
+    }
+}
 if ($RecycleOlderBackups) {
     if (-not $KeepBackup) { throw 'Specify the most recent backup directory to preserve.' }
     $preserved = Assert-WorkspacePath (Join-Path $workspace $KeepBackup)
@@ -136,6 +145,8 @@ $report = [pscustomobject]@{
     generated_bytes_removed=[long](($plan | Where-Object mode -ne 'recycle' | Measure-Object bytes -Sum).Sum)
     entries=@($plan | Group-Object { if ($_.relative -like 'local-media/stomp-video/*') {
             'local-media/stomp-video (generated frames only)'
+        } elseif ($_.relative -like 'local-media/walking-video-20261023/*') {
+            'local-media/walking-video-20261023 (generated frames only)'
         } else { $_.relative } } | ForEach-Object {
             [pscustomobject]@{relative=$_.Name; bytes=[long](($_.Group | Measure-Object bytes -Sum).Sum);
                 paths=$_.Count; mode=$_.Group[0].mode}
