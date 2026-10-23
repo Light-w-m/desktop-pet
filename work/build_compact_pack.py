@@ -74,7 +74,7 @@ def build(root=ROOT,output=None):
            'source_files':signature,'max_dependency_depth':GROUP-1}
     temporary=output/'pet-frames.part.bin'
     with temporary.open('wb') as packed,ThreadPoolExecutor(max_workers=4) as pool:
-        for name in (*manifest['animations'],'dragging','stomping','walking_left','walking_right','walking_turn'):
+        for name in (*manifest['animations'],'dragging','stomping','walking_left','walking_right'):
             frames=[]
             def source_frames():
                 if name in manifest['animations']:
@@ -116,7 +116,6 @@ def build(root=ROOT,output=None):
                 write_one()
             index['animations'][name]={'frames':frames}
             print(f'{name}: {len(frames)} frames, cumulative {packed.tell()/1024**2:.1f} MiB',flush=True)
-        index['animations']['walking_turn_back']={'frames':list(reversed(index['animations']['walking_turn']['frames']))}
     index['data_bytes']=temporary.stat().st_size
     temporary.replace(output/'pet-frames.bin')
     (output/'pet-frames.json').write_text(json.dumps(index,separators=(',',':'))+'\n',encoding='utf-8')
@@ -126,7 +125,6 @@ def build(root=ROOT,output=None):
     (output/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(f'Lossless compact pack complete: {index["data_bytes"]/1024**2:.1f} MiB',flush=True)
     return output
-
 
 if __name__ == '__main__':
     import argparse

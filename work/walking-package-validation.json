@@ -2,52 +2,43 @@
   "embedded_checksums_match": true,
   "horizontal_line_constant": true,
   "automatic_edge_reversal": true,
-  "recorded_turn_both_directions": true,
-  "turn_back_reuses_encoded_frames": true,
+  "immediate_direction_switch": true,
+  "turn_animation_included": false,
   "interrupted_motion_stays_stopped": true,
   "frames": {
     "left": 80,
-    "right": 80,
-    "turn": 21,
-    "turn_back": 21
+    "right": 80
   },
   "samples": [
     {
       "scale": 0.7,
-      "rendered_fps": 59.886403851321056,
-      "p95_frame_gap_ms": 18.19699000016044,
-      "entry_frame_gap_ms": 39.06219999953464,
-      "exit_frame_gap_ms": 12.12500000019645,
-      "turn_frame_gaps_ms": [
-        16.11640000010084,
-        16.500400000040827,
-        16.43829999920854,
-        17.031800000040676,
-        15.735099999801605,
-        18.339799999921524
+      "rendered_fps": 59.979664768646444,
+      "p95_frame_gap_ms": 18.447639999612875,
+      "entry_frame_gap_ms": 39.09839999960241,
+      "exit_frame_gap_ms": 16.122600000016973,
+      "direction_switch_gaps_ms": [
+        16.71269999951619,
+        14.775399999962247,
+        16.13759999963804,
+        16.308199999912176
       ],
       "cache_peak_bytes": 2300232,
       "cache_peak_frames": 12
     },
     {
       "scale": 1.3,
-      "rendered_fps": 59.78339816678381,
-      "p95_frame_gap_ms": 18.274915000210967,
-      "entry_frame_gap_ms": 44.451100000515,
-      "exit_frame_gap_ms": 6.700299999465642,
-      "turn_frame_gaps_ms": [
-        16.306900000017777,
-        17.448800000238407,
-        17.06610000019282,
-        16.35900000019319,
-        16.80709999982355,
-        16.860800000358722,
-        16.757800000050338,
-        17.723299999488518,
-        17.944899999747577,
-        16.222799999923154,
-        17.245300000467978,
-        18.149699999412405
+      "rendered_fps": 59.954003151744836,
+      "p95_frame_gap_ms": 18.825660000038624,
+      "entry_frame_gap_ms": 41.93219999979192,
+      "exit_frame_gap_ms": 15.67830000021786,
+      "direction_switch_gaps_ms": [
+        16.94000000043161,
+        14.447999999902095,
+        16.530199999579054,
+        16.040600000451377,
+        15.328800000133924,
+        17.51499999954831,
+        16.055999999480264
       ],
       "cache_peak_bytes": 7769340,
       "cache_peak_frames": 12

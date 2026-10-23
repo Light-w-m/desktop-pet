@@ -62,7 +62,7 @@
   "standing_matting": {
     "floor_reflection_removed": true,
     "shoe_outlines": "tracked planted sole contours",
-    "ribbons": "tracked full tails and pale knots",
+    "ribbons": "current-frame costume fabric segmentation; no tracked background pixels",
     "shared_standing_endpoints_repaired": true
   },
   "playback_pack": "pet-frames.json"

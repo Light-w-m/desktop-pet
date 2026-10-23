@@ -41,22 +41,10 @@
       "pixel_differences": 0,
       "additional_sizes_compared": 8,
       "random_seeks_compared": 4
-    },
-    "walking_turn": {
-      "native_and_default_frames_compared": 21,
-      "pixel_differences": 0,
-      "additional_sizes_compared": 8,
-      "random_seeks_compared": 4
-    },
-    "walking_turn_back": {
-      "native_and_default_frames_compared": 21,
-      "pixel_differences": 0,
-      "additional_sizes_compared": 8,
-      "random_seeks_compared": 4
     }
   },
   "all_native_pixels_alpha_offsets_and_timings_identical": true,
   "native_cache_peak_bytes": 11488480,
-  "standing_loop_cache_peak_bytes": 8350840,
-  "compact_pack_bytes": 240846148
+  "standing_loop_cache_peak_bytes": 8315163,
+  "compact_pack_bytes": 237670816
 }

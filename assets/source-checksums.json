@@ -2,16 +2,16 @@
   "version": 1,
   "files": {
     "standing-obs.webp": {
-      "bytes": 19903322,
-      "sha256": "0e4f98a6b9f7cadb0ede473ff52340153587c2ac16514267fa63f7d86e7e3977"
+      "bytes": 19480560,
+      "sha256": "3af5f22234557366d4aeb9ea418cfeb96d01c7474f1534726705edf13a9b0c58"
     },
     "reading-obs.webp": {
-      "bytes": 107260108,
-      "sha256": "09df0f83b1b16c39bfd30fab1d7d735872592dbb3603c1062ef633376b107053"
+      "bytes": 107217086,
+      "sha256": "88bbfcec55072095243b4335e6fe9ea8356d1b66a2de8dd12693506fa7a423c7"
     },
     "drinking-obs.webp": {
-      "bytes": 107357886,
-      "sha256": "0abfe221c48b35b72e2ae582614692aefcdaa12a8139fabdda0d49233c099fbd"
+      "bytes": 107307208,
+      "sha256": "217699e6511c0b64de969318da591de2de7b63820191328dcbf0b4ea9faa4987"
     }
   }
 }

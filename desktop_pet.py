@@ -146,7 +146,7 @@ class DesktopPet:
         self.qa_drag = '--qa-drag' in sys.argv
         self.qa_stomp = '--qa-stomp' in sys.argv
         self.qa_walk = '--qa-walk' in sys.argv
-        self.qa_report = APP_DIR/'work'/('walk-playback-qa.json' if self.qa_walk else 'stomp-playback-qa.json' if self.qa_stomp else
+        self.qa_report = APP_DIR/'work'/('standing-playback-qa.json' if '--qa-standing' in sys.argv else 'walk-playback-qa.json' if self.qa_walk else 'stomp-playback-qa.json' if self.qa_stomp else
                                        'drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
         self.animations = {}
         self.popup = None
@@ -279,7 +279,7 @@ class DesktopPet:
                 frame = self.displayed_frame
             else:
                 animation = self.animations[walk.name]
-                phase=min(walk.elapsed,animation['duration']) if walk.turning else walk.elapsed % animation['duration']
+                phase=walk.elapsed % animation['duration']
                 render_index = min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
                 render_name = walk.name
                 base = self.stream.get(self.current,index,size) if not walk.active else walk.entry_frame
@@ -376,8 +376,8 @@ class DesktopPet:
                 if active:self.start_drag_animation()
                 else:self.drag_motion.stop()
         elif self.qa_mode:
-            names=['standing','drinking','reading']
-            name=names[min(2,int((now-self.started)/max(3,self.qa_seconds/3)))]
+            names=['standing'] if '--qa-standing' in sys.argv else ['standing','drinking','reading']
+            name=names[min(len(names)-1,int((now-self.started)/max(3,self.qa_seconds/3)))]
             if self.qa_target!=name:
                 self.qa_target=name
                 self.switch(name,False)
@@ -476,7 +476,7 @@ class DesktopPet:
         self.clock.automatic = self.auto = self.paused = False
         self.voice_actions.defer(cancel_drinking=True)
         self.walking_speech.restart()
-        bounds = [bounds for name,bounds in self.pose_bounds.items() if name.startswith('walking_')]
+        bounds = [self.pose_bounds[name] for name in ('walking_left','walking_right')]
         left = min(b[0] for b in bounds)*self.scale
         right = max(b[2] for b in bounds)*self.scale
         area = monitor_work_area(sys.modules[__name__],round(self.x+(left+right)/2),self.y+self.height//2)
@@ -484,7 +484,6 @@ class DesktopPet:
         if limits[1] < limits[0]:
             return False
         self.walking.start(self.x,self.y,limits,self.scale,self.displayed_frame)
-        self.walking.turn_duration=self.animations.get('walking_turn',{}).get('duration',0)
         self.stream.prefetch([(self.walking.name,i,(self.width,self.height)) for i in range(3)])
         self.last_tick = time.perf_counter()
         return True
@@ -513,11 +512,7 @@ class DesktopPet:
         if walk.active:
             other = 'walking_right' if walk.direction < 0 else 'walking_left'
             edge_distance = walk.x-walk.left if walk.direction < 0 else walk.right-walk.x
-            if walk.turning:
-                other='walking_right' if walk.direction>0 else 'walking_left'
-                self.stream.prefetch([(other,i,size) for i in range(3)])
-            elif edge_distance < walk.speed*.5:
-                if walk.turn_duration>0:other='walking_turn' if walk.direction<0 else 'walking_turn_back'
+            if edge_distance < walk.speed*.5:
                 self.stream.prefetch([(other,i,size) for i in range(3)])
             else:
                 self.stream.prefetch()
@@ -538,9 +533,9 @@ class DesktopPet:
         animation = self.animations[self.current]
         index = min(bisect_right(animation['endpoints'],self.clock.position),len(animation['frames'])-1)
         animation = self.animations[walk.name]
-        phase=min(walk.elapsed,animation['duration']) if walk.turning else walk.elapsed % animation['duration']
+        phase=walk.elapsed % animation['duration']
         walking_index = min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
-        changing_blend = 0 < walk.weight < 1 or walk.turn_elapsed < walk.TURN
+        changing_blend = 0 < walk.weight < 1
         if not walk.visible or changing_blend or self.last_walk_frame != (walk.name,walking_index):
             self.draw(index)
         elif old_position != (self.x,self.y):
@@ -923,7 +918,7 @@ class DesktopPet:
             if not self.bits:continue
             if self.walking.visible:
                 animation=self.animations[self.walking.name]
-                phase=min(self.walking.elapsed,animation['duration']) if self.walking.turning else self.walking.elapsed % animation['duration']
+                phase=self.walking.elapsed % animation['duration']
                 index=min(bisect_right(animation['endpoints'],phase),len(animation['frames'])-1)
                 remaining=animation['endpoints'][index]-phase
                 if not self.walking.active:remaining=1/60

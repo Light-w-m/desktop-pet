@@ -1,0 +1,37 @@
+{
+  "embedded_repaired_assets_match": true,
+  "costume_colour_validation": "standing-ribbon-validation.json",
+  "all_cold_and_warm_loops_smooth": true,
+  "samples": [
+    {
+      "scale": 1,
+      "rendered_fps": 60.00828945278389,
+      "p95_frame_ms": 18.064189999768132,
+      "max_frame_ms": 23.00409999952535,
+      "loop_boundary_gaps_ms": [
+        16.968200000519573,
+        15.127099999517668,
+        16.114299999571813,
+        15.117599999939557,
+        16.46840000012162
+      ],
+      "cache_peak_bytes": 3067680,
+      "loop_cache_peak_bytes": 8366661
+    },
+    {
+      "scale": 1.3,
+      "rendered_fps": 59.997151981345006,
+      "p95_frame_ms": 18.178184999806035,
+      "max_frame_ms": 24.108000000524044,
+      "loop_boundary_gaps_ms": [
+        15.550600000096892,
+        15.432399999554036,
+        17.3015000000305,
+        16.02329999968788,
+        16.059600000517094
+      ],
+      "cache_peak_bytes": 5084992,
+      "loop_cache_peak_bytes": 8302579
+    }
+  ]
+}

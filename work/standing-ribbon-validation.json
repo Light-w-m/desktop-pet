@@ -1,0 +1,47 @@
+{
+  "standing_frames_checked": 153,
+  "all_main_frames_checked": {
+    "standing": 153,
+    "reading": 816,
+    "drinking": 945
+  },
+  "costume_tail_colours": {
+    "before": {
+      "maximum_cyan_pixels": [
+        468,
+        472
+      ],
+      "minimum_pink_pixels": [
+        6,
+        2
+      ]
+    },
+    "after": {
+      "maximum_cyan_pixels": [
+        0,
+        0
+      ],
+      "minimum_pink_pixels": [
+        333,
+        240
+      ]
+    }
+  },
+  "unchanged_visible_pixels_outside_repair": true,
+  "unchanged_alpha_outside_repair": true,
+  "unchanged_timings": true,
+  "regions": [
+    [
+      284,
+      427,
+      416,
+      509
+    ],
+    [
+      482,
+      427,
+      605,
+      509
+    ]
+  ]
+}

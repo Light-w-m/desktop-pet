@@ -4,16 +4,13 @@ import random
 class WalkingMotion:
     SPEED = 58.0  # Default display pixels/sec; follows the scale of the gait.
     FADE = .12
-    TURN = 0.0
 
     def __init__(self):
         self.active = self.preparing = False
-        self.weight = self.elapsed = self.turn_elapsed = 0.0
-        self.entry_frame = self.turn_frame = None
+        self.weight = self.elapsed = 0.0
+        self.entry_frame = None
         self.x = self.y = 0
         self.direction = -1
-        self.turn_duration = 0.0
-        self.turning = False
 
     @property
     def visible(self):
@@ -21,7 +18,6 @@ class WalkingMotion:
 
     @property
     def name(self):
-        if self.turning:return 'walking_turn' if self.direction>0 else 'walking_turn_back'
         return 'walking_left' if self.direction < 0 else 'walking_right'
 
     def start(self, x, y, limits, scale, frame):
@@ -31,10 +27,8 @@ class WalkingMotion:
         self.speed = self.SPEED*scale
         self.direction = 1 if self.x <= self.left else -1
         self.elapsed = self.weight = 0.0
-        self.turn_elapsed = self.TURN
-        self.entry_frame, self.turn_frame = frame, None
+        self.entry_frame = frame
         self.active = self.preparing = True
-        self.turning = False
 
     def stop(self):
         self.active = self.preparing = False
@@ -42,8 +36,7 @@ class WalkingMotion:
     def clear(self):
         self.stop()
         self.weight = 0.0
-        self.entry_frame = self.turn_frame = None
-        self.turning = False
+        self.entry_frame = None
 
     def advance(self, seconds):
         seconds = max(0,seconds)
@@ -51,23 +44,7 @@ class WalkingMotion:
             return False
         self.weight = max(0,min(1,self.weight+(1 if self.active else -1)*seconds/self.FADE))
         self.elapsed += seconds
-        self.turn_elapsed += seconds
         if not self.active:
-            return False
-        if self.turn_duration > 0:
-            if self.turning:
-                if self.elapsed >= self.turn_duration:
-                    self.elapsed -= self.turn_duration
-                    self.turning = False
-                return False
-            distance=self.x-self.left if self.direction<0 else self.right-self.x
-            if self.speed*seconds >= distance:
-                self.x=self.left if self.direction<0 else self.right
-                self.direction *= -1
-                self.turning = True
-                self.elapsed = 0.0
-                return True
-            self.x += self.direction*self.speed*seconds
             return False
         span = self.right-self.left
         if span <= 0:
@@ -80,7 +57,6 @@ class WalkingMotion:
         self.direction = 1 if position < span else -1
         if self.direction != old_direction:
             self.elapsed = 0.0
-            self.turn_elapsed = 0.0
             return True
         return False
 

@@ -36,16 +36,16 @@ class MotionTests(unittest.TestCase):
         walk.start(50,400,(0,500),1,None)
         self.assertEqual(walk.y,400)
 
-    def test_recorded_turn_holds_edge_and_uses_reversed_clip_on_other_side(self):
-        walk=WalkingMotion();walk.start(2,123,(0,4),1,None);walk.preparing=False
-        walk.turn_duration=.35
-        walk.advance(.1)
-        self.assertTrue(walk.turning);self.assertEqual(walk.name,'walking_turn')
-        self.assertEqual(walk.x,0)
-        walk.advance(.2);self.assertEqual(walk.x,0)
-        walk.advance(.15);self.assertFalse(walk.turning)
-        walk.advance(.1)
-        self.assertEqual(walk.x,4);self.assertEqual(walk.name,'walking_turn_back')
+    def test_edge_switches_gait_and_consumes_the_whole_tick_without_a_hold(self):
+        walk=WalkingMotion();walk.start(1,123,(0,100),1,None);walk.preparing=False
+        self.assertTrue(walk.advance(.1))
+        self.assertEqual(walk.name,'walking_right')
+        self.assertAlmostEqual(walk.x,4.8)
+        walk.advance(.1);self.assertAlmostEqual(walk.x,10.6)
+        walk.x=99
+        self.assertTrue(walk.advance(.1))
+        self.assertEqual(walk.name,'walking_left');self.assertAlmostEqual(walk.x,95.2)
+        walk.advance(.1);self.assertAlmostEqual(walk.x,89.4)
         walk.stop();x=walk.x;walk.advance(.2)
         self.assertEqual(walk.x,x);self.assertFalse(walk.visible)
 
