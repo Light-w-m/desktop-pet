@@ -1,33 +1,19 @@
 {
   "standing": {
     "rgb_mean": [
-      192.3244171142578,
-      173.3722381591797,
-      195.83834838867188
+      192.3026123046875,
+      173.17080688476562,
+      195.79383850097656
     ],
     "rgb_median": [
       211.0,
-      196.0,
+      195.0,
       208.0
     ],
-    "luminance_mean": 179.02352339323238,
-    "opaque_pixels": 55204
+    "luminance_mean": 178.87161128095659,
+    "opaque_pixels": 55279
   },
   "old_stomp": {
-    "rgb_mean": [
-      191.2245330810547,
-      171.37464904785156,
-      194.41876220703125
-    ],
-    "rgb_median": [
-      212.0,
-      197.0,
-      206.0
-    ],
-    "luminance_mean": 177.25851538515528,
-    "opaque_pixels": 56990
-  },
-  "new_stomp": {
     "rgb_mean": [
       191.90586853027344,
       172.74163818359375,
@@ -41,9 +27,23 @@
     "luminance_mean": 178.46755685510524,
     "opaque_pixels": 57490
   },
-  "old_luminance_error": 1.7650080080771033,
-  "new_luminance_error": 0.5559665381271373,
-  "new_rgb_median_error": 0.6666666666666666,
+  "new_stomp": {
+    "rgb_mean": [
+      192.3026123046875,
+      173.17080688476562,
+      195.79383850097656
+    ],
+    "rgb_median": [
+      211.0,
+      195.0,
+      208.0
+    ],
+    "luminance_mean": 178.87161128095659,
+    "opaque_pixels": 55279
+  },
+  "old_luminance_error": 0.4040544258513421,
+  "new_luminance_error": 0.0,
+  "new_rgb_median_error": 0.0,
   "two_hand_intro_removed": true,
   "fixed_palette_anchors_and_background_exposure_tracking": true,
   "complete_source_ending_retained": true,
@@ -51,7 +51,7 @@
     1.1333333333333333,
     6.066666666666666
   ],
-  "ending_standing_silhouette_iou": 0.9072079024540824,
+  "ending_standing_silhouette_iou": 1.0,
   "reference_bbox": [
     327,
     97,
@@ -59,9 +59,9 @@
     665
   ],
   "ending_bbox": [
-    328,
-    96,
-    559,
+    327,
+    97,
+    564,
     665
   ]
 }

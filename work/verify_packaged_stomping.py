@@ -57,14 +57,19 @@ for scale in (.6,1.0,1.3):
     assert sum(0 < row['elapsed'] < .2 for row in states) >= 8, 'Intro fade was skipped'
     exit_states=[row for row in states if row['elapsed'] > expected_duration-.24]
     assert len(exit_states) >= 10
-    assert exit_states[-1]['main_position']-exit_states[0]['main_position'] > .15, 'Return action froze during the fade'
+    assert all(row['main_position']==0 and row['weight']==1 for row in exit_states), 'Idle advanced before the exact endpoint'
+    first_idle=draws[positions[-1]+1]
+    assert first_idle[0]=='standing' and 1<=first_idle[1]<=2, 'Idle did not continue after its baked first frame'
+    tail=[row for row in unique if row[1]>=expected_frames-36]
+    assert len(tail)>=34 and max(b[1]-a[1] for a,b in zip(tail,tail[1:]))<=2,'Recovery skipped frames'
     samples.append({'scale':scale,'rendered_stomp_frames':len(unique),
         'rendered_fps':(len(unique)-1)/duration,'visible_duration_seconds':duration,
         'entry_frame_gap_ms':entry_gap,'exit_frame_gap_ms':exit_gap,
         'entry_render_ms':entry_ms,'exit_render_ms':exit_ms,
+        'handoff_frames_drawn':len(tail),'first_idle_frame':first_idle[1],
         'cache_peak_bytes':raw['peak_cache_bytes'],'cache_peak_frames':raw['peak_cache_frames']})
 report = {'embedded_pack_checksums': True, 'hidden_sticker_embedded': True, 'normal_picker_still_nine': True,
-          'actual_exe_one_shot_and_resume':True,'outgoing_drag_and_live_return':True,
+          'actual_exe_one_shot_and_resume':True,'outgoing_drag_and_exact_idle_endpoint':True,
           'intro_and_outro_frames_not_skipped':True,'samples':samples}
 report['complete_video_recovery_before_outro']=True
 report['idle_return_frames_independently_decodable']=24

@@ -1,0 +1,37 @@
+{
+  "frames_and_timings_preserved": 296,
+  "separate_boots_checked": 40,
+  "dark_gap_probe_before": 7140,
+  "dark_gap_probe_after": 0,
+  "body_outside_gap_unchanged_before_handoff": true,
+  "boot_fabric_preserved": true,
+  "endpoint_exactly_matches_current_idle_at_sizes": [
+    [
+      336,
+      288
+    ],
+    [
+      560,
+      480
+    ],
+    [
+      728,
+      624
+    ],
+    [
+      840,
+      720
+    ]
+  ],
+  "handoff_frames": 36,
+  "last_eight_frame_changes_premultiplied_mae": [
+    0.21081745624542236,
+    0.19601327180862427,
+    0.17950822412967682,
+    0.15910008549690247,
+    0.13477489352226257,
+    0.10402482002973557,
+    0.06622521579265594,
+    0.017786409705877304
+  ]
+}

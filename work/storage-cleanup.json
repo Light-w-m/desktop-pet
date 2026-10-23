@@ -1,35 +1,35 @@
 {
-  "preserved_backup": "backups/before-gait-ribbon-fix-20261023",
-  "recycled_bytes": 1015550064,
+  "preserved_backup": "backups/before-stomp-handoff-fix-20261023",
+  "recycled_bytes": 1276283475,
   "generated_bytes_removed": 0,
   "entries": [
     {
       "relative": "__pycache__",
-      "bytes": 213864,
+      "bytes": 213337,
       "paths": 1,
       "mode": "recycle"
     },
     {
-      "relative": "backups/before-new-walking-20261023",
-      "bytes": 298204240,
+      "relative": "backups/before-gait-ribbon-fix-20261023",
+      "bytes": 560459843,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/__pycache__",
-      "bytes": 41511,
+      "bytes": 29124,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 297757146,
+      "bytes": 296946207,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/pyinstaller-build",
-      "bytes": 301708736,
+      "bytes": 301010397,
       "paths": 1,
       "mode": "recycle"
     },

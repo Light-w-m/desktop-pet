@@ -297,8 +297,6 @@ class DesktopPet:
                 outgoing = self.stream.peek('dragging',drag_index,size)
                 if outgoing is not None:
                     base = self.drag_motion.blend(outgoing,size)
-            elif self.stomp_motion.elapsed > animation['duration']-self.stomp_motion.FADE_OUT:
-                base = self.stream.peek(self.current,index,size)
             frame = self.stomp_motion.blend(self.stream.get('stomping',render_index,size),size,base)
         elif self.stomp_motion.preparing and not self.drag_motion.visible:
             frame=self.displayed_frame
@@ -424,12 +422,12 @@ class DesktopPet:
                     # standing frame is already held from initial preparation.
                     self.stream.prefetch()
         self.drag_motion.advance(dt)
-        before_return=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT) if was_stomping else 0
-        self.stomp_motion.advance(dt)
+        unused=self.stomp_motion.advance(dt)
         if was_stomping and not stomp.preparing:
-            returned=max(0,stomp.elapsed-stomp.duration+stomp.FADE_OUT)-before_return
-            if returned > 0 and not self.paused:
-                self.clock.advance(returned)
+            if not stomp.visible and not self.paused:
+                # The last reaction frame has already shown idle frame zero.
+                # Continue with frame one and carry only the real overshoot.
+                self.clock.advance(self.animations['standing']['endpoints'][0]+unused)
             if stomp.elapsed >= stomp.FADE_IN:
                 self.drag_motion.clear()
         interacting=self.drag_motion.visible or self.stomp_motion.visible
@@ -571,11 +569,9 @@ class DesktopPet:
 
     def return_keys(self, seconds):
         stomp=self.stomp_motion
-        threshold=stomp.duration-stomp.FADE_OUT
-        returned=max(0,min(stomp.duration,stomp.elapsed+seconds)-threshold)-max(0,stomp.elapsed-threshold)
         clock=copy.copy(self.clock)
-        if not self.paused:
-            clock.advance(returned)
+        if not self.paused and stomp.elapsed+seconds >= stomp.duration:
+            clock.advance(self.animations['standing']['endpoints'][0]+max(0,stomp.elapsed+seconds-stomp.duration))
         keys=[]
         for _ in range(3):
             animation=self.animations[clock.current]

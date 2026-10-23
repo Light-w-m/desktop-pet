@@ -252,7 +252,7 @@ try:
               'capture_loss_cancels_pending_shake': True, 'cooldown_and_expression_timeout': True,
               'all_frames_valid_premultiplied_with_margins': count, 'shared_bounded_cache': True}
     report.update(live_outgoing_motion_during_fade=True,cold_start_is_nonblocking_and_preserves_intro=True,
-                  main_action_resumes_during_exit_fade=True,one_voice_dispatch_after_frames_ready=True,
+                  main_action_continues_after_exact_idle_endpoint=True,one_voice_dispatch_after_frames_ready=True,
                   old_pending_action_cancelled_new_menu_selection_preserved=True)
     (ROOT/'work'/'shaking-validation.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2), flush=True)

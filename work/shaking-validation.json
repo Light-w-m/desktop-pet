@@ -13,7 +13,7 @@
   "shared_bounded_cache": true,
   "live_outgoing_motion_during_fade": true,
   "cold_start_is_nonblocking_and_preserves_intro": true,
-  "main_action_resumes_during_exit_fade": true,
+  "main_action_continues_after_exact_idle_endpoint": true,
   "one_voice_dispatch_after_frames_ready": true,
   "old_pending_action_cancelled_new_menu_selection_preserved": true
 }

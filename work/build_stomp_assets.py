@@ -343,6 +343,8 @@ def build(extract=False, reuse_mattes=False):
         bg=Image.new('RGBA',frame.size,'#eadfe7');bg.alpha_composite(frame)
         contact.paste(bg.convert('RGB').resize((280,240)),((i%3)*280,(i//3)*240))
     contact.save(ROOT/'work/stomping-contact.jpg')
+    from repair_stomp_handoff import repair
+    repair()
     print(json.dumps({'frames':count,'poses':len(groups),'bytes':index['data_bytes']}),flush=True)
 
 

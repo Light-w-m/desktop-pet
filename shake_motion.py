@@ -72,7 +72,7 @@ class ShakeDetector:
 
 class StompMotion(DragMotion):
     FADE_IN = .20
-    FADE_OUT = .24
+    FADE_OUT = 0.0  # The asset itself ends on the exact neutral idle frame.
     RETURN_PRELOAD = .35
 
     def __init__(self):
@@ -91,11 +91,12 @@ class StompMotion(DragMotion):
 
     def advance(self, seconds):
         if not self.visible or self.preparing:
-            return
-        self.elapsed = min(self.duration, self.elapsed+max(0, seconds))
-        self.weight = max(0, min(1, self.elapsed/self.FADE_IN,
-                                 (self.duration-self.elapsed)/self.FADE_OUT))
+            return 0.0
+        position=self.elapsed+max(0,seconds)
+        self.elapsed = min(self.duration,position)
         self.active = self.elapsed < self.duration
+        self.weight = min(1,self.elapsed/self.FADE_IN) if self.active else 0.0
+        return max(0,position-self.duration)
 
     def blend(self, frame, size, base=None):
         if base is None:
