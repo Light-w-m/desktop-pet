@@ -9,8 +9,8 @@ import wave
 from PyInstaller.archive.readers import CArchiveReader
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
-from voice_library import runtime_folder
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.audio.voice_library import runtime_folder
 
 folder = runtime_folder(ROOT)
 catalog = json.loads((folder/'catalog.json').read_text(encoding='utf-8'))

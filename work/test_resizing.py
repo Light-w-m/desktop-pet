@@ -5,8 +5,8 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from frame_stream import resize_native,pack_frame
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.frame_stream import resize_native,pack_frame
 
 randomizer=random.Random(691)
 canvas=(840,720)

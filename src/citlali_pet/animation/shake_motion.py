@@ -2,7 +2,7 @@
 from collections import deque
 import math
 
-from drag_motion import DragMotion, blend_frames
+from .drag_motion import DragMotion, blend_frames
 
 
 class ShakeDetector:

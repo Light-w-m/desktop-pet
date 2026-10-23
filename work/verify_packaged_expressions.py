@@ -7,8 +7,8 @@ import sys
 from PyInstaller.archive.readers import CArchiveReader
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-from expressions import EXPRESSIONS
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.ui.expressions import EXPRESSIONS
 
 archive = CArchiveReader(str(ROOT/'work'/'dist'/'CitlaliDesktopPet.exe'))
 names = {name.replace('\\', '/'): name for name in archive.toc}

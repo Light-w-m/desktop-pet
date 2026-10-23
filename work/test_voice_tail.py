@@ -12,19 +12,20 @@ from unittest.mock import patch
 import wave
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 packaged='--packaged' in sys.argv
 if packaged:
     from PyInstaller.archive.readers import CArchiveReader
     executable=CArchiveReader(str(ROOT/'work'/'dist'/'CitlaliDesktopPet.exe'))
     pyz_name=next(name for name,entry in executable.toc.items() if entry[-1] == 'z')
     embedded=executable.open_embedded_archive(pyz_name)
-    module=types.ModuleType('voice_output')
-    exec(embedded.extract('voice_output'),module.__dict__)
-    sys.modules['voice_output']=module
-from voice_library import VoiceLibrary
-from voice_output import WaveHeader,WaveOutput
-from voices import VoicePlayer
+    module=types.ModuleType('citlali_pet.audio.voice_output')
+    module.__package__='citlali_pet.audio'
+    exec(embedded.extract('citlali_pet.audio.voice_output'),module.__dict__)
+    sys.modules['citlali_pet.audio.voice_output']=module
+from citlali_pet.audio.voice_library import VoiceLibrary
+from citlali_pet.audio.voice_output import WaveHeader,WaveOutput
+from citlali_pet.audio.voices import VoicePlayer
 
 
 class FakeFunction:
@@ -67,7 +68,7 @@ class FakeAPI:
 
 library=VoiceLibrary(ROOT,ROOT)
 api=FakeAPI()
-with patch('voice_output.C.WinDLL',return_value=api):
+with patch('citlali_pet.audio.voice_output.C.WinDLL',return_value=api):
     output=WaveOutput()
 for record in library.records:
     with wave.open(str(record['path']),'rb') as source:

@@ -13,20 +13,19 @@ from pathlib import Path
 import random
 import sys
 import time
-from frame_stream import FrameArchive, FrameStream
-from expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
-from pet_menu import PinkMenu, monitor_work_area
-from playback import Playback
-from voice_library import VoiceLibrary
-from voices import VoicePicker, VoicePlayer
-from voice_actions import VoiceActions
-from drag_motion import DragMotion
-from shake_motion import ShakeDetector, StompMotion
-from pixel_surface import PixelSurface
-from walking import WalkingMotion, WalkingSpeech
+from .animation.frame_stream import FrameArchive, FrameStream
+from .ui.expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
+from .ui.pet_menu import PinkMenu, monitor_work_area
+from .animation.playback import Playback
+from .audio.voice_library import VoiceLibrary
+from .audio.voices import VoicePicker, VoicePlayer
+from .audio.voice_actions import VoiceActions
+from .animation.drag_motion import DragMotion
+from .animation.shake_motion import ShakeDetector, StompMotion
+from .ui.pixel_surface import PixelSurface
+from .animation.walking import WalkingMotion, WalkingSpeech
 
-APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent
-RESOURCE_DIR = Path(getattr(sys, '_MEIPASS', APP_DIR))
+from .paths import APP_DIR, RESOURCE_DIR
 ASSETS = APP_DIR / 'assets' if (APP_DIR / 'assets' / 'manifest.json').exists() else RESOURCE_DIR / 'assets'
 if '--qa-assets' in sys.argv:
     ASSETS=Path(sys.argv[sys.argv.index('--qa-assets')+1])

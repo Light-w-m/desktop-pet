@@ -4,9 +4,9 @@ import random
 import sys
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from playback import Playback
-from voice_actions import VoiceActions
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.playback import Playback
+from citlali_pet.audio.voice_actions import VoiceActions
 
 
 class VoiceActionTests(unittest.TestCase):

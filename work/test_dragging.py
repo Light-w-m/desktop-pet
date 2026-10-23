@@ -11,10 +11,10 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 sys.argv += ['--qa-seconds','300','--qa-assets',str(ROOT/'work'/'repaired-assets')]
-import desktop_pet as app
-from frame_stream import FrameArchive
+from citlali_pet import app as app
+from citlali_pet.animation.frame_stream import FrameArchive
 
 folder = ROOT/'assets'/'dragging'
 metadata = json.loads((folder/'source.json').read_text())

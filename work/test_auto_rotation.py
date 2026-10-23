@@ -1,6 +1,6 @@
 """Exercise the real app's automatic voice dispatch without using speakers."""
 import json
-import marshal
+import importlib
 from pathlib import Path
 import random
 import sys
@@ -9,22 +9,24 @@ import types
 import wave
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 packaged='--packaged' in sys.argv
 if packaged:
     from PyInstaller.archive.readers import CArchiveReader
     executable=CArchiveReader(str(ROOT/'work/dist/CitlaliDesktopPet.exe'))
     pyz_name=next(name for name,entry in executable.toc.items() if entry[-1] == 'z')
     embedded=executable.open_embedded_archive(pyz_name)
-    for name in ('playback','voice_actions','desktop_pet'):
-        module=types.ModuleType(name);module.__file__=str(ROOT/(name+'.py'))
+    for name in ('citlali_pet.animation.playback','citlali_pet.audio.voice_actions','citlali_pet.app'):
+        importlib.import_module(name.rpartition('.')[0])
+        module=types.ModuleType(name)
+        module.__package__=name.rpartition('.')[0]
+        module.__file__=str((ROOT/'src'/Path(*name.split('.'))).with_suffix('.py'))
         sys.modules[name]=module
-        code=marshal.loads(executable.extract(name)) if name == 'desktop_pet' else embedded.extract(name)
-        exec(code,module.__dict__)
-from desktop_pet import DesktopPet
-from playback import Playback
-from voice_actions import VoiceActions
-from voice_library import VoiceLibrary
+        exec(embedded.extract(name),module.__dict__)
+from citlali_pet.app import DesktopPet
+from citlali_pet.animation.playback import Playback
+from citlali_pet.audio.voice_actions import VoiceActions
+from citlali_pet.audio.voice_library import VoiceLibrary
 
 manifest=json.loads((ROOT/'assets/manifest.json').read_text(encoding='utf-8'))
 pet=DesktopPet.__new__(DesktopPet)

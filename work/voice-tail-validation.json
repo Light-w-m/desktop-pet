@@ -11,28 +11,28 @@
     {
       "id": 51,
       "source_seconds": 1.5413333333333334,
-      "output_seconds": 1.817897099999982,
+      "output_seconds": 1.8135855000000447,
       "all_queued_samples_played": 85984,
       "natural_completion_reset_calls": 0
     },
     {
       "id": 66,
       "source_seconds": 1.084,
-      "output_seconds": 1.3581409000000804,
+      "output_seconds": 1.3545114000007743,
       "all_queued_samples_played": 64032,
       "natural_completion_reset_calls": 0
     },
     {
       "id": 3,
       "source_seconds": 9.070666666666666,
-      "output_seconds": 9.335641599999917,
+      "output_seconds": 9.323980299999675,
       "all_queued_samples_played": 447392,
       "natural_completion_reset_calls": 0
     },
     {
       "id": 29,
       "source_seconds": 35.59466666666667,
-      "output_seconds": 35.86978189999991,
+      "output_seconds": 35.86263279999912,
       "all_queued_samples_played": 1720544,
       "natural_completion_reset_calls": 0
     }

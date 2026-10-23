@@ -1,41 +1,65 @@
 {
-  "preserved_backup": "backups/before-stomp-handoff-fix-20261023",
-  "recycled_bytes": 1276283475,
+  "preserved_backup": "backups/before-package-layout-20261023",
+  "recycled_bytes": 1037030188,
   "generated_bytes_removed": 0,
   "entries": [
     {
-      "relative": "__pycache__",
-      "bytes": 213337,
+      "relative": "backups/before-stomp-handoff-fix-20261023",
+      "bytes": 438432820,
       "paths": 1,
       "mode": "recycle"
     },
     {
-      "relative": "backups/before-gait-ribbon-fix-20261023",
-      "bytes": 560459843,
+      "relative": "build",
+      "bytes": 125799,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "src/citlali_desktop_pet.egg-info",
+      "bytes": 20826,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "src/citlali_pet/__pycache__",
+      "bytes": 83185,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "src/citlali_pet/animation/__pycache__",
+      "bytes": 46599,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "src/citlali_pet/audio/__pycache__",
+      "bytes": 36980,
+      "paths": 1,
+      "mode": "recycle"
+    },
+    {
+      "relative": "src/citlali_pet/ui/__pycache__",
+      "bytes": 48938,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/__pycache__",
-      "bytes": 29124,
+      "bytes": 28299,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/dist",
-      "bytes": 296946207,
+      "bytes": 297150223,
       "paths": 1,
       "mode": "recycle"
     },
     {
       "relative": "work/pyinstaller-build",
-      "bytes": 301010397,
-      "paths": 1,
-      "mode": "recycle"
-    },
-    {
-      "relative": "work/sources/drag-deps",
-      "bytes": 117624567,
+      "bytes": 301056519,
       "paths": 1,
       "mode": "recycle"
     }

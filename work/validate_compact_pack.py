@@ -6,9 +6,9 @@ import sys
 import zlib
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 from PIL import Image
-from frame_stream import FrameArchive,pack_frame
+from citlali_pet.animation.frame_stream import FrameArchive,pack_frame
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--candidate',type=Path,default=ROOT/'work/repaired-assets/pet-frames.json')

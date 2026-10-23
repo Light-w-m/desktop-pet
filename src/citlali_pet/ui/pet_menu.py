@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 
 from PIL import Image, ImageChops
-from menu_view import COMMANDS, HEIGHT, HITS, WIDTH, font, render_menu
+from .menu_view import COMMANDS, HEIGHT, HITS, WIDTH, font, render_menu
 
 _RENDERER = ThreadPoolExecutor(max_workers=1, thread_name_prefix='PetMenuPaint')
 

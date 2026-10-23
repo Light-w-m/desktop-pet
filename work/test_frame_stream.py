@@ -5,8 +5,8 @@ import threading
 import time
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from frame_stream import FrameStream
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.frame_stream import FrameStream
 
 
 def wait_until(predicate):

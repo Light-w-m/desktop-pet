@@ -10,8 +10,8 @@ from unittest.mock import patch
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-from shake_motion import ShakeDetector
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.animation.shake_motion import ShakeDetector
 
 for axis in (0, 1, 2):
     detector = ShakeDetector()
@@ -31,9 +31,9 @@ for kind in ('straight', 'tiny_jitter', 'slow'):
     assert not detector.armed, kind
 
 sys.argv += ['--qa-seconds', '300', '--qa-stomp', '--qa-assets', str(ROOT/'work'/'repaired-assets')]
-import desktop_pet as app
-from expressions import EXPRESSIONS, PICKER_HITS
-from frame_stream import FrameArchive
+from citlali_pet import app as app
+from citlali_pet.ui.expressions import EXPRESSIONS, PICKER_HITS
+from citlali_pet.animation.frame_stream import FrameArchive
 
 assert len(EXPRESSIONS) == 9 and len(PICKER_HITS) == 11
 assert 'shake_angry' not in dict(EXPRESSIONS)

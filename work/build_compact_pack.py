@@ -10,9 +10,9 @@ import sys
 import zlib
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 from PIL import Image,ImageChops
-from frame_stream import FrameArchive
+from citlali_pet.animation.frame_stream import FrameArchive
 
 GROUP=8
 STANDING_ENTRY_KEYS=24  # Cover the full .24-second return and its decoder lookahead.

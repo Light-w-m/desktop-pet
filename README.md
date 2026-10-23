@@ -61,13 +61,29 @@ EXE 和窗口图标使用用户提供的抱枕图片，内置 16、24、32、48�
 
 ## 构建与验证
 
-`desktop_pet.py` 是 Windows 播放器源码，直接运行需要 Python 和 Pillow；`playback.py` 管理动作切换，`pet_menu.py` 和 `menu_view.py` 绘制粉色菜单，`expressions.py` 管理表情面板和透明贴图。九个 PNG 保存在 `assets/expressions` 并内置到 EXE；缩略图按需解码，最多缓存 18 张小图。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的素材包。
+运行代码统一放在 `src/citlali_pet`，根目录的 `main.py` 只负责启动；`app.py` 连接各个功能，`animation` 管理帧流、动作时钟和互动，`ui` 管理原生窗口表面、菜单和表情，`audio` 管理语音库、播放和调度。九个 PNG 保存在 `assets/expressions` 并内置到 EXE；缩略图按需解码，最多缓存 18 张小图。程序优先加载旁边的 `assets`，没有外部素材时使用 EXE 内的素材包。
 
-`drag_motion.py` 管理拖动的独立时钟和 0.16 秒渐变，拖动帧包保存在 `assets/dragging` 并与主动作共用一套受限缓存。Release 源码素材包含处理好的拖动帧包，直接构建不需要额外依赖；从原 GIF 重新处理时运行 `work/build_drag_assets.py`，需要 NumPy、OpenCV 和本地的原 GIF、透明轮廓参考。素材来源及校验值见 `assets/dragging/source.json`，拖动行为和打包帧率分别由 `work/test_dragging.py`、`work/analyze_dragging.py` 验证。
+```text
+main.py                  源码与 EXE 的启动入口
+pyproject.toml           Python 包及命令入口配置
+src/citlali_pet/
+  app.py                 主程序
+  paths.py               素材、设置与打包资源定位
+  animation/             动画与交互
+  ui/                    菜单、表情及透明绘图
+  audio/                 语音播放与调度
+assets/                  素材及校验表
+work/                    构建、素材处理与验证工具
+docs/                    说明文档
+```
 
-`shake_motion.py` 识别拖动中的明显反向，管理停下后的单次跺脚与站立恢复。帧包在 `assets/stomping`，专属表情在 `assets/easter-eggs`；两者内置到 EXE，跺脚和主动作、拖动动画共用受限帧缓存。`work/build_stomp_assets.py --extract` 用本地 MP4 和六个轮廓参考准备素材，需要 NumPy、OpenCV 和 ffmpeg。`work/test_shaking.py` 覆盖误触、松手/停下、站立恢复、暂停、缩放、重新拖动和冷却；`work/verify_packaged_stomping.py` 验证实际 EXE 内的素材、单次播放、完整收势后再渐变和站立恢复。
+安装 `requirements.txt` 的依赖、准备好源码素材后，用 `python main.py` 启动。开发时也可运行 `python -m pip install -e .`，然后使用 `python -m citlali_pet` 或 `citlali-pet`。从其他工作目录启动源码时，素材和设置仍定位到本项目；独立 EXE 继续使用程序旁的设置和内置素材。
 
-`voices.py` 管理后台播放和语音面板，`voice_output.py` 通过 WinMM 的独立播放句柄调节音量，`voice_actions.py` 在实际动画循环边界配对语音并安排站立闲聊；`voice_library.py` 管理可用语音。内存中仅保留正在播放的一条 PCM WAV，结束或停止后释放。构建时仅内置仍保留的语音；如需从自己的 OGG 生成播放文件，需要 ffmpeg，`work/prepare_voices.py` 会保留原采样率，不重新下载已删除的文件。Release 源码素材包包含已准备好的 `assets/voices`，从该素材包构建不需要再次转换。缺少语音素材时，其他桌宠功能仍可使用。
+[drag_motion.py](src/citlali_pet/animation/drag_motion.py) 管理拖动的独立时钟和 0.16 秒渐变，拖动帧包保存在 `assets/dragging` 并与主动作共用一套受限缓存。Release 源码素材包含处理好的拖动帧包，直接构建不需要额外依赖；从原 GIF 重新处理时运行 `work/build_drag_assets.py`，需要 NumPy、OpenCV 和本地的原 GIF、透明轮廓参考。素材来源及校验值见 `assets/dragging/source.json`，拖动行为和打包帧率分别由 `work/test_dragging.py`、`work/analyze_dragging.py` 验证。
+
+[shake_motion.py](src/citlali_pet/animation/shake_motion.py) 识别拖动中的明显反向，管理停下后的单次跺脚与站立恢复。帧包在 `assets/stomping`，专属表情在 `assets/easter-eggs`；两者内置到 EXE，跺脚和主动作、拖动动画共用受限帧缓存。`work/build_stomp_assets.py --extract` 用本地 MP4 和六个轮廓参考准备素材，需要 NumPy、OpenCV 和 ffmpeg。`work/test_shaking.py` 覆盖误触、松手/停下、站立恢复、暂停、缩放、重新拖动和冷却；`work/verify_packaged_stomping.py` 验证实际 EXE 内的素材、单次播放、完整收势后再渐变和站立恢复。
+
+[voices.py](src/citlali_pet/audio/voices.py) 管理后台播放和语音面板，[voice_output.py](src/citlali_pet/audio/voice_output.py) 通过 WinMM 的独立播放句柄调节音量，[voice_actions.py](src/citlali_pet/audio/voice_actions.py) 在实际动画循环边界配对语音并安排站立闲聊；[voice_library.py](src/citlali_pet/audio/voice_library.py) 管理可用语音。内存中仅保留正在播放的一条 PCM WAV，结束或停止后释放。构建时仅内置仍保留的语音；如需从自己的 OGG 生成播放文件，需要 ffmpeg，`work/prepare_voices.py` 会保留原采样率，不重新下载已删除的文件。Release 源码素材包包含已准备好的 `assets/voices`，从该素材包构建不需要再次转换。缺少语音素材时，其他桌宠功能仍可使用。
 
 所有语音共用自然收尾逻辑：原始 PCM 后附加 0.25 秒静音，等待设备完成整个缓冲区后直接释放，避免末尾发音被强制重置打断。手动停止、切换语音和静音仍可立即中断；原录音与磁盘上的 WAV 不做裁剪或改写。`work/test_voice_tail.py` 检查全部保留文件的 PCM 完整性、自然结束不重置，以及长短语音和动作语音的实际设备播放进度。
 
@@ -77,7 +93,7 @@ EXE 和窗口图标使用用户提供的抱枕图片，内置 16、24、32、48�
 
 原始 WebP 与拖动、跺脚源帧包保留用于开发和素材检查；EXE 只包含合并后的紧凑帧包，避免重复存储默认尺寸和互动素材。菜单图像仍在后台绘制。运行时直接注册 WebP 解码器，并排除不用的 AVIF 库，避免首次播放加载无关格式。
 
-播放器只缩放人物有效区域及 Lanczos 滤波需要的透明边缘，按原画布的有理数比例对齐采样，输出与完整画布缩放逐像素一致；原生尺寸直接使用原图块。`pixel_surface.py` 将图块直接复制到映射的位图缓冲区，减少 Python 逐行绘图开销。帧率、素材及原有显示、原生解码缓存限制保持不变；另用最多 8 MiB 压缩缓存复用一部分待机帧，达到上限后停止加入，缩放时释放。其他动作继续按需读取。
+播放器只缩放人物有效区域及 Lanczos 滤波需要的透明边缘，按原画布的有理数比例对齐采样，输出与完整画布缩放逐像素一致；原生尺寸直接使用原图块。[pixel_surface.py](src/citlali_pet/ui/pixel_surface.py) 将图块直接复制到映射的位图缓冲区，减少 Python 逐行绘图开销。帧率、素材及原有显示、原生解码缓存限制保持不变；另用最多 8 MiB 压缩缓存复用一部分待机帧，达到上限后停止加入，缩放时释放。其他动作继续按需读取。
 
 `work/test_resizing.py` 检查透明边缘、画布边界及不同缩放比例，`work/test_pixel_surface.py` 对比新旧绘图缓冲区，`work/test_loop_cache.py` 检查待机复用、字节上限和缩放时的旧任务失效。CPU 实测使用 `work/benchmark_cpu.py` 分别运行旧、新 EXE 的同尺寸、同位置三动作周期，同时记录帧率和内存；结果在 `work/cpu-before.json` 与 `work/cpu-after.json`。测量时关闭其他桌宠实例，避免重叠的透明窗口影响结果。`work/verify_app_icon.py` 验证图标原图、全部尺寸与 EXE 的 Windows 图标资源。
 

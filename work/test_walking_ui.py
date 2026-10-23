@@ -6,10 +6,10 @@ import sys
 import time
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 sys.argv += ['--qa-seconds','300','--qa-assets',str(ROOT/'work/repaired-assets')]
-import desktop_pet as app
-from menu_view import render_menu
+from citlali_pet import app as app
+from citlali_pet.ui.menu_view import render_menu
 app.user.SetProcessDPIAware()
 pet=app.DesktopPet()
 app.user.ShowWindow(pet.hwnd,0)

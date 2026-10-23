@@ -9,8 +9,8 @@ import zlib
 from PIL import Image,ImageChops,ImageStat
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
-from frame_stream import FrameArchive
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.animation.frame_stream import FrameArchive
 sys.path.insert(0,str(ROOT/'work'))
 from build_walking_assets import prepared,LOCAL,RANGES,np
 

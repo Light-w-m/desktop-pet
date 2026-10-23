@@ -1,0 +1,66 @@
+{
+  "previous_commit": "7051143abc1ae9f84bddddd89eb13b899a450c76",
+  "runtime_behavior_asts_identical_except_imports_and_app_paths": {
+    "desktop_pet.py": "src/citlali_pet/app.py",
+    "drag_motion.py": "src/citlali_pet/animation/drag_motion.py",
+    "frame_stream.py": "src/citlali_pet/animation/frame_stream.py",
+    "playback.py": "src/citlali_pet/animation/playback.py",
+    "shake_motion.py": "src/citlali_pet/animation/shake_motion.py",
+    "walking.py": "src/citlali_pet/animation/walking.py",
+    "voices.py": "src/citlali_pet/audio/voices.py",
+    "voice_actions.py": "src/citlali_pet/audio/voice_actions.py",
+    "voice_library.py": "src/citlali_pet/audio/voice_library.py",
+    "voice_output.py": "src/citlali_pet/audio/voice_output.py",
+    "expressions.py": "src/citlali_pet/ui/expressions.py",
+    "menu_view.py": "src/citlali_pet/ui/menu_view.py",
+    "pet_menu.py": "src/citlali_pet/ui/pet_menu.py",
+    "pixel_surface.py": "src/citlali_pet/ui/pixel_surface.py"
+  },
+  "root_python_files": [
+    "main.py"
+  ],
+  "animation_data_sha256": "02fcce7d02563d269edcd5ccbe6f7ebaac8f051967dec5f7a31c6f261a6dd80b",
+  "animation_bytes_and_all_frame_indices_unchanged": true,
+  "total_animation_frames": 2556,
+  "entrypoints": [
+    "python main.py",
+    "python -m citlali_pet",
+    "citlali-pet"
+  ],
+  "frozen_namespaced_modules": [
+    "citlali_pet.animation.drag_motion",
+    "citlali_pet.animation.frame_stream",
+    "citlali_pet.animation.playback",
+    "citlali_pet.animation.shake_motion",
+    "citlali_pet.animation.walking",
+    "citlali_pet.app",
+    "citlali_pet.audio.voice_actions",
+    "citlali_pet.audio.voice_library",
+    "citlali_pet.audio.voice_output",
+    "citlali_pet.audio.voices",
+    "citlali_pet.paths",
+    "citlali_pet.ui.expressions",
+    "citlali_pet.ui.menu_view",
+    "citlali_pet.ui.pet_menu",
+    "citlali_pet.ui.pixel_surface"
+  ],
+  "legacy_flat_modules_absent": true,
+  "wheel_and_gui_entrypoint_verified": true,
+  "frozen_behavior_reports": [
+    "walking-package-validation.json",
+    "stomp-package-validation.json",
+    "standing-package-validation.json",
+    "automatic-rotation-validation.json",
+    "voice-package-validation.json"
+  ],
+  "installed_executable_bytes": 296861410,
+  "executable_sha256": "d2d826a1dd677ec19dfe6342a34e10f4c8f55e4af9ecfc47b570cbb8b7209d3c",
+  "interactive_window": {
+    "pid": 8700,
+    "visible": true,
+    "layered": true,
+    "app_icon_loaded": true
+  },
+  "preferences_preserved": true,
+  "release_exe_identical": true
+}

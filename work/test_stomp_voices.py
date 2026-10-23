@@ -8,12 +8,13 @@ import sys
 import wave
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
-from desktop_pet import DesktopPet
-from playback import Playback
-from voice_actions import VoiceActions
-from voice_library import VoiceLibrary
-from voices import VoicePlayer
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.app import DesktopPet
+from citlali_pet.animation.playback import Playback
+from citlali_pet.audio.voice_actions import VoiceActions
+from citlali_pet.audio.voice_library import VoiceLibrary
+from citlali_pet.audio.voices import VoicePlayer
+from citlali_pet.animation.walking import WalkingSpeech
 from restore_stomp_voices import RECORDINGS
 
 library=VoiceLibrary(ROOT,ROOT)
@@ -37,6 +38,7 @@ pet.qa_mode=False
 pet.voices=library
 pet.voice_player=VoicePlayer(lambda path,flags:calls.append(path),volume=40)
 pet.voice_actions=VoiceActions(random.Random(42))
+pet.walking_speech=WalkingSpeech()
 pet.voice_manual=pet.voice_reaction=False
 pet.popup=None
 pet.paused=False

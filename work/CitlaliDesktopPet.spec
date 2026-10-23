@@ -26,6 +26,6 @@ if voice_folder:
     voice_catalog=json.loads((voice_folder/'catalog.json').read_text(encoding='utf-8'))
     datas += [(str(voice_folder/name),'assets/voices') for name in
               ['catalog.json']+[record['file'] for record in voice_catalog['records']]]
-a=Analysis([str(root/'desktop_pet.py')],pathex=[],binaries=[],datas=datas,hiddenimports=[],hookspath=[],hooksconfig={},runtime_hooks=[],excludes=['numpy','tkinter','matplotlib','torch','PIL.AvifImagePlugin','PIL._avif'],noarchive=False,optimize=0)
+a=Analysis([str(root/'main.py')],pathex=[str(root/'src')],binaries=[],datas=datas,hiddenimports=[],hookspath=[],hooksconfig={},runtime_hooks=[],excludes=['numpy','tkinter','matplotlib','torch','PIL.AvifImagePlugin','PIL._avif'],noarchive=False,optimize=0)
 pyz=PYZ(a.pure)
 exe=EXE(pyz,a.scripts,a.binaries,a.datas,[],name='CitlaliDesktopPet',icon=str(root/'assets/app.ico'),debug=False,bootloader_ignore_signals=False,strip=False,upx=True,console=False,disable_windowed_traceback=False)

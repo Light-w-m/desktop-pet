@@ -3,8 +3,8 @@ from pathlib import Path
 import sys
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from shake_motion import StompMotion
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.shake_motion import StompMotion
 
 
 class StompHandoffTests(unittest.TestCase):

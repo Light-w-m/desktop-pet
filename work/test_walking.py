@@ -4,8 +4,8 @@ import random
 import sys
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from walking import WalkingMotion, WalkingSpeech
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.walking import WalkingMotion, WalkingSpeech
 
 
 class MotionTests(unittest.TestCase):

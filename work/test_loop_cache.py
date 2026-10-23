@@ -4,8 +4,8 @@ import random
 import sys
 import unittest
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from frame_stream import FrameArchive,PreparedLoopCache
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.animation.frame_stream import FrameArchive,PreparedLoopCache
 
 
 class LoopCacheTests(unittest.TestCase):

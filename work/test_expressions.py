@@ -9,11 +9,11 @@ from unittest.mock import patch
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 sys.argv += ['--qa-seconds', '300', '--qa-assets', str(ROOT/'work'/'repaired-assets')]
-import desktop_pet as app
-from expressions import EXPRESSIONS, ExpressionPicker
-from pet_menu import monitor_work_area
+from citlali_pet import app as app
+from citlali_pet.ui.expressions import EXPRESSIONS, ExpressionPicker
+from citlali_pet.ui.pet_menu import monitor_work_area
 
 app.PinkMenu.activate = False
 app.PinkMenu.extra_style = 0x08000000

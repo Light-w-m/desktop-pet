@@ -10,10 +10,10 @@ import wave
 import winsound
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
-from voice_library import LOCAL_VOICES, VoiceLibrary
-from voices import VoicePlayer
-from voice_output import WaveOutput
+sys.path.insert(0,str(ROOT/'src'))
+from citlali_pet.audio.voice_library import LOCAL_VOICES, VoiceLibrary
+from citlali_pet.audio.voices import VoicePlayer
+from citlali_pet.audio.voice_output import WaveOutput
 
 
 def settle(player):
@@ -135,9 +135,9 @@ with tempfile.TemporaryDirectory(prefix='voice-test-',dir=ROOT/'work'/'sources')
     player.close()
 
 sys.argv += ['--qa-seconds','300','--qa-assets',str(ROOT/'work'/'repaired-assets')]
-import desktop_pet as app
+from citlali_pet import app as app
 from PIL import Image
-from voices import VoicePicker
+from citlali_pet.audio.voices import VoicePicker
 
 app.PinkMenu.activate = False
 app.PinkMenu.extra_style = 0x08000000

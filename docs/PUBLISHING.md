@@ -22,6 +22,8 @@ GitHub 普通 Git 仓库阻止超过 100 MiB 的单文件；Release 每个附件
 
 在 Windows x64、Python 3.12 环境中：
 
+运行模块位于 `src/citlali_pet`，源码入口为 `main.py`。构建配置会把包和素材收进同一个 EXE；发布文件的位置及设置格式保持一致。
+
 ```powershell
 python -m pip install -r requirements-build.txt
 python work/prepare_assets.py

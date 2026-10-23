@@ -8,9 +8,9 @@ import winsound
 
 from PIL import Image, ImageDraw, ImageFilter
 
-from menu_view import font
-from pet_menu import PinkMenu, rgba_pixels
-from voice_output import WaveOutput
+from ..ui.menu_view import font
+from ..ui.pet_menu import PinkMenu, rgba_pixels
+from .voice_output import WaveOutput
 
 WIDTH, HEIGHT, PAGE_SIZE = 188, 244, 5
 

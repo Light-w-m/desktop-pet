@@ -4,8 +4,8 @@ from pathlib import Path
 import random
 import sys
 
-sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
-from pixel_surface import PixelSurface
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'src'))
+from citlali_pet.ui.pixel_surface import PixelSurface
 
 randomizer=random.Random(471)
 for size in ((336,288),(560,480),(728,624),(840,720)):

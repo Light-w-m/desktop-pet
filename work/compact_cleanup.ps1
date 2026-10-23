@@ -47,13 +47,24 @@ function Get-Bytes([string]$path) {
 }
 
 $plan = @()
-foreach ($relative in @('work/pyinstaller-build', 'work/dist', 'work/github-publish-check',
+foreach ($relative in @('build', 'dist', 'work/pyinstaller-build', 'work/dist', 'work/github-publish-check',
     'work/git-publish-tmp', 'work/sources/compact-candidate', 'work/sources/drag-deps',
     'work/sources/flow-deps', 'work/sources/rife',
     '__pycache__', 'work/__pycache__')) {
     $path = Assert-WorkspacePath (Join-Path $workspace $relative)
     if (Test-Path -LiteralPath $path) {
         $plan += [pscustomobject]@{relative=$relative; path=$path; bytes=(Get-Bytes $path); mode='generated'}
+    }
+}
+# Source imports and Python package builds keep their generated files inside src.
+$sourceRoot = Assert-WorkspacePath (Join-Path $workspace 'src')
+if (Test-Path -LiteralPath $sourceRoot -PathType Container) {
+    foreach ($item in Get-ChildItem -LiteralPath $sourceRoot -Directory -Recurse -Force) {
+        if ($item.Name -eq '__pycache__' -or $item.Name -like '*.egg-info') {
+            $path = Assert-WorkspacePath $item.FullName
+            $relative = $path.Substring($workspace.Length + 1).Replace('\', '/')
+            $plan += [pscustomobject]@{relative=$relative; path=$path; bytes=(Get-Bytes $path); mode='generated'}
+        }
     }
 }
 $manifest = Get-Content -LiteralPath (Join-Path $workspace 'assets/manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json

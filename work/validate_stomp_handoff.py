@@ -4,12 +4,12 @@ from pathlib import Path
 import sys
 
 ROOT=Path(__file__).resolve().parent.parent
-sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 sys.path.insert(0,str(ROOT/'work/sources/drag-deps'))
 import cv2
 import numpy as np
 from PIL import Image
-from frame_stream import FrameArchive,pack_frame
+from citlali_pet.animation.frame_stream import FrameArchive,pack_frame
 from repair_stomp_handoff import native
 
 before=ROOT/'backups/before-stomp-handoff-fix-20261023/assets/stomping'

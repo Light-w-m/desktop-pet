@@ -4,8 +4,8 @@ from functools import lru_cache
 
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
-from menu_view import font
-from pet_menu import PinkMenu, monitor_work_area, rgba_pixels
+from .menu_view import font
+from .pet_menu import PinkMenu, monitor_work_area, rgba_pixels
 
 EXPRESSIONS = (('panic', '慌张'), ('sleep', '睡了'), ('suspicious', '怀疑'),
                ('hide', '不想面对'), ('wake', '刚醒'), ('blush', '脸红'),

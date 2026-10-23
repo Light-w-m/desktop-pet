@@ -5,9 +5,9 @@ import json
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 from PIL import Image
-from frame_stream import FrameArchive, pack_frame
+from citlali_pet.animation.frame_stream import FrameArchive, pack_frame
 
 stage = ROOT/'work'/'repaired-assets'
 archive = FrameArchive(stage/'pet-frames.json')

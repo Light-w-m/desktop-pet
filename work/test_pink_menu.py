@@ -7,13 +7,13 @@ import time
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0,str(ROOT/'src'))
 sys.argv += ['--qa-seconds', '120']
 sys.argv += ['--qa-assets', str(ROOT/'work'/'repaired-assets')]
-import desktop_pet as app
-from menu_view import HITS
+from citlali_pet import app as app
+from citlali_pet.ui.menu_view import HITS
 from PIL import Image
-from pet_menu import monitor_work_area, place_beside
+from citlali_pet.ui.pet_menu import monitor_work_area, place_beside
 
 # Send messages only to these test windows, without stealing the user's focus.
 app.PinkMenu.activate = False
@@ -149,7 +149,7 @@ try:
     pet.x, pet.y = 99, 200
     pet.draw(200)
     narrow = app.W.RECT(0, 0, 800, 720)
-    with patch('pet_menu.monitor_work_area', return_value=narrow):
+    with patch('citlali_pet.ui.pet_menu.monitor_work_area', return_value=narrow):
         pet.menu(picker=True)
         beside_visible_pet()
         native_dpi = max(1, app.user.GetDpiForWindow(pet.hwnd)/96)

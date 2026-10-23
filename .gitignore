@@ -5,6 +5,9 @@
 # Generated builds, caches, local settings and logs.
 __pycache__/
 *.py[cod]
+*.egg-info/
+/build/
+/dist/
 *.log
 /pet-settings.json
 /backups/
