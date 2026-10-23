@@ -109,7 +109,7 @@ def render_menu(state, hover=None, dpi=1.0):
     draw.arc(box((83, 140, 90, 152)), -70, 70, fill='#b2698b', width=factor)
     text(96, 139, '语音', 9.5, '#985d7b', True)
     rounded(HITS[70], 6, '#f6d5e3' if hover == 70 else '#fff1f6', '#efcedc')
-    text(70, 164, 'DeepSeek 助手', 9.5, '#985d7b', True, 'mt')
+    text(70, 164, '和她聊天', 9.5, '#985d7b', True, 'mt')
     rounded(HITS[20], 6, '#f9e0eb' if hover == 20 else '#fcebf2', '#efcedc')
     text(70, 190, '▷  继续播放' if state['paused'] else 'Ⅱ  暂停动画', 9.5, '#985d7b', anchor='mt')
     for command, label, scale in ((31, '小', .7), (32, '中', 1), (33, '大', 1.3)):

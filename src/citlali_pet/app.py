@@ -16,7 +16,7 @@ import time
 from .animation.frame_stream import FrameArchive, FrameStream
 from .ui.expressions import ExpressionBadge, ExpressionPicker, StickerLibrary
 from .ui.pet_menu import PinkMenu, monitor_work_area
-from .ui.deepseek import open_assistant
+from .ui.chat_window import ChatWindow
 from .animation.playback import Playback
 from .audio.voice_library import VoiceLibrary
 from .audio.voices import VoicePicker, VoicePlayer
@@ -150,6 +150,7 @@ class DesktopPet:
                                        'drag-playback-qa.json' if self.qa_drag else 'playback-qa.json')
         self.animations = {}
         self.popup = None
+        self.chat = None
         self.expression = None
         self.expression_key = None
         self.expression_expires_at = None
@@ -326,6 +327,7 @@ class DesktopPet:
         self.last_walk_frame=(render_name,render_index) if render_name.startswith('walking_') else None
         if self.expression:self.expression.follow()
         if self.popup:self.popup.follow()
+        if getattr(self,'chat',None):self.chat.follow()
         if self.qa_mode:
             completed=time.perf_counter()
             self.draw_times.append((render_name,render_index,completed))
@@ -346,6 +348,9 @@ class DesktopPet:
         logging.info('Requested %s auto=%s current=%s pending=%s',name,automatic,self.current,self.clock.pending)
 
     def tick(self):
+        if getattr(self,'chat',None):
+            self.chat.poll()
+            self.chat.follow()
         now=time.perf_counter()
         dt=max(0,now-self.last_tick)
         self.last_tick=now
@@ -628,6 +633,11 @@ class DesktopPet:
         self.popup=menu_type(self,sys.modules[__name__])
         self.popup.open(p.x,p.y)
 
+    def open_chat(self):
+        self.stop_walking()
+        if not self.chat:self.chat=ChatWindow(self,sys.modules[__name__])
+        self.chat.open()
+
     def reset_drag(self):
         self.drag_offset = self.drag_origin = None
         self.dragging = False
@@ -788,10 +798,12 @@ class DesktopPet:
         elif command==50:self.menu(position=position,picker=True)
         elif command==60:self.menu(position=position,voices=True)
         elif command==70:
-            open_assistant(lambda error: user.MessageBoxW(self.hwnd,error,'DeepSeek 助手',0x10))
+            self.open_chat()
 
     def window_proc(self,hwnd,msg,wparam,lparam):
         try:
+            if self.chat and hwnd==self.chat.hwnd:
+                return self.chat.window_proc(hwnd,msg,wparam,lparam)
             if self.popup and hwnd==self.popup.hwnd:
                 return self.popup.window_proc(hwnd,msg,wparam,lparam)
             if self.expression and hwnd==self.expression.hwnd:
@@ -800,6 +812,9 @@ class DesktopPet:
                 self.expression.follow()
             if msg==0x0113:
                 self.tick()
+                return 0
+            if msg==0x8046:
+                self.open_chat()
                 return 0
             if msg in (0x0201,0x0203):
                 self.stop_walking()
@@ -858,6 +873,7 @@ class DesktopPet:
                 return 0
             if msg==0x0100:
                 if wparam==27:user.DestroyWindow(hwnd)
+                elif wparam==13:self.open_chat()
                 elif wparam==32:
                     self.stop_walking()
                     self.paused=not self.paused
@@ -879,6 +895,7 @@ class DesktopPet:
                 return 0
             if msg==0x0002:
                 user.KillTimer(hwnd,1)
+                if self.chat:self.chat.close()
                 if self.popup:self.popup.close()
                 if self.expression:
                     self.expression.close()
@@ -910,6 +927,7 @@ class DesktopPet:
         while True:
             while user.PeekMessageW(C.byref(message),None,0,0,1):
                 if message.message==0x0012:return
+                if self.chat and self.chat.dialog_key(message):continue
                 user.TranslateMessage(C.byref(message))
                 user.DispatchMessageW(C.byref(message))
             self.tick()
@@ -948,22 +966,25 @@ class DesktopPet:
 
 def main():
     try:
-        if '--deepseek' in sys.argv:
-            import webbrowser
-            from .ui.deepseek import ensure_service
-            if not webbrowser.open(ensure_service()):
-                raise RuntimeError('无法打开默认浏览器。请查看 DeepSeek 安装目录的 logs/web.log。')
-            return
+        chat_requested = '--chat' in sys.argv or '--deepseek' in sys.argv or '--qa-chat' in sys.argv
         try:user.SetProcessDPIAware()
         except AttributeError:pass
         mutex_name='Local\\CitlaliDesktopPet_20261014'
         if '--qa-seconds' in sys.argv:mutex_name+=f'_QA_{os.getpid()}'
         mutex=kernel.CreateMutexW(None,False,mutex_name)
         if C.get_last_error()==183:
+            if chat_requested:
+                signature(user,'FindWindowW',W.HWND,W.LPCWSTR,W.LPCWSTR)
+                signature(user,'PostMessageW',W.BOOL,W.HWND,W.UINT,WPARAM,LPARAM)
+                existing=user.FindWindowW('CitlaliDesktopPetWindow_20261014','Citlali Desktop Pet — 茜特菈莉')
+                if existing:user.PostMessageW(existing,0x8046,0,0)
             kernel.CloseHandle(mutex)
             return
         timer_period=winmm.timeBeginPeriod(1)==0
-        try:DesktopPet().run()
+        try:
+            pet=DesktopPet()
+            if chat_requested:pet.open_chat()
+            pet.run()
         finally:
             if timer_period:winmm.timeEndPeriod(1)
             kernel.CloseHandle(mutex)

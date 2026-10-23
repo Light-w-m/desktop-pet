@@ -1,54 +1,43 @@
 {
-  "official_cli": "@deepseek-ai/dsh",
-  "cli_version": "0.2.1-rc.2",
+  "mode": "native_text_only_chat",
   "installation_root": "D:\\AI\\DeepSeek",
-  "c_drive_cli_removed": true,
-  "model_menu": [
-    "deepseek-flash"
-  ],
-  "default_output_tokens": 4096,
-  "hard_model_allowlist": false,
-  "permission": "workspace-write",
-  "real_api_chat": "connection successful",
-  "shell_tool_validation": {
-    "status": "passed",
-    "command": "Write-Output DESKTOP_PET_TOOL_OK",
-    "actual_tool_stdout": "DESKTOP_PET_TOOL_OK",
-    "permission": "workspace-write",
-    "escalation": false
-  },
-  "executable_sha256": "835f4c6aa6e6dcf420450fa319b2526ca8782376cc55ce6c0219d15ee7dcd3d8",
-  "executable_bytes": 296820781,
+  "fixed_model": "deepseek-flash",
+  "max_output_tokens": 1024,
+  "tools": [],
+  "tool_choice": "none",
+  "computer_operation_executor": false,
+  "cli_or_browser_used_by_pet": false,
+  "legacy_agent_server_stopped": true,
+  "key_storage": "Windows DPAPI, D:/AI/DeepSeek/data/pet-chat.json",
+  "history_on_disk": false,
+  "executable_sha256": "aaafb786ce628ac1577d9f3aa33a200ff3870c3446a9b469ca82a464621ce1c9",
+  "executable_bytes": 296826850,
   "installed_executable": {
-    "pid": 15748,
+    "pid": 24080,
     "visible": true,
-    "layered": true
+    "layered": true,
+    "chat_visible_and_responsive": true
   },
-  "frozen_launcher_exit_code": 0,
-  "embedded_deepseek_module": true,
+  "reopen_uses_existing_pet": true,
+  "embedded_native_chat_modules": true,
   "animation_media_identical_to_previous_exe": {
     "assets/pet-frames.json": "194c3f5be33611003b50ae085ff8ab97617684afbc6aa79f6de969d3fd3ef7fb",
     "assets/pet-frames.bin": "02fcce7d02563d269edcd5ccbe6f7ebaac8f051967dec5f7a31c6f261a6dd80b"
   },
   "release_exe_identical": true,
   "tests": [
-    "test_deepseek.py: 6 passed",
+    "test_deepseek.py: 10 passed",
     "test_project_layout.py: 3 passed",
     "test_pink_menu.py: passed",
-    "verify_packaged_standing.py: 2 scales passed",
-    "verify_app_icon.py: passed"
+    "test_chat_ui.py: passed",
+    "verify_text_chat.py: real API chat and computer-operation refusal passed",
+    "verify_packaged_chat.py: real API reply from frozen EXE passed",
+    "verify_packaged_standing.py: 2 scales, 60 FPS and smooth loops"
   ],
-  "acl_recovery_directory": "D:\\AI\\DeepSeek\\recovery\\20261023-tmp",
-  "workspace": "D:\\AI\\DeepSeek\\workspace\\files",
-  "sandbox_temp_root": "D:\\AI\\DeepSeek\\workspace\\.runtime-temp",
-  "acl_repair": {
-    "verified_paths": [
-      "D:\\AI\\DeepSeek",
-      "D:\\AI\\DeepSeek\\tmp"
-    ],
-    "grants": 2,
-    "refusals": 0,
-    "recovery_instructions": "D:\\AI\\DeepSeek\\recovery\\20261023-tmp\\README.md",
-    "temp_inheritance_resolved_by_disjoint_existing_full_control_parent": true
-  }
+  "validation_reports": [
+    "chat-ui-validation.json",
+    "text-chat-live-validation.json",
+    "chat-package-validation.json",
+    "standing-package-validation.json"
+  ]
 }

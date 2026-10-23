@@ -1,0 +1,25 @@
+{
+  "direct_https_api": true,
+  "native_chat_question_and_reply": true,
+  "arithmetic_reply": "2",
+  "computer_operation_request_refused_as_text": "抱歉，我做不到。我只是文字聊天桌宠，没有操作电脑的能力，不能打开计算器、读取文件、执行命令或控制鼠标键盘。",
+  "requests": [
+    {
+      "model": "deepseek-flash",
+      "tools": [],
+      "tool_choice": "none",
+      "max_tokens": 1024
+    },
+    {
+      "model": "deepseek-flash",
+      "tools": [],
+      "tool_choice": "none",
+      "max_tokens": 1024
+    }
+  ],
+  "legacy_agent_server_stopped": true,
+  "computer_tools": false,
+  "history_on_disk": false,
+  "key_storage": "Windows DPAPI, D:/AI/DeepSeek/data/pet-chat.json",
+  "side_by_side_preview": "work/chat-with-pet-preview.png"
+}

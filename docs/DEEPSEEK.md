@@ -1,45 +1,30 @@
-# DeepSeek 助手
+# 桌宠文字聊天
 
-桌宠右键菜单的 **DeepSeek 助手** 打开官方 DeepSeek Harness（`dsh`）本地网页。也可运行程序旁的 `CitlaliDesktopPet.exe --deepseek`，单独打开助手。对话目前显示在官方网页中。
+右键人物 → **和她聊天**，或人物获得焦点后按 **Enter**，在人物右侧打开独立对话框。在输入框打字后按 Enter 或点击“发送”；Shift+Enter 换行，Esc 或右上角 × 收起对话框。屏幕右侧空间不足时自动切到左侧，保持面板可见并避开人物。拖动人物、缩放或切换动作时，面板跟随；请求在后台完成，动画继续播放。
 
-## 本机安装
+## 仅文字问答
 
-本机已安装官方 npm 包 `@deepseek-ai/dsh@0.2.1-rc.2`，需要 Node.js 22.19+ 或 24+。默认目录为 `D:\AI\DeepSeek`：
+桌宠直接调用 DeepSeek 官方 HTTPS 文字对话接口，不启动或连接 CLI、浏览器、本地智能体服务。模型固定为 `deepseek-flash`，关闭思考，每条输入最多 2000 字，每次输出最多 1024 tokens。
 
-| 目录 | 内容 |
-| --- | --- |
-| `cli` | 官方 CLI 和依赖 |
-| `data` | 配置、密钥和会话 |
-| `cache`、`tmp` | npm/pnpm 缓存与临时文件 |
-| `workspace/files` | 文件操作目录 |
-| `workspace/.runtime-temp` | 与文件操作目录分开的沙箱临时目录 |
-| `logs` | 本地服务日志，包含本机访问令牌，不要分享 |
-| `bin` | 带 D 盘环境配置的 `dsh.cmd` |
+请求固定传入空工具列表和 `tool_choice: none`。运行路径没有命令执行器、文件操作工具、浏览器工具、鼠标键盘控制工具、插件或 MCP。即使服务意外返回工具调用或旧式 function call，客户端也会拒绝该回答，不执行操作。回答显示在原生只读文本框中，代码和链接也是普通文字，不会运行或打开。
 
-源码安装：在项目根目录运行 `powershell -ExecutionPolicy Bypass -File work/install_deepseek.ps1`。支持 `-InstallRoot D:\其他目录\DeepSeek`；安装脚本不覆盖已有配置。自定义目录通过用户环境变量 `CITLALI_DEEPSEEK_ROOT` 告知桌宠；修改后重启桌宠。
+只把用户主动输入的消息、最近最多 8 组文字问答和固定聊天提示词发给 API。不会发送文件、截图、目录内容、运行程序列表或电脑信息。消息仅保存在内存，“清空”删除当前对话，退出桌宠后不保留；关闭并重新打开面板可以继续当前会话。API 仍按实际 token 用量计费。
 
-安装器只给此 CLI 配置 D 盘缓存，不改变其他软件的 npm 全局设置。Windows、现有浏览器和系统组件仍可能使用自身目录。
+## API Key
 
-## 配置 Key 与使用
+点击面板右上角 **设置**，输入 DeepSeek API Key 并保存。已保存的密钥不会回填到输入框；留空保存会继续使用原密钥。无 Key、Key 无效、余额不足或网络超时会在界面中提示。
 
-1. 打开桌宠右键菜单 → **DeepSeek 助手**。
-2. 官方网页 **设置 → 模型**，在 DeepSeek 卡片填入自己的 API Key 并保存。无需发到聊天或写入源码。
-3. 添加工作区，先选 `D:\AI\DeepSeek\workspace\files`，创建会话。不要选择它的父目录，以免与沙箱临时目录重叠。
-4. 可以日常聊天，也可以要求打开程序、查找文件、执行命令。文件与命令操作走 Harness 的工具和权限流程。
+设置默认保存在 `D:\AI\DeepSeek\data\pet-chat.json`，使用 Windows DPAPI 加密，绑定当前 Windows 账号。密钥不写入源码、EXE、聊天内容或日志。也支持启动环境中的 `DEEPSEEK_API_KEY`，优先使用加密设置。已有的本机 DeepSeek Key 已迁移到这个独立的聊天配置。
 
-当前模型菜单只配置 `deepseek-flash`，关闭思考，单次默认输出量 4096 tokens，声明上下文 65536 tokens。模型目录、输出及默认值保存在 `data/cordis.patch.yml`。这是可编辑的本机默认配置，不是强制模型白名单、服务端账号限制或硬性费用预算；调用其他模型和覆盖请求参数仍需额外的网关校验才能硬性禁止。API 按实际用量计费。
+本机的旧 Harness 服务已停止，桌宠不再启动或连接它。旧的 `--deepseek` 启动参数也只打开原生文字聊天面板。独立聊天入口是 `CitlaliDesktopPet.exe --chat`，`D:\AI\DeepSeek\Open Chat.cmd` 和原有的 `Open DeepSeek.cmd` 均指向该入口。再次打开入口会唤起当前桌宠的面板，不会再启动一只桌宠。
 
-默认权限为 `workspace-write`，需要审批的操作在官方网页中确认。权限边界以 Harness 的实现为准，不能视为完整系统隔离。启动入口只监听 `127.0.0.1:3080`，重复点击复用本地服务；退出桌宠后服务继续运行。需要停止时，可按 `data/pet-service.json` 中记录的 PID 停止对应 Node 进程。服务不自动开机启动。
+如需在其他位置保存设置，可以在启动前设置 `CITLALI_DEEPSEEK_ROOT`。源码准备脚本为 `python work/prepare_chat.py`；它只创建本机配置目录和快捷启动文件，不安装 CLI 或智能体。
 
-本次接入包含文本对话和文件/命令工具。鼠标点击、屏幕识别、跨应用界面操作尚未接入；这些需要另配桌面操作工具。未填 Key 前只验证安装和启动，不代表已验证真实 API 推理。
+## 验证
 
-本机安装已实际通过 API 对话与 `Write-Output DESKTOP_PET_TOOL_OK` 工具调用，后者保持“工作区内修改”模式，未提权。Windows 沙箱要求新建临时子目录继承当前用户的完整控制权限；本机使用 `workspace/.runtime-temp` 与 `workspace/files` 两个独立目录解决该问题。只修复父目录本身的权限不一定能解决子目录继承问题。官方诊断脚本的备份、验证报告及按顺序排列的恢复命令保存在 `D:\AI\DeepSeek\recovery\20261023-tmp\README.md`。
+- `work/test_deepseek.py`：空工具请求、固定模型及输出上限、输入和上下文限制、工具调用拦截、纯文本响应、密钥加密与注入字符拦截。
+- `work/test_chat_ui.py`：原生输入与回答、异步请求时动画继续、跟随人物、清空、关闭后重开、密钥输入框不暴露已保存的 Key。
+- `work/verify_text_chat.py`：真实 API 问答和操作请求的文字拒绝、原生面板截图及验证记录。
+- `work/verify_packaged_chat.py`：在实际 EXE 中输入问题，验证原生窗口、加密密钥读取及真实 API 回答。
 
-## 来源
-
-- [DeepSeek 官方仓库](https://github.com/deepseek-ai/deepseek-harness)
-- [官方 Web UI 使用指南](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.zh.md)
-- [官方模型配置说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/providers.zh.md)
-- [DeepSeek API 模型说明](https://api-docs.deepseek.com/quick_start/pricing/)
-
-官方 Harness 仍处于开发预览期。本项目把它作为本机独立依赖，不把 CLI、密钥、会话或日志打进桌宠 EXE 或 Git。
+[DeepSeek Chat Completion 参数说明](https://api-docs.deepseek.com/api/create-chat-completion/) 中的 `tool_choice: none` 表示模型不调用工具。客户端同时没有任何接收并执行模型动作的代码路径。
