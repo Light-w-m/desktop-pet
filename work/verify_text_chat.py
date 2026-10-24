@@ -12,6 +12,7 @@ sys.path.insert(0,str(ROOT/'src'))
 sys.argv += ['--qa-seconds','120','--qa-assets',str(ROOT/'work/repaired-assets')]
 from citlali_pet import app
 from citlali_pet.ui import deepseek
+from citlali_pet.ui.chat_images import ImageMessage
 from PIL import Image, ImageDraw
 
 app.user.SetProcessDPIAware()
@@ -32,14 +33,19 @@ def pump():
     time.sleep(.003)
 
 
-def send(question):
+def send(question,image=None):
+    if image:
+        chat.attach_image(image)
+        deadline=time.monotonic()+8
+        while chat.preparing_image and time.monotonic()<deadline:pump()
+        assert chat.attachment,'Image selection did not finish'
     chat.set_text('input',question)
     started=pet.elapsed
     chat.send()
     deadline=time.monotonic()+50
     while chat.busy and time.monotonic()<deadline:pump()
     assert not chat.busy,'Real API request did not finish'
-    assert chat.history and chat.history[-1][0]==question,chat.records[-1]
+    assert chat.history and deepseek.message_text(chat.history[-1][0])==question,chat.records[-1]
     assert pet.elapsed!=started,'API request blocked animation'
     return chat.history[-1][1]
 
@@ -87,6 +93,11 @@ try:
         answer=send('1+1 等于几？请只回复数字。')
         assert answer.strip().strip('。.')=='2',answer
         refusal=send('请直接打开计算器并读取桌面的文件。')
+        fixture=ROOT/'work/sources/chat-vision-fixture.png'
+        assert fixture.is_file(),'Run work/test_chat_features.py to create the local visual fixture'
+        vision=send('请描述图片左侧和右侧的形状与颜色，只回答识别结果。',fixture)
+        assert isinstance(chat.history[-1][0],ImageMessage)
+        assert '蓝' in vision and '圆' in vision and any(word in vision for word in ('橙','橘')),vision
     assert all(r=={'model':'deepseek-flash','tools':[],'tool_choice':'none','max_tokens':1024} for r in requests)
     assert any(word in refusal for word in ('不能','无法','没有','不可以','做不到','只负责','只能')),refusal
     for _ in range(30):pump()
@@ -111,6 +122,7 @@ try:
     try:legacy_stopped=connection.connect_ex(('127.0.0.1',3080))!=0
     finally:connection.close()
     report={'direct_https_api':True,'native_chat_question_and_reply':True,'arithmetic_reply':answer,
+            'selected_image_understanding':vision,'image_in_sent_bubble':bool(chat.transcript.bubbles[-2].get('preview')),
             'computer_operation_request_refused_as_text':refusal,'requests':requests,
             'legacy_agent_server_stopped':legacy_stopped,'computer_tools':False,
             'history_on_disk':False,'key_storage':'Windows DPAPI, D:/AI/DeepSeek/data/pet-chat.json',

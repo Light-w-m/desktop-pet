@@ -6,6 +6,7 @@ import threading
 
 from . import deepseek
 from .chat_transcript import BubbleTranscript
+from .chat_images import ImageError, ImageMessage, choose_image, load_image, paint_image
 from .pet_menu import monitor_work_area, place_beside
 
 
@@ -25,6 +26,7 @@ class ChatWindow:
     WIDTH, HEIGHT = 340, 442
     SEND, CLEAR, SETTINGS, CLOSE, SAVE, BACK = 701, 702, 703, 704, 705, 706
     INPUT, TRANSCRIPT, KEY = 707, 708, 709
+    IMAGE, THUMBNAIL, REMOVE_IMAGE = 710, 711, 712
 
     def __init__(self, owner, api):
         self.owner, self.api = owner, api
@@ -34,9 +36,14 @@ class ChatWindow:
         self.history = []
         self.records = []
         self.results = queue.SimpleQueue()
+        self.image_results = queue.SimpleQueue()
+        self.attachment = self.attachment_preview = None
+        self.preparing_image = False
+        self.modal_depth = 0
+        self.draft = ''
         self.busy = False
         self.settings_visible = False
-        self.status = 'Enter 发送 · Shift+Enter 换行'
+        self.status = ''
         self.composing = False
         self.suppress_enter = False
         self.font = self.bold_font = self.brush = self.white_brush = None
@@ -118,22 +125,26 @@ class ChatWindow:
         self.add_control('title','STATIC','茜特菈莉 · 聊天',(16,13,192,25),bold=True)
         self.add_control('settings','BUTTON','设置',(236,11,52,27),0x0001000b,self.SETTINGS)
         self.add_control('close','BUTTON','×',(296,11,28,27),0x0001000b,self.CLOSE)
-        self.add_control('subtitle','STATIC','DeepSeek · 仅文字问答',(16,43,300,20))
+        self.add_control('subtitle','STATIC','DeepSeek · 对话与识图',(16,43,300,20))
         transcript = self.add_control('transcript','STATIC','',(16,70,308,224),
             0x02000000 | 0x00200000,self.TRANSCRIPT)
         self.transcript = BubbleTranscript(self,transcript)
-        input_hwnd = self.add_control('input','EDIT','',(16,306,308,58),
+        input_hwnd = self.add_control('input','EDIT',self.draft,(16,306,308,58),
             0x00010000 | 0x00000004 | 0x00000040 | 0x00001000,self.INPUT)
         a.user.SendMessageW(input_hwnd,0x00C5,deepseek.MAX_INPUT,0)
         self.input_callback = a.WNDPROC(self.input_proc)
         self.input_original = a.user.SetWindowLongPtrW(input_hwnd,-4,C.cast(self.input_callback,C.c_void_p).value)
         self.add_control('status','STATIC',self.status,(16,374,308,20))
+        self.add_control('attachment_preview','STATIC','',(16,372,28,28),0x0000000d,self.THUMBNAIL)
+        self.add_control('attachment_name','STATIC','',(52,378,226,20),0x0000408c)
+        self.add_control('remove_image','BUTTON','×',(292,372,32,28),0x0001000b,self.REMOVE_IMAGE)
         self.add_control('clear','BUTTON','清空',(16,401,64,27),0x0001000b,self.CLEAR)
+        self.add_control('image','BUTTON','图片',(88,401,64,27),0x0001000b,self.IMAGE)
         self.add_control('send','BUTTON','发送',(246,401,78,27),0x0001000b,self.SEND,bold=True)
         self.add_control('key_label','STATIC','DeepSeek API Key',(16,83,308,24),bold=True)
         key_hwnd = self.add_control('key','EDIT','',(16,121,308,32),0x00010000 | 0x00800000 | 0x0020 | 0x0080,self.KEY)
         a.user.SendMessageW(key_hwnd,0x00C5,256,0)
-        self.add_control('key_info','STATIC','密钥只保存在本机，并由 Windows 加密。\n不发送文件、截图或电脑信息。',(16,171,308,54))
+        self.add_control('key_info','STATIC','密钥只保存在本机，并由 Windows 加密。\n图片仅在你选图并发送后提交。',(16,171,308,54))
         self.add_control('key_status','STATIC','',(16,239,308,42))
         self.add_control('save','BUTTON','保存',(218,306,106,32),0x0001000b,self.SAVE)
         self.add_control('back','BUTTON','返回聊天',(16,306,106,32),0x0001000b,self.BACK)
@@ -166,10 +177,11 @@ class ChatWindow:
 
     def show_settings(self, visible):
         self.settings_visible = visible
-        for name in ('transcript','input','status','clear','send'):
+        for name in ('transcript','input','status','clear','image','send'):
             self.api.user.ShowWindow(self.controls[name],0 if visible else 5)
         for name in ('key_label','key','key_info','key_status','save','back'):
             self.api.user.ShowWindow(self.controls[name],5 if visible else 0)
+        self.refresh_attachment()
         if visible:
             self.set_text('key','')
             try:
@@ -183,14 +195,52 @@ class ChatWindow:
 
     def refresh_busy(self):
         if not self.hwnd:return
-        for name in ('send','input','clear'):
-            self.api.user.EnableWindow(self.controls[name],not self.busy)
+        for name in ('send','input','clear','image','remove_image'):
+            self.api.user.EnableWindow(self.controls[name],not self.busy and not self.preparing_image)
         self.set_text('send','等待…' if self.busy else '发送')
         self.set_text('status',self.status)
 
+    def refresh_attachment(self):
+        if not self.hwnd:return
+        visible = bool(self.attachment) and not self.settings_visible
+        if self.attachment:
+            self.attachment_preview = self.attachment.preview((round(28*self.dpi),round(28*self.dpi)))
+        else:self.attachment_preview = None
+        for name in ('attachment_preview','attachment_name','remove_image'):
+            self.api.user.ShowWindow(self.controls[name],5 if visible else 0)
+        self.api.user.ShowWindow(self.controls['status'],0 if visible or self.settings_visible else 5)
+        self.set_text('attachment_name',self.attachment.name if self.attachment else '')
+        self.api.user.InvalidateRect(self.controls['attachment_preview'],None,True)
+
+    def attach_image(self, path):
+        if self.busy or self.preparing_image:return
+        self.preparing_image = True
+        self.status = '正在准备图片…'
+        self.refresh_busy()
+        def worker():
+            try:self.image_results.put((load_image(path),None))
+            except ImageError as error:self.image_results.put((None,str(error)))
+            except Exception:self.image_results.put((None,'图片准备失败，请换一张图片。'))
+        threading.Thread(target=worker,name='PetImagePrepare',daemon=True).start()
+
+    def pick_image(self):
+        if self.busy or self.preparing_image:return
+        self.modal_depth += 1
+        self.api.user.SetTimer(self.owner.hwnd,1,16,None)
+        try:
+            path = choose_image(self.hwnd)
+            if path:self.attach_image(path)
+        except ImageError as error:
+            self.status = str(error)
+            self.refresh_busy()
+        finally:
+            self.api.user.KillTimer(self.owner.hwnd,1)
+            self.modal_depth -= 1
+
     def send(self):
-        if self.busy:return
+        if self.busy or self.preparing_image:return
         question = self.text('input').strip()
+        if self.attachment:question = ImageMessage(question,self.attachment)
         try:
             deepseek.build_request(question,self.history)
             deepseek.load_api_key()
@@ -203,8 +253,11 @@ class ChatWindow:
             return
         self.busy = True
         self.status = '正在听你说话…'
-        self.records.append(('user',question))
+        self.records.append(('user',deepseek.message_text(question),self.attachment))
+        self.attachment = None
+        self.refresh_attachment()
         self.set_text('input','')
+        self.draft = ''
         self.render_transcript()
         self.refresh_busy()
         history = list(self.history)
@@ -220,6 +273,21 @@ class ChatWindow:
 
     def poll(self):
         try:
+            image,error = self.image_results.get_nowait()
+        except queue.Empty:pass
+        else:
+            self.preparing_image = False
+            if error:
+                self.status = error
+                self.records.append(('notice',error))
+                self.records = self.records[-20:]
+                self.render_transcript()
+            else:
+                self.attachment = image
+                self.status = ''
+            self.refresh_attachment()
+            self.refresh_busy()
+        try:
             question,answer,error = self.results.get_nowait()
         except queue.Empty:
             return
@@ -227,14 +295,17 @@ class ChatWindow:
         if error:
             self.records.append(('notice',error))
             self.status = '发送失败，可以重试。'
-            self.set_text('input',question)
+            self.set_text('input',deepseek.message_text(question))
+            self.draft = deepseek.message_text(question)
+            if isinstance(question,ImageMessage):self.attachment = question.image
         else:
             self.history.append((question,answer))
             self.history = self.history[-8:]
             self.records.append(('assistant',answer))
-            self.status = 'Enter 发送 · Shift+Enter 换行'
+            self.status = ''
         self.records = self.records[-20:]
         self.render_transcript()
+        self.refresh_attachment()
         self.refresh_busy()
         if self.hwnd and not self.settings_visible and not self.owner.qa_mode:
             # Do not steal focus if the user has returned to another application.
@@ -247,7 +318,15 @@ class ChatWindow:
         elif command == self.CLEAR and not self.busy:
             self.records.clear()
             self.history.clear()
+            self.attachment = None
+            self.status = ''
+            self.refresh_attachment()
+            self.refresh_busy()
             self.render_transcript()
+        elif command == self.IMAGE:self.pick_image()
+        elif command == self.REMOVE_IMAGE and not self.busy:
+            self.attachment = None
+            self.refresh_attachment()
         elif command == self.SETTINGS:self.show_settings(not self.settings_visible)
         elif command == self.BACK:self.show_settings(False)
         elif command == self.SAVE:
@@ -282,8 +361,9 @@ class ChatWindow:
         if not self.hwnd or (message.hWnd != self.hwnd and message.hWnd not in self.controls.values()
                              and not self.transcript.contains(message.hWnd)):return False
         if message.message == 0x0100 and message.wParam == 9:
-            names = ('key','save','back','settings','close') if self.settings_visible else ('input','send','clear','settings','close')
-            controls = [self.controls[name] for name in names if not self.busy or name not in ('input','send','clear')]
+            names = ('key','save','back','settings','close') if self.settings_visible else ('input','send','image','clear','settings','close')
+            if self.attachment and not self.settings_visible:names = names+('remove_image',)
+            controls = [self.controls[name] for name in names if not (self.busy or self.preparing_image) or name not in ('input','send','clear','image','remove_image')]
             current = self.api.user.GetFocus()
             index = controls.index(current) if current in controls else -1
             step = -1 if self.api.user.GetKeyState(16)&0x8000 else 1
@@ -296,8 +376,12 @@ class ChatWindow:
 
     def draw_button(self, item):
         a = self.api
+        if item.id == self.THUMBNAIL:
+            a.user.FillRect(item.dc,C.byref(item.rect),self.white_brush)
+            if self.attachment_preview:paint_image(a,item.dc,self.attachment_preview,0,0)
+            return
         label = next((name for name,handle in self.controls.items() if handle == item.hwnd),None)
-        text = {'send':'等待…' if self.busy else '发送','clear':'清空','settings':'设置','close':'×','save':'保存','back':'返回聊天'}.get(label,'')
+        text = {'send':'等待…' if self.busy else '发送','clear':'清空','image':'图片','remove_image':'×','settings':'设置','close':'×','save':'保存','back':'返回聊天'}.get(label,'')
         strong = label in ('send','save') and not item.state&4
         brush = a.gdi.CreateSolidBrush(color('#bb7394' if strong else '#f8e5ee'))
         a.user.FillRect(item.dc,C.byref(item.rect),brush)
@@ -310,6 +394,13 @@ class ChatWindow:
 
     def window_proc(self, hwnd, message, wparam, lparam):
         a = self.api
+        if message == 0x0006 and (wparam&0xffff) == 0 and not self.modal_depth:
+            # Defer destruction until Windows finishes transferring activation.
+            a.user.PostMessageW(hwnd,0x8047,0,0)
+            return 0
+        if message == 0x8047:
+            if not self.modal_depth:self.close()
+            return 0
         if message == 0x0111:
             if not (wparam>>16):self.invoke(wparam&0xffff)
             return 0
@@ -334,6 +425,7 @@ class ChatWindow:
 
     def close(self):
         if not self.hwnd:return
+        self.draft = self.text('input')
         self.api.user.DestroyWindow(self.hwnd)
         if self.transcript:self.transcript.dispose()
         self.transcript = None

@@ -1,6 +1,7 @@
 """Scrollable native text bubbles; message contents never become actions."""
 import ctypes as C
 from ctypes import wintypes as W
+from .chat_images import paint_image
 
 
 class SCROLLINFO(C.Structure):
@@ -56,8 +57,10 @@ class BubbleTranscript:
         messages = list(records[-20:]) or [('assistant', '我在这里。想聊点什么？')]
         # The window text also exposes plain message bodies to accessibility
         # readers and WM_GETTEXT. Sender names are never inserted into the view.
-        a.user.SetWindowTextW(self.hwnd, '\r\n\r\n'.join(text for _, text in messages)[-24000:])
-        for role, text in messages:
+        a.user.SetWindowTextW(self.hwnd, '\r\n\r\n'.join(('[图片]\r\n' if len(record)>2 and record[2] else '')+record[1] for record in messages)[-24000:])
+        for record in messages:
+            role,text = record[:2]
+            image = record[2] if len(record)>2 else None
             role = role if role in self.COLOURS else 'notice'
             text = text.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n')
             style = 0x50000844 | (1 if role == 'notice' else 0)  # multiline, read-only, no HTML or links
@@ -67,7 +70,7 @@ class BubbleTranscript:
                 raise C.WinError(C.get_last_error())
             a.user.SendMessageW(hwnd, 0x0030, self.chat.font, 0)
             original = a.user.SetWindowLongPtrW(hwnd, -4, C.cast(self.bubble_callback, C.c_void_p).value)
-            self.bubbles.append({'hwnd': hwnd, 'role': role, 'text': text, 'original': original})
+            self.bubbles.append({'hwnd': hwnd, 'role': role, 'text': text, 'original': original,'image':image})
         self.layout(bottom or messages[-1][0] == 'user')
 
     def measure(self, width):
@@ -89,6 +92,9 @@ class BubbleTranscript:
                     a.gdi.GetTextExtentPoint32W(dc, line, units, C.byref(size))
                     natural = max(natural, size.cx)
                 bubble_width = min(max_width, max(round(40*dpi), natural+2*px))
+                preview = item['image'].preview((max(1,max_width-2*px),round(122*dpi))) if item.get('image') else None
+                if preview:bubble_width = max(bubble_width,preview[0][0]+2*px)
+                image_space = preview[0][1]+(round(8*dpi) if item['text'] else 0) if preview else 0
                 x = width-margin-bubble_width if item['role'] == 'user' else margin
                 if item['role'] == 'notice':x = (width-bubble_width)//2
                 hwnd = item['hwnd']
@@ -98,10 +104,13 @@ class BubbleTranscript:
                 rect = W.RECT(0, 0, text_width, 1000000)
                 a.user.SendMessageW(hwnd, 0x00B4, 0, C.addressof(rect))
                 lines = max(1, a.user.SendMessageW(hwnd, 0x00BA, 0, 0))
-                height = lines*line_height+2*py+2
-                item.update(x=x, y=y, width=bubble_width, height=height, lines=lines, px=px, py=py)
-                a.user.SetWindowPos(hwnd, None, x+px, y+py-self.offset, text_width, height-2*py, 0x0014)
-                rect.bottom = height-2*py
+                text_height = lines*line_height+2 if item['text'] else 0
+                height = text_height+2*py+image_space
+                item.update(x=x, y=y, width=bubble_width, height=height, lines=lines, px=px, py=py,
+                            preview=preview,image_space=image_space,text_height=text_height)
+                a.user.SetWindowPos(hwnd, None, x+px, y+py+image_space-self.offset, text_width, max(1,text_height), 0x0014)
+                a.user.ShowWindow(hwnd,5 if item['text'] else 0)
+                rect.bottom = max(1,text_height)
                 a.user.SendMessageW(hwnd, 0x00B3, 0, C.addressof(rect))
                 y += height+gap
         finally:
@@ -131,8 +140,8 @@ class BubbleTranscript:
 
     def place_bubbles(self):
         for item in self.bubbles:
-            self.api.user.SetWindowPos(item['hwnd'], None, item['x']+item['px'], item['y']+item['py']-self.offset,
-                item['width']-2*item['px'], item['height']-2*item['py'], 0x0014)
+            self.api.user.SetWindowPos(item['hwnd'], None, item['x']+item['px'], item['y']+item['py']+item['image_space']-self.offset,
+                item['width']-2*item['px'], max(1,item['text_height']), 0x0014)
         self.api.user.InvalidateRect(self.hwnd, None, True)
 
     def scroll_to(self, offset):
@@ -161,6 +170,7 @@ class BubbleTranscript:
                 top+item['height']+1, round(14*self.chat.dpi), round(14*self.chat.dpi))
             a.gdi.FillRgn(dc, region, self.brushes[item['role']])
             a.gdi.DeleteObject(region)
+            if item.get('preview'):paint_image(a,dc,item['preview'],item['x']+item['px'],top+item['py'])
 
     def window_proc(self, hwnd, message, wparam, lparam):
         a = self.api

@@ -19,6 +19,7 @@ for name,result,args in (
     ('GetWindowTextW',C.c_int,(W.HWND,W.LPWSTR,C.c_int)),
     ('GetClassNameW',C.c_int,(W.HWND,W.LPWSTR,C.c_int)),
     ('GetWindowRect',W.BOOL,(W.HWND,C.POINTER(W.RECT))),
+    ('IsWindow',W.BOOL,(W.HWND,)),
     ('GetWindowThreadProcessId',W.DWORD,(W.HWND,C.POINTER(W.DWORD))),
     ('GetDlgItem',W.HWND,(W.HWND,C.c_int)),
     ('SetWindowTextW',W.BOOL,(W.HWND,W.LPCWSTR)),
@@ -104,10 +105,78 @@ try:
     assert set(bubble_rects)=={question.value,'2'},set(bubble_rects)
     assert bubble_rects[question.value].left>bubble_rects['2'].left
     assert bubble_rects[question.value].bottom<bubble_rects['2'].top
+    # Choose the local test image through the actual native file dialog. Only
+    # windows owned by this packaged test process are inspected or operated.
+    fixture=ROOT/'work/sources/chat-vision-fixture.png'
+    assert fixture.is_file(),'Run test_chat_features.py first'
+    dialog_handles=[]
+    chat_pid=W.DWORD();user.GetWindowThreadProcessId(chat,C.byref(chat_pid))
+    @callback
+    def inspect_dialog(hwnd,_):
+        caption=C.create_unicode_buffer(128)
+        user.GetWindowTextW(hwnd,caption,len(caption))
+        pid=W.DWORD();user.GetWindowThreadProcessId(hwnd,C.byref(pid))
+        if caption.value=='选择要识别的图片' and pid.value==chat_pid.value and user.IsWindowVisible(hwnd):dialog_handles.append(hwnd)
+        return True
+    user.PostMessageW(chat,0x0111,710,0)
+    deadline=time.monotonic()+12
+    while time.monotonic()<deadline:
+        dialog_handles.clear();user.EnumWindows(inspect_dialog,0)
+        if dialog_handles:break
+        time.sleep(.05)
+    assert len(dialog_handles)==1,'Native image picker did not open'
+    dialog=dialog_handles[0]
+    filename_container=user.GetDlgItem(dialog,1148) or user.GetDlgItem(dialog,1152)
+    assert filename_container,'Native file-name control was not found'
+    edits=[]
+    @callback
+    def inspect_filename(hwnd,_):
+        kind=C.create_unicode_buffer(32);user.GetClassNameW(hwnd,kind,len(kind))
+        if kind.value.upper()=='EDIT':edits.append(hwnd)
+        return True
+    inspect_filename(filename_container,0)
+    user.EnumChildWindows(filename_container,inspect_filename,0)
+    assert len(edits)==1,'Native file-name edit was not found'
+    filename=C.create_unicode_buffer(str(fixture))
+    deadline=time.monotonic()+3
+    while time.monotonic()<deadline:
+        user.SendMessageW(edits[0],0x000C,0,C.cast(filename,C.c_void_p).value)
+        selected=C.create_unicode_buffer(32768)
+        user.SendMessageW(edits[0],0x000D,len(selected),C.cast(selected,C.c_void_p).value)
+        if selected.value==filename.value:break
+        time.sleep(.05)
+    assert selected.value==filename.value,'Native picker did not accept the test image path'
+    user.PostMessageW(dialog,0x0111,1,0)
+    deadline=time.monotonic()+12
+    while time.monotonic()<deadline:
+        assert user.IsWindow(chat),'The image picker dismissed its owning chat'
+        preview=user.GetDlgItem(chat,711)
+        if preview and user.IsWindowVisible(preview):break
+        time.sleep(.05)
+    assert user.IsWindowVisible(user.GetDlgItem(chat,711)),'Selected image preview did not appear'
+    prompt=C.create_unicode_buffer('请描述图片左右两侧的颜色和形状。')
+    assert user.SendMessageW(input_hwnd,0x000C,0,C.cast(prompt,C.c_void_p).value)
+    user.PostMessageW(chat,0x0111,701,0)
+    deadline=time.monotonic()+40
+    vision=''
+    while time.monotonic()<deadline:
+        length=user.SendMessageW(transcript,0x000E,0,0)
+        body=C.create_unicode_buffer(length+1)
+        user.SendMessageW(transcript,0x000D,len(body),C.cast(body,C.c_void_p).value)
+        vision=body.value.replace('\r','').split('\n\n')[-1]
+        if '蓝' in vision and '圆' in vision and any(word in vision for word in ('橙','橘')):break
+        time.sleep(.1)
+    assert '蓝' in vision and '圆' in vision and any(word in vision for word in ('橙','橘')),vision
+    user.PostMessageW(chat,0x0006,0,parent)
+    deadline=time.monotonic()+3
+    while user.IsWindow(chat) and time.monotonic()<deadline:time.sleep(.05)
+    assert not user.IsWindow(chat) and user.IsWindow(parent),'Outside activation failed to dismiss only chat'
     result={'frozen_native_chat_opened':True,'real_api_reply':'2',
             'key_decryption_and_windows_https_in_exe':True,'tools':[],
             'local_agent_server_required':False,'sender_names_in_transcript':False,
-            'conversation_view':'native_left_right_bubbles','frozen_bubble_alignment_verified':True}
+            'conversation_view':'native_left_right_bubbles','frozen_bubble_alignment_verified':True,
+            'real_native_image_picker':True,'image_preview_in_exe':True,
+            'real_vision_reply':vision,'outside_activation_dismisses_only_chat':True}
     (ROOT/'work/chat-package-validation.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 finally:

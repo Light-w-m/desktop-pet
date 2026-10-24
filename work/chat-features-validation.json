@@ -1,0 +1,12 @@
+{
+  "shortcut_hint_removed": true,
+  "inside_click_keeps_chat": true,
+  "outside_activation_dismisses_chat": true,
+  "draft_and_history_survive_dismiss": true,
+  "owned_image_picker_does_not_dismiss": true,
+  "selected_image_preview_and_remove": true,
+  "no_upload_until_send": true,
+  "image_only_added_capability": true,
+  "image_in_sent_bubble": true,
+  "computer_tools": false
+}

@@ -2,8 +2,16 @@
   "direct_https_api": true,
   "native_chat_question_and_reply": true,
   "arithmetic_reply": "2",
-  "computer_operation_request_refused_as_text": "抱歉，我没有操作电脑的能力，无法打开计算器，也不能读取或修改桌面文件。",
+  "selected_image_understanding": "左侧是蓝色圆形，右侧是橙色正方形。",
+  "image_in_sent_bubble": true,
+  "computer_operation_request_refused_as_text": "我做不到：我没有操作电脑的能力，无法打开计算器、读取桌面文件或执行任何命令，只能在这里用文字和你聊天。",
   "requests": [
+    {
+      "model": "deepseek-flash",
+      "tools": [],
+      "tool_choice": "none",
+      "max_tokens": 1024
+    },
     {
       "model": "deepseek-flash",
       "tools": [],
