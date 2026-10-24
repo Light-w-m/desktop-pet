@@ -4,7 +4,7 @@
 
 从 [Releases](https://github.com/Light-w-m/desktop-pet/releases) 下载 **CitlaliDesktopPet.exe**，双击运行，无需安装 Python。默认站立，背景和窗口边框透明。EXE 内置全部播放素材。
 
-[v1.3.0](https://github.com/Light-w-m/desktop-pet/releases/tag/v1.3.0) 使用无损动画差分压缩，EXE 约 229 MiB，五种动画共 2178 帧。主动作和拖动素材保持原像素，所有素材在压缩前后逐帧对比无差异；日常运行只需要 EXE。
+[v1.4.0](https://github.com/Light-w-m/desktop-pet/releases/tag/v1.4.0) 新增人物旁边的聊天气泡、主动选图识别和点击外部收起，并包含自由走动、完整跺脚收势与待机飘带修复。EXE 约 283 MiB，七组动画共 2556 帧；日常运行只需要 EXE，聊天与识图需要在设置中填写自己的 DeepSeek API Key。
 
 源码仓库不包含大型 EXE、动画 WebP 和播放帧包。需要从源码运行或构建时，另下载同一版本的 **CitlaliDesktopPet-source-assets.zip**，解压到项目根目录。MP4 原始录屏不随仓库或 Release 分发。发布步骤见 [GitHub 发布说明](docs/PUBLISHING.md)。
 
